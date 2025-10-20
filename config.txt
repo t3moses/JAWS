@@ -1,0 +1,11 @@
+boats data file: Config/boats data.csv // file of boats data.
+sailors data file: Config/sailors data.csv // file of sailors data.
+boats available file: Config/boats available.csv // file of boats availability.
+sailors available file: Config/sailors available.csv // file of sailors availability.
+sailor histories file: Config/sailor histories.csv // file of sailor histories.
+user input file file: user input/NSC-SDC form.txt // file containing a user input form.
+assignments file name: html/assignments.html // html files for the events.
+debug file name: debug/debug.txt // file containing debug output.
+addresses file name: addresses/addresses.txt // file containing email addresses of sailors and owners by event date.
+crew info file name: crew info/crew info.txt // file containing information about the sailors in the upcoming event.
+tickets file name: html/tickets.html // file containing tickets.

@@ -11,22 +11,29 @@
                 font-size: 24px;
             }
             .button_class{
-                width: 300px;
+                margin-top: 10px;
                 background-color: #DDDDDD;
                 border: 2px solid #000000;
                 border-radius: 10px;
                 font-size: 24px;
                 cursor: pointer;
             }
+            .div_class{
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
         </style>
     </head>
     <body>
         <form class = "form_class" method = "post" action="/display_name_from_form.php">
-            <label for="fname">First name:</label><br>
-            <input type="text" id="fname" name="fname"><br>
-            <label for="lname">Last name:</label><br>
-            <input type="text" id="lname" name="lname"><br>
-            <input type="submit" value="Next">
+            <div class = "div_class">
+                <label for="fname">First name:</label><br>
+                <input type="text" id="fname" name="fname"><br>
+                <label for="lname">Last name:</label><br>
+                <input type="text" id="lname" name="lname"><br>
+                <input class = "button_class" type="submit" value="Next"><br>
+                <button class = "button_class" type="button" onclick="window.location.href='/index.html'">Cancel</button>
+             </div>
         </form>
-    </body>
+   </body>
 </html>

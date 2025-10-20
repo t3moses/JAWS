@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            .form_class{
+                margin-top: 5px;
+                margin-bottom: 2px;
+                background-color: #DDDDDD;
+                border: 2px solid #000000;
+                border-radius: 10px;
+                font-size: 24px;
+            }
+            .button_class{
+                margin-top: 10px;
+                background-color: #DDDDDD;
+                border: 2px solid #000000;
+                border-radius: 10px;
+                font-size: 24px;
+                cursor: pointer;
+            }
+            .div_class{
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <form class = "form_class" method = "post" action="/account_boat_form.php">
+            <div class = "div_class">
+                <label for="bname">Boat name</label><br>
+                <input type="text" id="bname" name="bname"><br>
+                <input class = "button_class" type="submit" value="Next"><br>
+                <button class = "button_class" type="button" onclick="window.location.href='/program.html'">Cancel</button>
+             </div>
+        </form>
+   </body>
+</html>

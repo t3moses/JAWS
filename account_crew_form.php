@@ -1,6 +1,6 @@
 <?php
 
-function display_name_from_form() {
+function key_from_name() {
 
     // Check if form was submitted
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -17,20 +17,26 @@ function display_name_from_form() {
         $fname = htmlspecialchars($fname);
         $lname = htmlspecialchars($lname);
         
-        return ($fname . " " . $lname);
+        return (strtolower($fname) . strtolower($lname));
     }
 }
 
-$_display_name = display_name_from_form();
+
+$handle = fopen("dbfile.txt", 'w');
+if ($handle) {
+    $_database_key = key_from_name();
+    fwrite($handle, $_database_key);
+    fclose($handle);
+}
 
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Display Name From Form</title>
     </head>
     <body>
-        <p>Result: <?php echo $_display_name; ?></p>
+        <p>Thank you for registering</p>
+        <p>Your database key is <?php echo $_database_key; ?></p>
     </body>
 </html>
