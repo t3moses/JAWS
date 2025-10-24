@@ -10,6 +10,13 @@
                 border-radius: 10px;
                 font-size: 24px;
             }
+            .text_class{
+                margin-top: 10px;
+                background-color: #DDDDDD;
+                border: 2px solid #000000;
+                border-radius: 10px;
+                font-size: 24px;
+            }
             .button_class{
                 margin-top: 10px;
                 background-color: #DDDDDD;
@@ -27,8 +34,8 @@
     <body>
         <form class = "form_class" method = "post" action="/account_boat_form.php">
             <div class = "div_class">
-                <label for="bname">Boat name</label><br>
-                <input type="text" id="bname" name="bname"><br>
+                <label for="boat_name">Boat name:</label><br>
+                <input class = "text_class" type="text" id="boat_name" name="bname"><br>
                 <input class = "button_class" type="submit" value="Next"><br>
                 <button class = "button_class" type="button" onclick="window.location.href='/program.html'">Cancel</button>
              </div>
