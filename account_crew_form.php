@@ -22,7 +22,7 @@ function key_from_name() {
 }
 
 
-$handle = fopen("dbfile.txt", 'w');
+$handle = fopen("crew_data.csv", 'w');
 if ($handle) {
     $_database_key = key_from_name();
     fwrite($handle, $_database_key);

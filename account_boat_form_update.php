@@ -47,8 +47,6 @@ $_boat_updated_arr = boat_from_form();
 
 $_boat_updated_str = implode(',', $_boat_updated_arr );
 
-echo $_boat_updated_str; // --- IGNORE ---
-
 // Open the boat data file and 
 // copy each line (except the one being updated) into $_boats_updated_str.
 // Append the updated boat string.
@@ -125,7 +123,7 @@ file_put_contents( 'boat_data.csv', $_boats_updated_str );
             <p>Assistance: <?php echo $_boat_updated_arr[8]?></p>
         </div>
         <div>
-            <button type="button" onclick="window.location.href='/program.html'">Next</button>
+            <button type="button" onclick="window.location.href='/program.html'">Done</button>
         </div>
     </body>
 </html>

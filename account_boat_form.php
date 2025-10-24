@@ -148,6 +148,13 @@ if ( !$_record_exists ) {
             .hidden {
                 display: none;
             }
+            .select_class{
+                margin-top: 10px;
+                background-color: #DDDDDD;
+                border: 2px solid #000000;
+                border-radius: 10px;
+                font-size: 24px;
+            }
             label {
                 display: inline-block;
                 font-size: 24px;
@@ -182,13 +189,27 @@ if ( !$_record_exists ) {
             <input class = "text_class" type="text" id="mobile_number" name="mobile_number" value="<?php echo $_mobile_number?>"></br>
 
             <label for="min_occupancy">Min occupancy:</label>
-            <input class = "text_class" type="text" id="min_occupancy" name="min_occupancy" value="<?php echo $_min_occupancy?>"required></br>
+            <select class = "select_class" name="min_occupancy" id="min_occupancy">
+                <option value="1" <?php if($_min_occupancy == '1') echo 'selected'; ?>>1</option>
+                <option value="2" <?php if($_min_occupancy == '2') echo 'selected'; ?>>2</option>
+                <option value="3" <?php if($_min_occupancy == '3') echo 'selected'; ?>>3</option>
+            </select></br>
 
-            <label for="max_occupancy">Max occupancy:</label>
-            <input class = "text_class" type="text" id="max_occupancy" name="max_occupancy" value="<?php echo $_max_occupancy?>"required></br>
+            <label for="max_occupancy">Min occupancy:</label>
+            <select class = "select_class" name="max_occupancy" id="max_occupancy">
+                <option value="1" <?php if($_max_occupancy == '1') echo 'selected'; ?>>1</option>
+                <option value="2" <?php if($_max_occupancy == '2') echo 'selected'; ?>>2</option>
+                <option value="3" <?php if($_max_occupancy == '3') echo 'selected'; ?>>3</option>
+                <option value="4" <?php if($_max_occupancy == '4') echo 'selected'; ?>>4</option>
+                <option value="5" <?php if($_max_occupancy == '5') echo 'selected'; ?>>5</option>
+                <option value="6" <?php if($_max_occupancy == '6') echo 'selected'; ?>>6</option>
+            </select></br>
 
             <label for="assistance">Request assistance:</label>
-            <input class = "text_class" type="text" id="assistance" name="assistance" value="<?php echo $_assistance?>"required></br>
+            <select class = "select_class" name="assistance" id="assistance">
+                <option value="Yes" <?php if($_assistance == 'Yes') echo 'selected'; ?>>Yes</option>
+                <option value="No" <?php if($_assistance == 'No') echo 'selected'; ?>>No</option>
+            </select></br>
 
             <input class = "button_class" type="submit" value="Submit"> 
         </form>

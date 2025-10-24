@@ -8,7 +8,6 @@ function index_from_array( $_array, $_element ) {
         }
     }
     return -1;
-
 }
 
 function index_from_row( $_row, $_element ) {
@@ -19,12 +18,13 @@ function index_from_row( $_row, $_element ) {
 }
 
 function array_from_key( $_arrays, $_key, $_key_index ) {
-    // Return the array from arrays that corresponds to  the key.
+    // Return the array from arrays that corresponds to the key.
     foreach( $_arrays as $_array ){
         if ( $_array[ $_key_index ] === $_key ) {
             return $_array;
         }
     }
+    return -1;
 }
 
 ?>
