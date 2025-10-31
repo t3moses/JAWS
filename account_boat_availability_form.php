@@ -110,13 +110,6 @@ foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
                 border-radius: 10px;
                 font-size: 24px;
             }
-            .text_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
             .button_class{
                 margin-top: 10px;
                 background-color: #DDDDDD;
@@ -139,17 +132,13 @@ foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
                 border-radius: 10px;
                 font-size: 24px;
             }
-            label {
-                display: inline-block;
-                font-size: 24px;
-                width: 150px;
-                margin-bottom: 10px;
-            }
             p {
                 display: inline-block;
                 font-size: 24px;
                 margin-bottom: 10px;
             }
+            .flex-container { display: flex; gap: 0px; }
+            .column { flex: 1; /* Each column takes equal space */ }
         </style>
     </head>
     <body>
@@ -165,36 +154,27 @@ offering a choice betweenAvailable and not available.
 
 -->
 
-            <?php
+            <?php for ( $_index = 1; $_index < count( $_db_boat_availability_arr ); $_index++ ) { ?>
+                
+                <div class='flex-container'>
+                    <div class='column'>
+                        <p><?php echo $_header_arr[ $_index ]; ?></p>
+                    </div>
+                    <div class='column'>
+                        <select class = select_class name=avail id=avail>
 
-                for ( $_index = 1; $_index < count( $_db_boat_availability_arr ); $_index++ ) {
-                    echo "<p>" . $_header_arr[ $_index ] . "</p>";
-                    echo "<select class = select_class name=avail id=avail>";
-                        echo "<option value=0";
-                        if($_db_boat_availability_arr[ $_index ] === '0') echo ' selected';
-                        echo ">0</option>";
-                        echo "<option value=1";
-                        if($_db_boat_availability_arr[ $_index ] === '1') echo ' selected';
-                        echo ">1</option>";
-                        echo "<option value=2";
-                        if($_db_boat_availability_arr[ $_index ] === '2') echo ' selected';
-                        echo ">2</option>";
-                        echo "<option value=3";
-                        if($_db_boat_availability_arr[ $_index ] === '3') echo ' selected';
-                        echo ">3</option>";
-                        echo "<option value=4";
-                        if($_db_boat_availability_arr[ $_index ] === '4') echo ' selected';
-                        echo ">4</option>";
-                        echo "<option value=5";
-                        if($_db_boat_availability_arr[ $_index ] === '5') echo ' selected';
-                        echo ">5</option>";
-                        echo "<option value=6";
-                        if($_db_boat_availability_arr[ $_index ] === '6') echo ' selected';
-                        echo ">6</option>";
-                    echo "</select></br>";
-                }
+                            <option value = 0 <?php if($_db_boat_availability_arr[ $_index ] === '0' ) { echo ' selected'; } ?>>0</option>
+                            <option value = 1 <?php if($_db_boat_availability_arr[ $_index ] === '1' ) { echo ' selected'; } ?>>1</option>
+                            <option value = 2 <?php if($_db_boat_availability_arr[ $_index ] === '2' ) { echo ' selected'; } ?>>2</option>
+                            <option value = 3 <?php if($_db_boat_availability_arr[ $_index ] === '3' ) { echo ' selected'; } ?>>3</option>
+                            <option value = 4 <?php if($_db_boat_availability_arr[ $_index ] === '4' ) { echo ' selected'; } ?>>4</option>
+                            <option value = 5 <?php if($_db_boat_availability_arr[ $_index ] === '5' ) { echo ' selected'; } ?>>5</option>
+                            <option value = 6 <?php if($_db_boat_availability_arr[ $_index ] === '6' ) { echo ' selected'; } ?>>6</option>
 
-            ?>
+                        </select></br>
+                    </div>
+                </div>
+            <?php } ?>
 
             <input class = "button_class" type="submit" value="Submit"> 
         </form>
