@@ -6,22 +6,6 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-function index_from_array( $_array, $_element ) {
-    // Return the index of the element in the array, or -1 if not found.
-    foreach ( $_array as $_index => $_item ) {
-        if ( $_item === $_element ) {
-            return $_index;
-        }
-    }
-    return -1;
-}
-
-function index_from_row( $_row, $_element ) {
-    // Return the index of the element in the row.
-    $_array = str_getcsv( $_row );
-    $_index = index_from_array( $_array, $_element );
-    return $_index;
-}
 function boat_from_form() {
 
     // Make the $_boat array from the posted boat data.
@@ -42,47 +26,59 @@ function boat_from_form() {
     }
 }
 
-// Get the boat array from the form submission, and convert it into a string
+// Get the boat array from the form posted by account_boat_data_form.php
+// and convert it into a string.  This will be appended to $_boats_updated_str
+// and written back to the boats_data.csv file.
 $_boat_updated_arr = boat_from_form();
-
+$_boat_key = $_boat_updated_arr[ 0 ];
+$_max_occupancy = $_boat_updated_arr[ 7 ];
 $_boat_updated_str = implode(',', $_boat_updated_arr );
 
-// Open the boat data file and 
-// copy each line (except the one being updated) into $_boats_updated_str.
-// Append the updated boat string.
+// Read the boats_data.csv file as a string.
+$_db_boats_str = file_get_contents( 'boats_data.csv' );
 
-// Read the boat data file as a string.
-$_db_boats_str = file_get_contents('boat_data.csv');
+// Then append the updated boat string.
+$_db_boats_str  = $_db_boats_str . "\n" . $_boat_updated_str;
 
-// Then explode it into an array of boat strings.
-$_db_boats_arr_str = explode( "\n", $_db_boats_str );
+// And write the updated boats data back to the file.
+file_put_contents( 'boats_data.csv', $_db_boats_str );
 
-// Get the key index from the first row of the boats array.
-$_key_index = index_from_row( $_db_boats_arr_str[0], 'key' );
-$_user_boat_key = $_boat_updated_arr[ $_key_index ];
+//--------------
+// Set the availabilitty to "Y" for every event date.
+//--------------
 
-// Walk through the array of boat strings.
-// Copy all except the one being updated into $_boats_updated_str.
-$_boats_updated_str = '';
+// Read the boats_availability.csv file into a string.
+$_db_boats_availability_str = file_get_contents('boats_availability.csv');
 
-foreach ( $_db_boats_arr_str as $_db_boat_str ) {
+// We need to know the number of events,
+// so explode it into an array of boat availability strings.
+$_db_boats_availability_arr_str = explode( "\n", $_db_boats_availability_str );
 
-    $_db_boat_arr = explode( ',', $_db_boat_str );
+// And eplode the header row into 'key' followed by event dates.
+$_header_row_str = $_db_boats_availability_arr_str[ 0 ];
+$_header_row_arr = explode( ",", $_header_row_str );
+$_event_count = count( $_header_row_arr );
 
-    if ( $_db_boat_arr[ $_key_index ] !== $_user_boat_key && !empty( $_db_boat_str ) ) {
+// Create the updated boat availability array
+// as the boat key followed by max_occupancy for each event.
+$_boat_availability_updated_arr = [];
+$_boat_availability_updated_arr[ 0 ] = $_boat_key;
 
-        $_boats_updated_str .= $_db_boat_str . "\n";
-    }
+for ( $_index = 1; $_index < $_event_count; $_index++ ) {
+    $_boat_availability_updated_arr[ $_index ] = $_max_occupancy;
 }
 
-// Then append the updated boat record to $_boats_updated_str.
-$_boats_updated_str .= $_boat_updated_str;
+// Convert the array to a string.
+$_boat_availability_updated_str = implode(',', $_boat_availability_updated_arr );
 
-// Write the updated boat data back to the file.
-file_put_contents( 'boat_data.csv', $_boats_updated_str );
+// Then append it to the updated boats availability string.
+$_boats_availability_updated_str = $_db_boats_availability_str . chr(0x0a) . $_boat_availability_updated_str;
 
+// And write the result back to the file.
+file_put_contents( 'boats_availability.csv', $_boats_availability_updated_str );
 
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -123,7 +119,7 @@ file_put_contents( 'boat_data.csv', $_boats_updated_str );
             <p>Assistance: <?php echo $_boat_updated_arr[8]?></p>
         </div>
         <div>
-            <button type="button" onclick="window.location.href='/program.html'">Done</button>
+            <button type="button" onclick="window.location.href='/account_boat_availability_form.php?bkey=<?php echo $_boat_key; ?>'">Next</button>
         </div>
     </body>
 </html>

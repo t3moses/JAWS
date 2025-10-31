@@ -6,6 +6,32 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+/*
+
+Get $_boat_name using the user's posted form data,
+Convert it to $_boat_key.
+Check if $_boat_key exists in boat_data.csv.
+If it exists, load account_boat_availabiity_form.php.
+If it does not exist, load account_boat_data_form.php.
+In either case, post $_boat_key.
+Use:
+
+<?php
+
+if ( $_record_exists ) {
+    header("Location: /account_boat_availability_form.php?" . $_boat_key);
+    exit;
+} else {
+    header("Location: /account_boat_data_form.php?" . $_boat_key);
+    exit;
+}
+
+?>
+
+The target files can then use $_GET to retrieve the boat key.
+
+*/
+
 function key_from_name( $_name ) {
     // Create a sanitized database key from a name.
     return trim( strtolower( htmlspecialchars( $_name )));
@@ -30,10 +56,10 @@ function index_from_row( $_row, $_element ) {
 
 function boat_name_from_form() {
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Retrieve form data
-        $_boat_name = $_POST['bname'] ?? '';
+        $_boat_name = $_GET['bname'] ?? '';
 
         // Validate the data
         if (empty($_boat_name)) {
@@ -42,25 +68,6 @@ function boat_name_from_form() {
         else {
             return $_boat_name;
         }
-    }
-}
-
-function boat_key_from_form() {
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-        // Retrieve form data
-        $_boat_name = $_POST['bname'] ?? '';
-
-        // Validate the data
-        if (empty($_boat_name)) {
-            return null;
-        }
-        $_boat_key = key_from_name( $_boat_name );
-        return $_boat_key;
-    }
-    else {
-        return null;
     }
 }
 
@@ -74,15 +81,13 @@ $_db_boats = explode( "\n", $_db_boats );
 
 $_header_row = $_db_boats[0];
 
-$_key_index = index_from_row( $_db_boats[0], 'key' );
-
 $_record_exists = false;
 
 foreach ( $_db_boats as $_db_boat ) {
 
     $_db_boat = explode( ',', $_db_boat );
 
-    if ( $_db_boat[ $_key_index ] === $_user_boat_key ) {
+    if ( $_db_boat[ 0 ] === $_user_boat_key ) {
 
         $_boat_key = $_user_boat_key;
         $_owner_first_name = $_db_boat[ index_from_row( $_header_row, 'owner first name' )];
@@ -165,7 +170,7 @@ if ( !$_record_exists ) {
                 display: inline-block;
                 font-size: 24px;
                 margin-bottom: 10px;
-            }            
+            }          
         </style>
     </head>
     <body>
@@ -183,19 +188,19 @@ if ( !$_record_exists ) {
             <input class = "text_class" type="text" id="owner_last_name" name="owner_last_name" value="<?php echo $_owner_last_name?>"required></br>
 
             <label for="email_address">Email address:</label>
-            <input class = "text_class" type="text" id="email_address" name="email_address" value="<?php echo $_email_address?>"required></br>
+            <input class = "text_class" type="email" id="email_address" name="email_address" value="<?php echo $_email_address?>"required></br>
 
             <label for="mobile_number">Mobile number:</label>
-            <input class = "text_class" type="text" id="mobile_number" name="mobile_number" value="<?php echo $_mobile_number?>"></br>
+            <input class = "text_class" type="tel" id="mobile_number" name="mobile_number" value="<?php echo $_mobile_number?>"></br>
 
             <label for="min_occupancy">Min occupancy:</label>
-            <select class = "select_class" name="min_occupancy" id="min_occupancy">
+            <select class = "select_class" name="min_occupancy" id="max_occupancy">
                 <option value="1" <?php if($_min_occupancy == '1') echo 'selected'; ?>>1</option>
                 <option value="2" <?php if($_min_occupancy == '2') echo 'selected'; ?>>2</option>
                 <option value="3" <?php if($_min_occupancy == '3') echo 'selected'; ?>>3</option>
             </select></br>
 
-            <label for="max_occupancy">Min occupancy:</label>
+            <label for="max_occupancy">Max occupancy:</label>
             <select class = "select_class" name="max_occupancy" id="max_occupancy">
                 <option value="1" <?php if($_max_occupancy == '1') echo 'selected'; ?>>1</option>
                 <option value="2" <?php if($_max_occupancy == '2') echo 'selected'; ?>>2</option>

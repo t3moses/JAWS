@@ -9,6 +9,13 @@
                 border: 2px solid #000000;
                 border-radius: 10px;
                 font-size: 24px;
+            }            
+            .text_class{
+                margin-top: 10px;
+                background-color: #DDDDDD;
+                border: 2px solid #000000;
+                border-radius: 10px;
+                font-size: 24px;
             }
             .button_class{
                 margin-top: 10px;
@@ -25,12 +32,12 @@
         </style>
     </head>
     <body>
-        <form class = "form_class" method = "post" action="/account-crew-form.php">
+        <form class = "form_class" method = "post" action="/account_crew_form.php">
             <div class = "div_class">
                 <label for="fname">First name:</label><br>
-                <input type="text" id="fname" name="fname"><br>
+                <input class="text_class" type="text" id="fname" name="fname"><br>
                 <label for="lname">Last name:</label><br>
-                <input type="text" id="lname" name="lname"><br>
+                <input class="text_class" type="text" id="lname" name="lname"><br>
                 <input class = "button_class" type="submit" value="Next"><br>
                 <button class = "button_class" type="button" onclick="window.location.href='/program.html'">Cancel</button>
              </div>
