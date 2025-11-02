@@ -8,27 +8,7 @@ header("Expires: 0");
 
 /*
 
-Get $_boat_name using the user's posted form data,
-Convert it to $_boat_key.
-Check if $_boat_key exists in boats_data.csv.
-If it exists, load account_boat_availabiity_form.php.
-If it does not exist, load account_boat_data_form.php.
-In either case, post $_boat_key.
-Use:
-
-<?php
-
-if ( $_record_exists ) {
-    header("Location: /account_boat_availability_form.php?" . $_boat_key);
-    exit;
-} else {
-    header("Location: /account_boat_data_form.php?" . $_boat_key);
-    exit;
-}
-
-?>
-
-The target files can then use $_GET to retrieve the boat key.
+ARRIVE HERE ONLY IF THE BOAT OWNER DOES NOT HAVE AN ACCOUNT.
 
 */
 
@@ -216,7 +196,7 @@ if ( !$_record_exists ) {
                 <option value="No" <?php if($_assistance == 'No') echo 'selected'; ?>>No</option>
             </select></br>
 
-            <input class = "button_class" type="submit" value="Submit"> 
+            <input class = "button_class" type="submit" value="Next">
         </form>
     </body>
 </html>

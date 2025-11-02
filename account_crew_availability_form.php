@@ -6,36 +6,17 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-/*
-
-Get $_boat_name using the user's posted form data,
-Convert it to $_boat_key.
-Check if $_boat_key exists in boats_data.csv.
-If it exists, load account_boat_availabiity_form.php.
-If it does not exist, load account_boat_data_form.php.
-In either case, post $_boat_key.
-Use:
-
-<?php
-
-if ( $_record_exists ) {
-    header("Location: /account_boat_availability_form.php?" . $_boat_key);
-    exit;
-} else {
-    header("Location: /account_boat_data_form.php?" . $_boat_key);
-    exit;
+function display_name_from_names( $_first_name, $_last_name ) {
+    // Create a display name from first and last names.
+    $_first_part = ucfirst( strtolower( str_replace(" ", "", $_first_name )));
+    $_second_part = strtoupper( str_replace(" ", "", $_last_name )[0]);
+    return $_first_part . $_second_part;
 }
-
-?>
-
-The target files can then use $_GET to retrieve the boat key.
-
-*/
 
 function subject_attribute_from_file( $_subject_key, $_attribute_name, $_file ) {
 
 // Convert the file to an array of strings.
-// Convert the first string to an array (this is the header row).
+// Convert the first string into an array (this is the header row).
 // Find the array index of the requested attribute.
 
     $_file_arr_str = explode( "\n", $_file );
@@ -57,41 +38,44 @@ function subject_attribute_from_file( $_subject_key, $_attribute_name, $_file ) 
     return null;
 }
 
-function boat_key_from_form() {
+function crew_key_from_form() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Retrieve form data
-        $_boat_key = $_GET['bkey'] ?? '';
+        $_crew_key = $_GET['ckey'] ?? '';
 
         // Validate the data
-        if (empty($_boat_key)) {
+        if (empty($_crew_key)) {
             return null;
         }
         else {
-            return $_boat_key;
+            return $_crew_key;
         }
     }
 }
 
-// Get the boat key from the redirect and look up its name in boats_data.csv.
-$_user_boat_key = boat_key_from_form();
-$_db_boat_data = file_get_contents('boats_data.csv');
-$_display_name = subject_attribute_from_file( $_user_boat_key, "display name", $_db_boat_data );
+// Get the crew key from the redirect and look up its display name in crews_data.csv.
+$_user_crew_key = crew_key_from_form();
+$_db_crew_data = file_get_contents('crews_data.csv');
 
-// Read the boat availability file into an array of boat strings.
-$_db_boats_availability_str = file_get_contents('boats_availability.csv');
-$_db_boats_availability_arr_str = explode( "\n", $_db_boats_availability_str );
+$_first_name = subject_attribute_from_file( $_user_crew_key, "first name", $_db_crew_data );
+$_last_name = subject_attribute_from_file( $_user_crew_key, "last name", $_db_crew_data );
+$_display_name = display_name_from_names( $_first_name, $_last_name );
 
-$_header_arr = explode( ",", $_db_boats_availability_arr_str[ 0 ] );
+// Read the crew availability file into an array of crew strings.
+$_db_crews_availability_str = file_get_contents('crews_availability.csv');
+$_db_crews_availability_arr_str = explode( "\n", $_db_crews_availability_str );
 
-foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
+$_header_arr = explode( ",", $_db_crews_availability_arr_str[ 0 ] );
 
-    $_db_boat_availability_arr = explode( ',', $_db_boat_availability_str );
+foreach ( $_db_crews_availability_arr_str as $_db_crew_availability_str ) {
 
-    if ( $_db_boat_availability_arr[ 0 ] === $_user_boat_key) {
+    $_db_crew_availability_arr = explode( ',', $_db_crew_availability_str );
 
-        break; // with $_db_boat_availability_arr containing the target boat availability.
+    if ( $_db_crew_availability_arr[ 0 ] === $_user_crew_key) {
+
+        break; // with $_db_crew_availability_arr containing the target crew availability.
 
     }
 }
@@ -142,9 +126,9 @@ foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
         </style>
     </head>
     <body>
-        <p>Boat name: <?php echo $_display_name; ?></p>
-        <form method="get" action="account_boat_availability_update.php">
-            <input class = "hidden" type="text" id="key" name="key" value="<?php echo $_user_boat_key; ?>"required>
+        <p>Username: <?php echo $_display_name; ?></p>
+        <form method="get" action="account_crew_availability_update.php">
+            <input class = "hidden" type="text" id="key" name="key" value="<?php echo $_user_crew_key; ?>"required>
 
 
 <!--
@@ -154,29 +138,27 @@ offering a choice betweenAvailable and not available.
 
 -->
 
-            <?php for ( $_index = 1; $_index < count( $_db_boat_availability_arr ); $_index++ ) { ?>
+            <?php for ( $_index = 1; $_index < count( $_db_crew_availability_arr ); $_index++ ) { ?>
                 
                 <div class='flex-container'>
                     <div class='column'>
                         <p><?php echo $_header_arr[ $_index ]; ?></p>
                     </div>
                     <div class='column'>
+                        <p>I am available</p>
+                    </div>
+                    <div class='column'>
                         <select class = select_class name=avail id=avail>
 
-                            <option value = 0 <?php if($_db_boat_availability_arr[ $_index ] === '0' ) { echo ' selected'; } ?>>0</option>
-                            <option value = 1 <?php if($_db_boat_availability_arr[ $_index ] === '1' ) { echo ' selected'; } ?>>1</option>
-                            <option value = 2 <?php if($_db_boat_availability_arr[ $_index ] === '2' ) { echo ' selected'; } ?>>2</option>
-                            <option value = 3 <?php if($_db_boat_availability_arr[ $_index ] === '3' ) { echo ' selected'; } ?>>3</option>
-                            <option value = 4 <?php if($_db_boat_availability_arr[ $_index ] === '4' ) { echo ' selected'; } ?>>4</option>
-                            <option value = 5 <?php if($_db_boat_availability_arr[ $_index ] === '5' ) { echo ' selected'; } ?>>5</option>
-                            <option value = 6 <?php if($_db_boat_availability_arr[ $_index ] === '6' ) { echo ' selected'; } ?>>6</option>
+                            <option value = "" <?php if($_db_crew_availability_arr[ $_index ] === '' ) { echo ' selected'; } ?>>No</option>
+                            <option value = "Y" <?php if($_db_crew_availability_arr[ $_index ] !== '' ) { echo ' selected'; } ?>>Yes</option>
 
                         </select></br>
                     </div>
                 </div>
             <?php } ?>
 
-            <input class = "button_class" type="submit" value="Next">
+            <input class = "button_class" type="submit" value="Next"> 
         </form>
     </body>
 </html>
