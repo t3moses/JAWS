@@ -83,43 +83,24 @@ file_put_contents( 'boats_availability.csv', $_boats_availability_updated_str );
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            button {
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            label {
-                display: inline-block;
-                width: 150px;
-                margin-bottom: 10px;
-            }
-            p {
-                display: inline-block;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }    
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
         <div>
-            <p>Your account has been updated</p>
+            <p class = "p_class" >Your account has been updated</p>
         </div>
         <div>
-            <p>Owner first name: <?php echo $_boat_updated_arr[1]?></p></br>
-            <p>Owner last name: <?php echo $_boat_updated_arr[2]?></p></br>
-            <p>Boat name: <?php echo $_boat_updated_arr[3]?></p></br>
-            <p>Email address: <?php echo $_boat_updated_arr[4]?></p></br>
-            <p>Mobile number: <?php echo $_boat_updated_arr[5]?></p></br>
-            <p>Min occupancy: <?php echo $_boat_updated_arr[6]?></p></br>
-            <p>Max occupancy: <?php echo $_boat_updated_arr[7]?></p></br>
-            <p>Assistance: <?php echo $_boat_updated_arr[8]?></p>
+            <p class = "p_class" >Owner first name: <?php echo $_boat_updated_arr[1]?></p></br>
+            <p class = "p_class" >Owner last name: <?php echo $_boat_updated_arr[2]?></p></br>
+            <p class = "p_class" >Boat name: <?php echo $_boat_updated_arr[3]?></p></br>
+            <p class = "p_class" >Email address: <?php echo $_boat_updated_arr[4]?></p></br>
+            <p class = "p_class" >Mobile number: <?php echo $_boat_updated_arr[5]?></p></br>
+            <p class = "p_class" >Min occupancy: <?php echo $_boat_updated_arr[6]?></p></br>
+            <p class = "p_class" >Max occupancy: <?php echo $_boat_updated_arr[7]?></p></br>
+            <p class = "p_class" >Assistance: <?php echo $_boat_updated_arr[8]?></p>
         </div>
         <div>
-            <button type="button" onclick="window.location.href='/account_boat_availability_form.php?bkey=<?php echo $_boat_key; ?>'">Next</button>
+            <button class="button_class" type="button" onclick="window.location.href='/account_boat_availability_form.php?bkey=<?php echo $_boat_key; ?>'">Next</button>
         </div>
     </body>
 </html>

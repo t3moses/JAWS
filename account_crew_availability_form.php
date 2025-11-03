@@ -85,50 +85,12 @@ foreach ( $_db_crews_availability_arr_str as $_db_crew_availability_str ) {
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            .form_class{
-                margin-top: 5px;
-                margin-bottom: 2px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            .button_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            .div_class{
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
-            .hidden {
-                display: none;
-            }
-            .select_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            p {
-                display: inline-block;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }
-            .flex-container { display: flex; gap: 0px; }
-            .column { flex: 1; /* Each column takes equal space */ }
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
-        <p>Username: <?php echo $_display_name; ?></p>
+        <p class = "p_class" >Username: <?php echo $_display_name; ?></p>
         <form method="get" action="account_crew_availability_update.php">
-            <input class = "hidden" type="text" id="key" name="key" value="<?php echo $_user_crew_key; ?>"required>
+            <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_crew_key; ?>"required>
 
 
 <!--
@@ -142,10 +104,10 @@ offering a choice betweenAvailable and not available.
                 
                 <div class='flex-container'>
                     <div class='column'>
-                        <p><?php echo $_header_arr[ $_index ]; ?></p>
+                        <p class = "p_class" ><?php echo $_header_arr[ $_index ]; ?></p>
                     </div>
                     <div class='column'>
-                        <p>I am available</p>
+                        <p class = "p_class" >I am available</p>
                     </div>
                     <div class='column'>
                         <select class = select_class name=avail id=avail>

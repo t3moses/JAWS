@@ -102,85 +102,36 @@ if ( !$_record_exists ) {
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            .form_class{
-                margin-top: 5px;
-                margin-bottom: 2px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            .text_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            .button_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            .div_class{
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
-            .hidden {
-                display: none;
-            }
-            .select_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            label {
-                display: inline-block;
-                font-size: 24px;
-                width: 150px;
-                margin-bottom: 10px;
-            }
-            p {
-                display: inline-block;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }          
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
-        <p>Boat name: <?php echo $_display_name?></p>
+        <p class = "p_class" >Boat name: <?php echo $_display_name?></p>
         <form method="post" action="account_boat_data_update.php">
 
-            <input class = "hidden" type="text" id="boat_key" name="boat_key" value="<?php echo $_user_boat_key?>"required>
+            <input class = "hidden_class" type="text" id="boat_key" name="boat_key" value="<?php echo $_user_boat_key?>"required>
 
-            <input class = "hidden" type="text" id="display_name" name="display_name" value="<?php echo $_display_name?>"required>
+            <input class = "hidden_class" type="text" id="display_name" name="display_name" value="<?php echo $_display_name?>"required>
 
-            <label for="owner_first_name">Owner's first name:</label>
+            <label class = "label_class" for="owner_first_name">Owner's first name:</label>
             <input class = "text_class" type="text" id="owner_first_name" name="owner_first_name" value="<?php echo $_owner_first_name?>"required></br>
 
-            <label for="owner_last_name">Owner's last name:</label>
+            <label class = "label_class" for="owner_last_name">Owner's last name:</label>
             <input class = "text_class" type="text" id="owner_last_name" name="owner_last_name" value="<?php echo $_owner_last_name?>"required></br>
 
-            <label for="email_address">Email address:</label>
+            <label class = "label_class" for="email_address">Email address:</label>
             <input class = "text_class" type="email" id="email_address" name="email_address" value="<?php echo $_email_address?>"required></br>
 
-            <label for="mobile_number">Mobile number:</label>
+            <label class = "label_class" for="mobile_number">Mobile number:</label>
             <input class = "text_class" type="tel" id="mobile_number" name="mobile_number" value="<?php echo $_mobile_number?>"></br>
 
-            <label for="min_occupancy">Min occupancy:</label>
+            <label class = "label_class" for="min_occupancy">Min occupancy:</label>
             <select class = "select_class" name="min_occupancy" id="max_occupancy">
                 <option value="1" <?php if($_min_occupancy == '1') echo 'selected'; ?>>1</option>
                 <option value="2" <?php if($_min_occupancy == '2') echo 'selected'; ?>>2</option>
                 <option value="3" <?php if($_min_occupancy == '3') echo 'selected'; ?>>3</option>
             </select></br>
 
-            <label for="max_occupancy">Max occupancy:</label>
+            <label class = "label_class" for="max_occupancy">Max occupancy:</label>
             <select class = "select_class" name="max_occupancy" id="max_occupancy">
                 <option value="1" <?php if($_max_occupancy == '1') echo 'selected'; ?>>1</option>
                 <option value="2" <?php if($_max_occupancy == '2') echo 'selected'; ?>>2</option>
@@ -190,7 +141,7 @@ if ( !$_record_exists ) {
                 <option value="6" <?php if($_max_occupancy == '6') echo 'selected'; ?>>6</option>
             </select></br>
 
-            <label for="assistance">Request assistance:</label>
+            <label class = "label_class" for="assistance">Request assistance:</label>
             <select class = "select_class" name="assistance" id="assistance">
                 <option value="Yes" <?php if($_assistance == 'Yes') echo 'selected'; ?>>Yes</option>
                 <option value="No" <?php if($_assistance == 'No') echo 'selected'; ?>>No</option>

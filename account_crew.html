@@ -7,42 +7,14 @@ Send the crew first and last names to account_crew_exists.php to decide if the a
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            .form_class{
-                margin-top: 5px;
-                margin-bottom: 2px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }            
-            .text_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-            }
-            .button_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            .div_class{
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
         <form class = "form_class" method = "post" action="/account_crew_exists.php">
             <div class = "div_class">
-                <label for="fname">First name:</label><br>
+                <label class = "label_class" for="fname">First name:</label><br>
                 <input class="text_class" type="text" id="fname" name="fname"><br>
-                <label for="lname">Last name:</label><br>
+                <label class = "label_class" for="lname">Last name:</label><br>
                 <input class="text_class" type="text" id="lname" name="lname"><br>
                 <input class = "button_class" type="submit" value="Next"><br>
                 <button class = "button_class" type="button" onclick="window.location.href='/program.html'">Cancel</button>

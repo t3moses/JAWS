@@ -77,34 +77,20 @@ file_put_contents( 'crews_availability.csv', $_crews_availability_updated_str );
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            button {
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            p {
-                display: inline-block;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }    
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
         <div>
-            <p>Username: <?php echo $_display_name; ?></p></br>
+            <p class = "p_class" >Username: <?php echo $_display_name; ?></p></br>
         </div>
         <div>
-            <p>Email address: <?php echo $_crew_arr[4]; ?></p></br>
-            <p>Membership number: <?php echo $_crew_arr[5]; ?></p></br>
-            <p>Skill: <?php echo $_crew_arr[6]; ?></p></br>
-            <p>Experience: <?php echo $_crew_arr[7]; ?></p></br>
+            <p class = "p_class" >Email address: <?php echo $_crew_arr[4]; ?></p></br>
+            <p class = "p_class" >Membership number: <?php echo $_crew_arr[5]; ?></p></br>
+            <p class = "p_class" >Skill: <?php echo $_crew_arr[6]; ?></p></br>
+            <p class = "p_class" >Experience: <?php echo $_crew_arr[7]; ?></p></br>
         </div>
         <div>
-            <button type="button" onclick="window.location.href='/account_crew_availability_form.php?ckey=<?php echo $_user_crew_key;?>'">Next</button>
+            <button class = "button_class" type="button" onclick="window.location.href='/account_crew_availability_form.php?ckey=<?php echo $_user_crew_key;?>'">Next</button>
         </div>
     </body>
 </html>

@@ -107,31 +107,11 @@ file_put_contents( 'crews_availability.csv', $_crews_availability_updated_str );
 <!DOCTYPE html>
 <html>
     <head>
-        <style>
-            .button_class{
-                margin-top: 10px;
-                background-color: #DDDDDD;
-                border: 2px solid #000000;
-                border-radius: 10px;
-                font-size: 24px;
-                cursor: pointer;
-            }
-            .div_class{
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
-            p {
-                display: inline-block;
-                font-size: 24px;
-                margin-bottom: 10px;
-            }
-            .flex-container { display: flex; gap: 0px; }
-            .column { flex: 1; /* Each column takes equal space */ }
-        </style>
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
         <div>
-            <p>Your account has been updated</p>
+            <p class = "p_class" >Your account has been updated</p>
         </div>
 <!--
 
@@ -140,8 +120,8 @@ Loop through the list of events, displaying the event value.
 -->
         <?php for ( $_index = 1; $_index < $_number_of_events; $_index++ ) { ?>
             <div class='flex-container'>
-                <div class='column'><p> <?php echo $_header_arr[ $_index ]; ?></p></div>
-                <div class='column'><p> <?php echo $_availability_updated[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_header_arr[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_availability_updated[ $_index ]; ?></p></div>
                 </div>
             </div>
         <?php } ?>
