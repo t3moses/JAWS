@@ -6,28 +6,13 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'arrays.php';
+
 /*
 
 ARRIVE HERE ONLY IF THE CREW MEMBER DOES NOT CURRENTLY HAVE AN ACCOUNT.
 
 */
-
-function index_from_array( $_array, $_element ) {
-    // Return the index of the element in the array, or -1 if not found.
-    foreach ( $_array as $_index => $_item ) {
-        if ( $_item === $_element ) {
-            return $_index;
-        }
-    }
-    return -1;
-}
-
-function index_from_row( $_row, $_element ) {
-    // Return the index of the element in the row.
-    $_array = str_getcsv( $_row );
-    $_index = index_from_array( $_array, $_element );
-    return $_index;
-}
 
 function crew_name_array_from_get() {
 
@@ -71,7 +56,8 @@ $_experience = '';
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
 
@@ -82,7 +68,7 @@ $_experience = '';
             <input class = "hidden_class" type="text" id="last_name" name="last_name" value="<?php echo $_last_name; ?>">
 
             <label class = "label_class" for="email_address">Email address:</label>
-            <input class = "text_class" type="text" id="email_address" name="email_address" value="<?php echo $_email_address; ?>"required></br>
+            <input class = "text_class"  type="email" id="email_address" name="email_address" value="<?php echo $_email_address; ?>"required></br>
 
             <label class = "label_class" for="membership_number">Membership number:</label>
             <input class = "text_class" type="text" id="membership_number" name="membership_number" value="<?php echo $_memebership_number; ?>"></br>
@@ -95,7 +81,7 @@ $_experience = '';
             </select></br>
 
             <label class = "label_class" for="experience">Experience:</label>
-            <textarea class = "textarea_class" name="experience" id="experience" rows="10" cols="30"><?php echo $_experience; ?></textarea></br>
+            <textarea class = "textarea_class" name="experience" id="experience" rows="10"><?php echo $_experience; ?></textarea></br>
 
             <input class = "button_class" type="submit" value="Next"> 
 

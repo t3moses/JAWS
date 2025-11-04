@@ -6,6 +6,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'names.php';
+
 /*
 
 The query string consists of the boat key and a list of the boat's available spaces; one number for each event.
@@ -88,19 +90,25 @@ for ( $_index = 0; $_index < $_number_of_rows; $_index++ ) {
     }
 }
 
-// Finally, rewrite the boats_availability.csv file.
+// Rewrite the boats_availability.csv file.
 file_put_contents( 'boats_availability.csv', $_boats_availability_updated_str );
+
+// Get the boat name associated with the boat key.
+$_db_boats_str = file_get_contents('boats_data.csv');
+$_boat_name = subject_attribute_from_file( $_user_boat_key, 'display name', $_db_boats_str );
+
 
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <p class = "p_class" >Your account has been updated</p>
+            <p class = "p_class" ><?php echo $_boat_name; ?>'s availability has been updated</p>
         </div>
 <!--
 

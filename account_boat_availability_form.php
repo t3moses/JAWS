@@ -6,6 +6,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'names.php';
+
 /*
 
 Get $_boat_name using the user's posted form data,
@@ -16,46 +18,10 @@ If it does not exist, load account_boat_data_form.php.
 In either case, post $_boat_key.
 Use:
 
-<?php
-
-if ( $_record_exists ) {
-    header("Location: /account_boat_availability_form.php?" . $_boat_key);
-    exit;
-} else {
-    header("Location: /account_boat_data_form.php?" . $_boat_key);
-    exit;
-}
-
-?>
-
 The target files can then use $_GET to retrieve the boat key.
 
 */
 
-function subject_attribute_from_file( $_subject_key, $_attribute_name, $_file ) {
-
-// Convert the file to an array of strings.
-// Convert the first string to an array (this is the header row).
-// Find the array index of the requested attribute.
-
-    $_file_arr_str = explode( "\n", $_file );
-    $_header_str = $_file_arr_str[ 0 ];
-    $_header_arr = explode( ',', $_header_str );
-    $_attribute_index = array_search( $_attribute_name, $_header_arr );
-
-// Traverse the rows of the array looking for the one that corespomds to the subject.
-// Do this by converting each row to an array of attibute values (the first attribute is the subject key).
-// Then return the value of the requested attribute.
-// If the subject is not represented in the file, return  null.
-
-    foreach ( $_file_arr_str as $_file_str ) {
-        $_attribute_arr = explode( ',', $_file_str );
-        if ( $_attribute_arr[ 0 ] === $_subject_key ) {
-            return $_attribute_arr[ $_attribute_index ];
-        }
-    }
-    return null;
-}
 
 function boat_key_from_form() {
 
@@ -101,7 +67,8 @@ foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <p class = "p_class" >Boat name: <?php echo $_display_name; ?></p>

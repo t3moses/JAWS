@@ -1,0 +1,8 @@
+001: Send confirmation emails from nsc-sdc@nsc.ca.
+002: Refine the types of email and phone number input fields and mark required where appropriate.
+003: Translate Matthew to PHP.
+004: Add username to account_crew_availability_update.php
+005: Clean up html for account_boat.html. RESOLVED
+006: Add boat name to account_boat_data_update.php and account_boat_availability_update.php
+007: In account_boat_availability_update.php, get the baot name from the key and display it in the output.
+008: Improve the presentation on smart phones.

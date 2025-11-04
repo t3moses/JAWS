@@ -6,6 +6,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'names.php';
+
 /*
 
 Get $_user_boat_name using the user's posted form data,
@@ -19,11 +21,6 @@ Use:
 The target files can then use $_GET to retrieve the boat key.
 
 */
-
-function key_from_name( $_name ) {
-    // Create a sanitized database key from a name.
-    return trim( strtolower( htmlspecialchars( $_name )));
-}
 
 function boat_name_from_form() {
 

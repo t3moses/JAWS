@@ -6,6 +6,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'names.php';
+
 /*
 
 The query string consists of the crew key and a list of the crew's available codes; one code for each event.
@@ -102,16 +104,23 @@ for ( $_index = 0; $_index < $_number_of_crews; $_index++ ) {
 // Finally, rewrite the boats_availability.csv file.
 file_put_contents( 'crews_availability.csv', $_crews_availability_updated_str );
 
+// Get the display name associated with the crew key.
+$_db_crews_str = file_get_contents('crews_data.csv');
+$_first_name = subject_attribute_from_file( $_user_crew_key, 'first name', $_db_crews_str );
+$_last_name = subject_attribute_from_file( $_user_crew_key, 'last name', $_db_crews_str );
+$_display_name = display_name_from_names( $_first_name, $_last_name );
+
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <p class = "p_class" >Your account has been updated</p>
+            <p class = "p_class" ><?php echo $_display_name; ?>'s availability has been updated</p>
         </div>
 <!--
 

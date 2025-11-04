@@ -6,33 +6,15 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'arrays.php';
+require_once 'names.php';
+
 /*
 
 ARRIVE HERE ONLY IF THE BOAT OWNER DOES NOT HAVE AN ACCOUNT.
 
 */
 
-function key_from_name( $_name ) {
-    // Create a sanitized database key from a name.
-    return trim( strtolower( htmlspecialchars( $_name )));
-}
-
-function index_from_array( $_array, $_element ) {
-    // Return the index of the element in the array, or -1 if not found.
-    foreach ( $_array as $_index => $_item ) {
-        if ( $_item === $_element ) {
-            return $_index;
-        }
-    }
-    return -1;
-}
-
-function index_from_row( $_row, $_element ) {
-    // Return the index of the element in the row.
-    $_array = str_getcsv( $_row );
-    $_index = index_from_array( $_array, $_element );
-    return $_index;
-}
 
 function boat_name_from_form() {
 
@@ -102,7 +84,8 @@ if ( !$_record_exists ) {
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <p class = "p_class" >Boat name: <?php echo $_display_name?></p>

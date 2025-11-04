@@ -83,11 +83,12 @@ file_put_contents( 'boats_availability.csv', $_boats_availability_updated_str );
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <p class = "p_class" >Your account has been updated</p>
+            <p class = "p_class" ><?php echo $_boat_updated_arr[3]?>'s account has been created</p>
         </div>
         <div>
             <p class = "p_class" >Owner first name: <?php echo $_boat_updated_arr[1]?></p></br>

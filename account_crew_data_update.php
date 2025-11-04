@@ -6,6 +6,7 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'names.php';
 
 function crew_from_form() {
 
@@ -25,13 +26,6 @@ function crew_from_form() {
         
         return $_crew;
     }
-}
-
-function display_name_from_names( $_first_name, $_last_name ) {
-    // Create a display name from first and last names.
-    $_first_part = ucfirst( strtolower( str_replace(' ', '', $_first_name )));
-    $_second_part = strtoupper( str_replace(' ', '', $_last_name )[0]);
-    return $_first_part . $_second_part;
 }
 
 // Get the crew array from the post, and create the display name.
@@ -77,7 +71,8 @@ file_put_contents( 'crews_availability.csv', $_crews_availability_updated_str );
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="css/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
         <div>
