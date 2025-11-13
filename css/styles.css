@@ -1,6 +1,6 @@
 /*
 
-v=004
+v=010
 
 */
 
@@ -21,6 +21,7 @@ v=004
 }
 .button_class{
     margin-top: 2%;
+    margin-bottom: 2%;
     margin-left: 2%;
     background-color: #DDDDDD;
     border: 2px solid #000000;
@@ -41,9 +42,13 @@ v=004
     font-size: 1.6rem;
 }
 .textarea_class{
-    width: 90%;
-    max-width: 90%;
+    width: 96%;
+    max-width: 96%;
+    resize: vertical;
+    box-sizing: border-box;
     margin-top: 2%;
+    margin-bottom: 2%;
+    margin-right: 2%;
     margin-left: 2%;
     background-color: #DDDDDD;
     border: 2px solid #000000;
@@ -73,6 +78,7 @@ v=004
 }
 .select_class{
     margin-top: 2%;
+    margin-left: 2%;
     background-color: #DDDDDD;
     border: 2px solid #000000;
     border-radius: 10px;

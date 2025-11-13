@@ -6,22 +6,23 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'database.php';
 require_once 'names.php';
 
 /*
 
-The query string consists of the boat key and a list of the boat's available spaces; one number for each event.
+The query string contains the boat key and a list of the boat's available spaces; one number for each event.
 These were captured from the user by account_boat_availability_form.php.
 
 This must be formed into an array and then a comma-separated string.
 
-The file boats_availability.csv contains an entry for the boat identified in the query string.
-This entry has to be relaced by the one formed from the query string.
-THen the result has to be written back to boats_availability.csv file.
+The boats_availability_file contains an entry for the boat identified in the query string.
+This entry has to be replaced by the one formed from the query string.
+THen the result has to be written back to boats_availability_file.
 
 */
 
-function string_from_get() {
+function string_from_get_url() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
@@ -39,31 +40,32 @@ function string_from_get() {
 }
 
 // Get the query string from the get URL.
-$_user_str = string_from_get();
+$_user_str = string_from_get_url();
 
 // Trim the prefix from the query string.
-
 if ( str_starts_with( $_user_str, "key=" )) {
     $_user_str = substr( $_user_str, strlen( "key=" ));
 }
 
-// Convert the result into an array.  The first element is the boat key.
+// Convert the result into an indexed array.  The first element is the boat key.
 // The remaining elements are the boat's availability numbers; one for each event.
 $_user_arr = explode( "&avail=", $_user_str );
-$_user_boat_key = $_user_arr[ 0 ];
 
 // Now convert the query array back into a comma-separated string.
+// And isolate the boat key.
 $_user_str = implode( ",", $_user_arr );
 
-// Now read the boats availability file as a string.
-$_db_boats_availability_str = file_get_contents('boats_availability.csv');
+$_user_boat_key = array_shift( $_user_arr );
 
-// And explode it into an array of strings; one string for each boat.
-$_db_boats_availability_arr_str = explode( "\n", $_db_boats_availability_str );
+// Now read the boats availability file from the database as a string.
+$_db_boats_availability_str = str_from_file( 'boats_availability_file' );
 
-// Get the event dates from the first row of the boats_availability.csv file.
-$_header_arr = explode(",", $_db_boats_availability_arr_str[ 0 ] );
-$_number_of_events = count( $_header_arr );
+// And explode it into a list of strings; one string for each boat.
+$_db_boats_availability_lst_str = explode( "\n", $_db_boats_availability_str );
+
+// Get the event ids and the number of events from the database.
+$_event_ids = event_ids();
+$_number_of_events = number_of_events();
 
 // Now build the updated file.
 $_boats_availability_updated_str = '';
@@ -71,15 +73,15 @@ $_boats_availability_updated_str = '';
 // Copy the original file to the updated file,
 // replacing the entry for the boat with the user-provided values.
 
-$_number_of_rows = count( $_db_boats_availability_arr_str );
+$_number_of_boats = count( $_db_boats_availability_lst_str );
 
-for ( $_index = 0; $_index < $_number_of_rows; $_index++ ) {
+for ( $_index = 0; $_index < $_number_of_boats; $_index++ ) {
 
     if ( $_index !== 0 ){
-        $_boats_availability_updated_str .= chr(0x0a);
+        $_boats_availability_updated_str .= chr(0x0a); // new line except at the very beginning.
     }
 
-    $_db_boat_availability_str = $_db_boats_availability_arr_str[ $_index ];
+    $_db_boat_availability_str = $_db_boats_availability_lst_str[ $_index ];
     $_db_boat_availability_arr = explode( ',', $_db_boat_availability_str );
 
     if ( $_db_boat_availability_arr[ 0 ] === $_user_boat_key ) {
@@ -91,11 +93,11 @@ for ( $_index = 0; $_index < $_number_of_rows; $_index++ ) {
 }
 
 // Rewrite the boats_availability.csv file.
-file_put_contents( 'boats_availability.csv', $_boats_availability_updated_str );
+file_from_str( 'boats_availability_file', $_boats_availability_updated_str );
 
-// Get the boat name associated with the boat key.
-$_db_boats_str = file_get_contents('boats_data.csv');
-$_boat_name = subject_attribute_from_file( $_user_boat_key, 'display name', $_db_boats_str );
+// Get the boat name associated with the boat key to display at the top of the page.
+$_db_boats_data_lst_asa = lst_asa_from_file( 'boats_data_file' );
+$_boat_name = subject_attribute_from_file( $_user_boat_key, "display_name", $_db_boats_data_lst_asa );
 
 
 ?>
@@ -115,9 +117,9 @@ $_boat_name = subject_attribute_from_file( $_user_boat_key, 'display name', $_db
 Loop through the list of events, displaying the event value.
 
 -->
-        <?php for ( $_index = 1; $_index < $_number_of_events; $_index++ ) { ?>
+        <?php for ( $_index = 0; $_index < $_number_of_events; $_index++ ) { ?>
             <div class='flex-container'>
-                <div class='column'><p class = "p_class" > <?php echo $_header_arr[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $_index ]; ?></p></div>
                 <div class='column'><p class = "p_class" > <?php echo $_user_arr[ $_index ]; ?></p></div>
                 </div>
             </div>

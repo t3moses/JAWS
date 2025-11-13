@@ -6,23 +6,20 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'database.php';
 require_once 'names.php';
 
 /*
 
 Get $_user_boat_name using the user's posted form data,
 Convert it to $_user_boat_key.
-Check if $_boat_key exists in boats_data.csv.
-If it exists, load account_boat_availabiity_form.php.
-If it does not exist, load account_boat_data_form.php?$_boat_key.
-In either case, post $_boat_key?$_boat_key.
-Use:
-
-The target files can then use $_GET to retrieve the boat key.
+Check if $_user_boat_key exists in boats_data.csv.
+If it exists, load account_boat_availabiity_form.php and post the boat key.
+If it does not exist, load account_boat_data_form.php and post the boat name.
 
 */
 
-function boat_name_from_form() {
+function boat_name_from_post() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -40,20 +37,16 @@ function boat_name_from_form() {
 }
 
 // Convert the boat name supplied by the user into a key.
-$_user_boat_name = boat_name_from_form();
+$_user_boat_name = boat_name_from_post();
 $_user_boat_key = key_from_name( $_user_boat_name );
 
-// Read the boat data file into an array of boat strings.
-$_db_boats_str = file_get_contents('boats_data.csv');
-$_db_boats_arr_str = explode( "\n", $_db_boats_str );
+$_db_boats_lst_asa = lst_asa_from_file( 'boats_data_file' );
 
 $_record_exists = false;
 
-foreach ( $_db_boats_arr_str as $_db_boat_str ) {
+foreach ( $_db_boats_lst_asa as $_db_boat_asa ) {
 
-    $_db_boat_arr = explode( ',', $_db_boat_str );
-
-    if ( $_db_boat_arr[ 0 ] === $_user_boat_key ) {
+    if ( $_db_boat_asa [ 'key' ] === $_user_boat_key ) {
 
         $_record_exists = true;
         break;

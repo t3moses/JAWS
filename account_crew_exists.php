@@ -20,9 +20,10 @@ The target files can then use $_GET to retrieve the crew key.
 
 */
 
+require_once 'database.php';
 require_once 'names.php';
 
-function crew_name_from_form() {
+function crew_name_from_post() {
 
 // Get the first and last names entered by the user and form them into an array.
 
@@ -43,32 +44,23 @@ function crew_name_from_form() {
 }
 
 // Convert the first and last names entered by the user into a key.
-$_name_arr = crew_name_from_form();
-$_user_crew_name_arr[ 0 ] = htmlspecialchars( trim( $_name_arr[ 0 ] ));
-$_user_crew_name_arr[ 1 ] = htmlspecialchars( trim( $_name_arr[ 1 ] ));
-$_user_crew_key = key_from_names( $_user_crew_name_arr );
+$_user_name_arr = crew_name_from_post();
+$_user_crew_key = key_from_names( $_user_name_arr );
 
 $_cname = [
-    'first' => $_user_crew_name_arr[ 0 ],
-    'last' => $_user_crew_name_arr[ 1 ]
+    'fname' => $_user_name_arr[ 0 ],
+    'lname' => $_user_name_arr[ 1 ]
 ];
 
 $_query_string = http_build_query( $_cname );
 
-// Read the crew data file into a string.
-$_db_crews_str = file_get_contents('crews_data.csv');
+$_db_crews_lst_asa = lst_asa_from_file( 'crews_data_file' );
 
-// Explode the crews data into an array of strings.
-$_db_crews_arr_str = explode( "\n", $_db_crews_str );
-
-// Check if a record for the user exists in the crews data.
 $_record_exists = false;
 
-foreach ( $_db_crews_arr_str as $_db_crew_str ) {
+foreach ( $_db_crews_lst_asa as $_db_crew_asa ) {
 
-    $_db_crew_arr = explode( ',', $_db_crew_str );
-
-    if ( $_db_crew_arr[ 0 ] === $_user_crew_key ) {
+    if ( $_db_crew_asa [ 'key' ] === $_user_crew_key ) {
 
         $_record_exists = true;
         break;
@@ -77,7 +69,6 @@ foreach ( $_db_crews_arr_str as $_db_crew_str ) {
 }
 
 // Pass on the key or name array to the next step.
-
 
 if ( $_record_exists ) {
     header( "Location: /account_crew_availability_form.php?ckey=" . $_user_crew_key );

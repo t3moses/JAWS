@@ -1,0 +1,11 @@
+001: Send confirmation emails from nsc-sdc@nsc.ca.
+002: Refine the types of email and phone number input fields and mark required where appropriate. RESOLVED
+003: Translate Matthew to PHP.
+004: Add username to account_crew_availability_update.php. RESOLVED
+005: Clean up html for account_boat.html. RESOLVED
+006: Add boat name to account_boat_data_update.php and account_boat_availability_update.php. REDSOLVED
+007: Improve the presentation on smart phones. RESOLVED
+008: Leave a margin on the right of the experience textarea. RESOLVED
+009: Implement a user authentication scheme.
+010: Block user input after 1000 on the day of an event.
+011: Provide an admininstrator interface.

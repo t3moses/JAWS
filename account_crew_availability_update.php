@@ -6,109 +6,65 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'database.php';
 require_once 'names.php';
+require_once 'arrays.php';
 
 /*
 
-The query string consists of the crew key and a list of the crew's available codes; one code for each event.
+The get query string consists of the crew key and a list of the crew's available codes; one code for each event.
 
 This must be formed into an array and then a comma-separated string.
 
-The file crews_availability.csv contains an entry for the crew identified in the query string.
+The file crews_availability.csv contains an entry for the crew member identified in the query string.
 This entry has to be replaced by the one formed from the query string.
 Then the result has to be written back to crews_availability.csv file.
 
 */
 
-function string_from_get() {
+
+function string_from_get_url() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Retrieve get data
-        $_user_str = $_SERVER['QUERY_STRING'];
+        $_user_availability_str = $_SERVER['QUERY_STRING'];
 
         // Validate the data
-        if (empty( $_user_str )) {
+        if (empty( $_user_availability_str )) {
             return null;
         }
         else {
-            return $_user_str;
+            return $_user_availability_str;
         }
     }
 }
 
 // Get the query string from the get URL.
-$_user_str = string_from_get();
+$_user_availability_str = string_from_get_url();
 
 // Trim the prefix from the query string.
-
-if ( str_starts_with( $_user_str, "key=" )) {
-    $_user_str = substr( $_user_str, strlen( "key=" ));
+if ( str_starts_with( $_user_availability_str, "key=" )) {
+    $_user_availability_str = substr( $_user_availability_str, strlen( "key=" ));
 }
 
-// Convert the result into an array.  The first element is the crew key.
-// The remaining elements are the crew's availability codes; one for each event.
-$_user_arr = explode( "&avail=", $_user_str );
-$_user_crew_key = $_user_arr[ 0 ];
+// Convert the result into an indexed array.  The first element is the crew key.
+// The remaining elements are the user's availabilities for each event.
+// Convert the result into a comma-separated string.
+$_user_availability_arr = explode( "&avail=", $_user_availability_str );
+replace_csv_row( $_user_availability_arr, 'crews_availability_file' );
+$_user_availability_str = implode( ",", $_user_availability_arr );
+$_user_crew_key = array_shift( $_user_availability_arr );
 
-// Convert $_user_arr "" / "Y" to "No" / "Yes".
-$_availability_updated[ 0 ] = $_user_crew_key ;
-$_number_of_events = count( $_user_arr);
-for ( $_index = 1; $_index < $_number_of_events; $_index++ ) {
-    if ( $_user_arr[ $_index ] === "" ) {
-        $_availability_updated[ $_index ] = "No";
-    }
-    else {
-        $_availability_updated[ $_index ] = "Yes";
-    }
-}
-
-// Now convert the query array back into a comma-separated string.
-$_user_str = implode( ",", $_user_arr );
-
-// Now read the crew's availability file as a string.
-$_db_crews_availability_str = file_get_contents('crews_availability.csv');
-
-// And explode it into an array of strings; one string for each crew.
-$_db_crews_availability_arr_str = explode( "\n", $_db_crews_availability_str );
-
-// Get the event dates from the first row of the crews_availability.csv file.
-$_header_arr = explode(",", $_db_crews_availability_arr_str[ 0 ] );
-$_number_of_events = count( $_header_arr );
-
-// Now build the updated file.
-$_crews_availability_updated_str = '';
-
-// Copy the original file to the updated file,
-// replacing the entry for the crew with the user-provided values.
-
-$_number_of_crews = count( $_db_crews_availability_arr_str );
-
-for ( $_index = 0; $_index < $_number_of_crews; $_index++ ) {
-
-    if ( $_index !== 0 ){
-        $_crews_availability_updated_str .= chr(0x0a);
-    }
-
-    $_db_crew_availability_str = $_db_crews_availability_arr_str[ $_index ];
-    $_db_crew_availability_arr = explode( ',', $_db_crew_availability_str );
-
-    if ( $_db_crew_availability_arr[ 0 ] === $_user_crew_key ) {
-        $_crews_availability_updated_str .= $_user_str;
-    }
-    else {
-        $_crews_availability_updated_str .= $_db_crew_availability_str;
-    }
-}
-
-// Finally, rewrite the boats_availability.csv file.
-file_put_contents( 'crews_availability.csv', $_crews_availability_updated_str );
-
-// Get the display name associated with the crew key.
-$_db_crews_str = file_get_contents('crews_data.csv');
-$_first_name = subject_attribute_from_file( $_user_crew_key, 'first name', $_db_crews_str );
-$_last_name = subject_attribute_from_file( $_user_crew_key, 'last name', $_db_crews_str );
+// Now get the display name associated with the crew key for display at the top of the page.
+$_db_crews_lst_asa = lst_asa_from_file( 'crews_data_file' );
+$_first_name = subject_attribute_from_file( $_user_crew_key, 'first_name', $_db_crews_lst_asa );
+$_last_name = subject_attribute_from_file( $_user_crew_key, 'last_name', $_db_crews_lst_asa );
 $_display_name = display_name_from_names( $_first_name, $_last_name );
+
+// Get the event dates and the number of events from the database.
+$_event_ids = event_ids();
+$_number_of_events = number_of_events();
 
 ?>
 
@@ -127,10 +83,10 @@ $_display_name = display_name_from_names( $_first_name, $_last_name );
 Loop through the list of events, displaying the event value.
 
 -->
-        <?php for ( $_index = 1; $_index < $_number_of_events; $_index++ ) { ?>
+        <?php for ( $_index = 0; $_index < $_number_of_events; $_index++ ) { ?>
             <div class='flex-container'>
-                <div class='column'><p class = "p_class" > <?php echo $_header_arr[ $_index ]; ?></p></div>
-                <div class='column'><p class = "p_class" > <?php echo $_availability_updated[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_user_availability_arr[ $_index ]; ?></p></div>
                 </div>
             </div>
         <?php } ?>

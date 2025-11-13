@@ -6,24 +6,17 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+require_once 'database.php';
 require_once 'names.php';
 
 /*
 
-Get $_boat_name using the user's posted form data,
-Convert it to $_boat_key.
-Check if $_boat_key exists in boats_data.csv.
-If it exists, load account_boat_availabiity_form.php.
-If it does not exist, load account_boat_data_form.php.
-In either case, post $_boat_key.
-Use:
-
-The target files can then use $_GET to retrieve the boat key.
+ARRIVE HERE ONLY IF THE BOAT DOES CURRENTLY HAVE AN ACCOUNT.
 
 */
 
 
-function boat_key_from_form() {
+function boat_key_from_get_url() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
@@ -40,27 +33,34 @@ function boat_key_from_form() {
     }
 }
 
-// Get the boat key from the redirect and look up its name in boats_data.csv.
-$_user_boat_key = boat_key_from_form();
-$_db_boat_data = file_get_contents('boats_data.csv');
-$_display_name = subject_attribute_from_file( $_user_boat_key, "display name", $_db_boat_data );
+// Get the boat key provided through the get url query string.
+// Get the boat name corresponding to the boat key for display at the top of the html form.
+$_user_boat_key = boat_key_from_get_url();
+$_db_boats_data_lst_asa = lst_asa_from_file( 'boats_data_file' );
 
-// Read the boat availability file into an array of boat strings.
-$_db_boats_availability_str = file_get_contents('boats_availability.csv');
-$_db_boats_availability_arr_str = explode( "\n", $_db_boats_availability_str );
+$_boat_name = subject_attribute_from_file( $_user_boat_key, 'display_name', $_db_boats_data_lst_asa );
 
-$_header_arr = explode( ",", $_db_boats_availability_arr_str[ 0 ] );
+// Get the database boats availability as a list of strings.
+$_db_boats_availability_str = str_from_file( 'boats_availability_file' );
+$_db_boats_availability_lst_str = explode( "\n", $_db_boats_availability_str );
 
-foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
-
+// Find the list entry that corresponds to $_user_boat_key.
+// Isolate the key.
+$_record_exists = false;
+foreach ( $_db_boats_availability_lst_str as $_db_boat_availability_str ) {
     $_db_boat_availability_arr = explode( ',', $_db_boat_availability_str );
-
-    if ( $_db_boat_availability_arr[ 0 ] === $_user_boat_key) {
-
-        break; // with $_db_boat_availability_arr containing the target boat availability.
-
+    if ( $_db_boat_availability_arr[ 0 ] === $_user_boat_key ) {
+        $_record_exists = true;
+        $_db_boat_key = array_shift( $_db_boat_availability_arr );
+        break; // with $_db_boat_availability_arr containing the target boat availability array.
     }
 }
+if ( $_record_exists === false ) { die( 'Unable to find boat record' ); }
+
+// Get the event ids and the number of events from the database.
+$_event_ids = event_ids();
+$_number_of_events = number_of_events();
+
 
 ?>
 
@@ -71,23 +71,22 @@ foreach ( $_db_boats_availability_arr_str as $_db_boat_availability_str ) {
         <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
-        <p class = "p_class" >Boat name: <?php echo $_display_name; ?></p>
+        <p class = "p_class" >Boat name: <?php echo $_boat_name; ?></p>
         <form method="get" action="account_boat_availability_update.php">
             <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_boat_key; ?>"required>
-
 
 <!--
 
 Lopp through the list of events, displaying the event value and
-offering a choice betweenAvailable and not available.  
+offering a choice of the number of availablr spaces.
 
 -->
 
-            <?php for ( $_index = 1; $_index < count( $_db_boat_availability_arr ); $_index++ ) { ?>
+            <?php for ( $_index = 0; $_index < $_number_of_events ; $_index++ ) { ?>
                 
                 <div class='flex-container'>
                     <div class='column'>
-                        <p class = "p_class" ><?php echo $_header_arr[ $_index ]; ?></p>
+                        <p class = "p_class" ><?php echo $_event_ids[ $_index ]; ?></p>
                     </div>
                     <div class='column'>
                         <select class = select_class name=avail id=avail>
