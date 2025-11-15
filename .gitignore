@@ -1,14 +1,5 @@
 LightsailDefaultKey-ca-central-1.pem
-index archive.html
 bitnamo password.txt
 JAWS UI.key
-boats_data.csv
-boats_availability.csv
-boats_data_OG.csv
-boats_availability_OG.csv
-crews_data.csv
-crews_availability.csv
-crews_data_OG.csv
-crews_availability_OG.csv
-crews_history.csv
 mailer.php
+toggle.html

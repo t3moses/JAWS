@@ -41,7 +41,7 @@ function boat_name_from_get_url() {
 
 // Convert the boat name supplied by the user into a key.
 $_user_boat_name = boat_name_from_get_url();
-$_user_boat_key = key_from_name( $_user_boat_name );
+$_user_boat_key = key_from_string( $_user_boat_name );
 
 $_boat = asa_from_default_boat();
 $_boat[ 'key' ] =  $_user_boat_key ;

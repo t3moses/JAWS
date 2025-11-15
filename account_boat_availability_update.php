@@ -11,7 +11,7 @@ require_once 'names.php';
 
 /*
 
-The query string contains the boat key and a list of the boat's available spaces; one number for each event.
+The get url query string contains the boat key and a list of the boat's available spaces; one number for each event.
 These were captured from the user by account_boat_availability_form.php.
 
 This must be formed into an array and then a comma-separated string.
@@ -54,13 +54,11 @@ $_user_arr = explode( "&avail=", $_user_str );
 // Now convert the query array back into a comma-separated string.
 // And isolate the boat key.
 $_user_str = implode( ",", $_user_arr );
-
 $_user_boat_key = array_shift( $_user_arr );
 
 // Now read the boats availability file from the database as a string.
-$_db_boats_availability_str = str_from_file( 'boats_availability_file' );
-
 // And explode it into a list of strings; one string for each boat.
+$_db_boats_availability_str = str_from_file( 'boats_availability_file' );
 $_db_boats_availability_lst_str = explode( "\n", $_db_boats_availability_str );
 
 // Get the event ids and the number of events from the database.
@@ -72,7 +70,6 @@ $_boats_availability_updated_str = '';
 
 // Copy the original file to the updated file,
 // replacing the entry for the boat with the user-provided values.
-
 $_number_of_boats = count( $_db_boats_availability_lst_str );
 
 for ( $_index = 0; $_index < $_number_of_boats; $_index++ ) {

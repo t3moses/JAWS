@@ -38,7 +38,9 @@ function boat_name_from_post() {
 
 // Convert the boat name supplied by the user into a key.
 $_user_boat_name = boat_name_from_post();
-$_user_boat_key = key_from_name( $_user_boat_name );
+$_user_boat_key = key_from_string( $_user_boat_name );
+
+echo 'boat key: ' . $_user_boat_key . '<br>';
 
 $_db_boats_lst_asa = lst_asa_from_file( 'boats_data_file' );
 

@@ -45,7 +45,7 @@ function crew_name_from_post() {
 
 // Convert the first and last names entered by the user into a key.
 $_user_name_arr = crew_name_from_post();
-$_user_crew_key = key_from_names( $_user_name_arr );
+$_user_crew_key = key_from_strings( $_user_name_arr );
 
 $_cname = [
     'fname' => $_user_name_arr[ 0 ],

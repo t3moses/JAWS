@@ -1,0 +1,15 @@
+key,owner_key,display_name,email_address,mobile_number,min_occupancy,max_occupancy,assistance
+boat1,ad,Boat 1,example@example.com,613 555 1212,2,3,FALSE
+boat2,bd,Boat 2,example@example.com,613 555 1212,2,4,FALSE
+boat3,cd,Boat 3,example@example.com,613 555 1212,2,3,FALSE
+boat4,dd,Boat 4,example@example.com,613 555 1212,1,3,FALSE
+boat5,ed,Boat 5,example@example.com,613 555 1212,1,3,FALSE
+boat6,fd,Boat 6,example@example.com,613 555 1212,1,5,TRUE
+boat7,gd,Boat 7,example@example.com,613 555 1212,1,2,FALSE
+boat8,hd,Boat 8,example@example.com,613 555 1212,1,3,TRUE
+boat9,id,Boat 9,example@example.com,613 555 1212,1,2,FALSE
+boat10,jd,Boat 10,example@example.com,613 555 1212,1,4,FALSE
+boat11,kd,Boat 11,example@example.com,613 555 1212,1,2,FALSE
+boat12,ld,Boat 12,example@example.com,613 555 1212,2,3,TRUE
+boat13,md,Boat 13,example@example.com,613 555 1212,1,2,FALSE
+boat14,nd,Boat 14,example@example.com,613 555 1212,3,4,FALSE

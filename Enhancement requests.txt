@@ -7,5 +7,11 @@
 007: Improve the presentation on smart phones. RESOLVED
 008: Leave a margin on the right of the experience textarea. RESOLVED
 009: Implement a user authentication scheme.
-010: Block user input after 1000 on the day of an event.
+010: Block user input after 1000 on event day.
 011: Provide an admininstrator interface.
+012: Email crew info to owners at 1000 on event day.
+013: Email reminder to crew members at 1300 one day before event day.
+014: Implement mandatory policy.
+015: Implement discretionary policy.
+016: Email tickets to the administrator at 1300 on event day.
+017: In all user input, replace ',' with '+u002C' and "\n" with '+u2028'.  RESOLVED

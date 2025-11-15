@@ -1,33 +1,5 @@
 <?php
 
-/*
-function index_from_array( $_array, $_element ) {
-    // Return the index of the element in the array, or -1 if not found.
-    foreach ( $_array as $_index => $_item ) {
-        if ( $_item === $_element ) {
-            return $_index;
-        }
-    }
-    return -1;
-}
-
-function index_from_row( $_row, $_element ) {
-    // Return the index of the element in the row.
-    $_array = str_getcsv( $_row );
-    $_index = index_from_array( $_array, $_element );
-    return $_index;
-}
-
-function array_from_key( $_arrays, $_key, $_key_index ) {
-    // Return the array from arrays that corresponds to the key.
-    foreach( $_arrays as $_array ){
-        if ( $_array[ $_key_index ] === $_key ) {
-            return $_array;
-        }
-    }
-    return -1;
-}
-*/
 
 function replace_csv_row( $_new_row, $_filename ){
 
@@ -35,11 +7,12 @@ function replace_csv_row( $_new_row, $_filename ){
 
 Replace the row in the csv file that corresponds to the new row.
 
+Start by separating the new row into a key and a list of values.
+Then get the file from the database, and convert it into a list of strings.
+The first row in the list is the header row.
+
 */
 
-    // Start by separating the new row into a key and a list of values.
-    // Then get the file from the database, and convert it into a list of strings.
-    // The first row in the list is the header row.
     $_new_key = array_shift( $_new_row ); // $_new_row is now the csv row without a key.
     $_db_str = str_from_file( $_filename );
     $_db_lst_str = explode( "\n", $_db_str );

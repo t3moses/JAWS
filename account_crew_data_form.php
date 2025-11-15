@@ -37,7 +37,7 @@ function crew_name_array_from_get_url() {
 $_crew_name_arr = crew_name_array_from_get_url();
 
 $_crew = asa_from_default_crew();
-$_crew[ 'key' ] = key_from_names( $_crew_name_arr );
+$_crew[ 'key' ] = key_from_strings( $_crew_name_arr );
 $_crew[ 'first_name' ] = $_crew_name_arr[0];
 $_crew[ 'last_name' ] = $_crew_name_arr[1];
 

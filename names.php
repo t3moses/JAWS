@@ -1,13 +1,44 @@
 <?php
 
-    function key_from_name( $_name ) {
-        // Create a sanitized database key from a name.
-        return strtolower( htmlspecialchars(preg_replace('/\s+/', '', $_name)));
+    function csv_safe( $_unsafe_string ) {
+
+        // Remove commas and newlines from the string.
+
+        $_safe_string = '';
+        for( $_index = 0; $_index < strlen( $_unsafe_string ); $_index++ ) {
+            if ( $_unsafe_string[ $_index ] === ',' ) {
+                $_safe_string .= '+u002C';
+                }
+            elseif ( $_unsafe_string[ $_index ] === "\n" ) {
+                $_safe_string .= '+u2028';
+            }
+            else {
+                $_safe_string .= $_unsafe_string[ $_index ] ;
+            }
+        }
+        return $_safe_string;
     }
 
-    function key_from_names( $_name_arr ) {
-        // Create a database key from the first and last names entered by the user.
-        return strtolower( htmlspecialchars(trim($_name_arr[ 0 ]) . trim($_name_arr[ 1 ])));
+    function user_safe( $_user_unsafe ) {
+
+        // Remove unsafe characters from the string.
+
+        return htmlspecialchars( $_user_unsafe );
+    }
+
+    function key_from_string( $_string ) {
+
+        // Create a sanitized database key from a string.
+
+        return strtolower( csv_safe( preg_replace('/\s+/', '', user_safe ( $_string ))));
+    }
+
+    function key_from_strings( $_string_arr ) {
+
+        // Create a database key from the first two elements of the string array.
+    
+        return strtolower( preg_replace('/\s+/', '', csv_safe( user_safe( $_string_arr[ 0 ]))) . 
+        preg_replace('/\s+/', '', csv_safe( user_safe( $_string_arr[ 1 ]))));
     }
 
     function display_name_from_names( $_first_name, $_last_name ) {
