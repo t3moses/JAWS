@@ -33,15 +33,21 @@
         return strtolower( csv_safe( preg_replace('/\s+/', '', user_safe ( $_string ))));
     }
 
-    function key_from_strings( $_string_arr ) {
+    function key_from_strings( $_fname, $_lname ) {
 
         // Create a database key from the first two elements of the string array.
     
-        return strtolower( preg_replace('/\s+/', '', csv_safe( user_safe( $_string_arr[ 0 ]))) . 
-        preg_replace('/\s+/', '', csv_safe( user_safe( $_string_arr[ 1 ]))));
+        return strtolower( preg_replace('/\s+/', '', csv_safe( user_safe( $_fname,))) . 
+        preg_replace('/\s+/', '', csv_safe( user_safe( $_lname,))));
     }
 
-    function display_name_from_names( $_first_name, $_last_name ) {
+    function display_name_from_string( $_string ) {
+        // Create a display name from the name.
+        $_display_name = ucfirst( strtolower( str_replace(' ', '', $_string )));
+        return $_display_name;
+    }
+
+    function display_name_from_strings( $_first_name, $_last_name ) : string {
         // Create a display name from first and last names.
         $_first_part = ucfirst( strtolower( str_replace(' ', '', $_first_name )));
         $_second_part = strtoupper( str_replace(' ', '', $_last_name )[0]);

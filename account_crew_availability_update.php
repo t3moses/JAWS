@@ -6,9 +6,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once 'database.php';
-require_once 'names.php';
-require_once 'arrays.php';
+require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
+require_once __DIR__ . '/Libraries/Season/src/Season.php';
 
 /*
 
@@ -40,31 +39,34 @@ function string_from_get_url() {
     }
 }
 
-// Get the query string from the get URL.
-$_user_availability_str = string_from_get_url();
 
-// Trim the prefix from the query string.
-if ( str_starts_with( $_user_availability_str, "key=" )) {
-    $_user_availability_str = substr( $_user_availability_str, strlen( "key=" ));
+$_user_str = string_from_get_url();
+
+if ( str_starts_with( $_user_str, "key=" )) {
+    $_user_str = substr( $_user_str, strlen( "key=" ));
 }
+$_user_arr = explode( "&avail=", $_user_str );
+// $_user_str = implode( ",", $_user_arr );
+$_user_crew_key = array_shift( $_user_arr );
 
-// Convert the result into an indexed array.  The first element is the crew key.
-// The remaining elements are the user's availabilities for each event.
-// Convert the result into a comma-separated string.
-$_user_availability_arr = explode( "&avail=", $_user_availability_str );
-replace_csv_row( $_user_availability_arr, 'crews_availability_file' );
-$_user_availability_str = implode( ",", $_user_availability_arr );
-$_user_crew_key = array_shift( $_user_availability_arr );
+$_squad = new Squad();
+$_season = new Season();
+$_event_ids = $_season->get_event_ids();
+$_crew = $_squad->get_crew( $_user_crew_key );
 
-// Now get the display name associated with the crew key for display at the top of the page.
-$_db_crews_lst_asa = lst_asa_from_file( 'crews_data_file' );
-$_first_name = subject_attribute_from_file( $_user_crew_key, 'first_name', $_db_crews_lst_asa );
-$_last_name = subject_attribute_from_file( $_user_crew_key, 'last_name', $_db_crews_lst_asa );
-$_display_name = display_name_from_names( $_first_name, $_last_name );
+/* $_available = array_combine( $_event_ids, $_user_arr );
+foreach ( $_event_ids as $_event_id ){
+    $_crew->set_available( $_event_id, $_available[ $_event_id ] );
+}
+*/
 
-// Get the event dates and the number of events from the database.
-$_event_ids = event_ids();
-$_number_of_events = number_of_events();
+for( $i = 0; $i < count( $_user_arr ); $i++ ) {
+    $_crew->set_available( $_event_ids[ $i ], $_user_arr[ $i ] );
+}
+// $_crew->set_all_available( $_user_arr );
+$_squad->set_crew( $_crew );
+$_squad->save();
+
 
 ?>
 
@@ -76,17 +78,17 @@ $_number_of_events = number_of_events();
     </head>
     <body>
         <div>
-            <p class = "p_class" ><?php echo $_display_name; ?>'s availability has been updated</p>
+            <p class = "p_class" ><?php echo $_crew->get_display_name(); ?>'s availability has been updated</p>
         </div>
 <!--
 
 Loop through the list of events, displaying the event value.
 
 -->
-        <?php for ( $_index = 0; $_index < $_number_of_events; $_index++ ) { ?>
+        <?php for ( $i = 0; $i < count($_event_ids); $i++ ) { ?>
             <div class='flex-container'>
-                <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $_index ]; ?></p></div>
-                <div class='column'><p class = "p_class" > <?php echo $_user_availability_arr[ $_index ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $i ]; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php echo $_crew->get_available( $_event_ids[ $i ]); ?></p></div>
                 </div>
             </div>
         <?php } ?>

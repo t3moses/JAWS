@@ -6,18 +6,18 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once 'database.php';
-require_once 'names.php';
-
 /*
 
-Get $_user_boat_name using the user's posted form data,
-Convert it to $_user_boat_key.
-Check if $_user_boat_key exists in boats_data.csv.
-If it exists, load account_boat_availabiity_form.php and post the boat key.
-If it does not exist, load account_boat_data_form.php and post the boat name.
+Get $_user_boat_name using the user's posted form data.
+Check if $_user_boat_key exists in the fleet.
+If it exists, load account_boat_availabiity_form.php.
+If it does not exist, load <account_boat_data_form class="ph".
 
 */
+
+require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
+require_once __DIR__ . '/Libraries/Name/src/Name.php';
+
 
 function boat_name_from_post() {
 
@@ -36,27 +36,12 @@ function boat_name_from_post() {
     }
 }
 
-// Convert the boat name supplied by the user into a key.
 $_user_boat_name = boat_name_from_post();
 $_user_boat_key = key_from_string( $_user_boat_name );
 
-echo 'boat key: ' . $_user_boat_key . '<br>';
+$_fleet = new Fleet();
 
-$_db_boats_lst_asa = lst_asa_from_file( 'boats_data_file' );
-
-$_record_exists = false;
-
-foreach ( $_db_boats_lst_asa as $_db_boat_asa ) {
-
-    if ( $_db_boat_asa [ 'key' ] === $_user_boat_key ) {
-
-        $_record_exists = true;
-        break;
-
-    }
-}
-
-if ( $_record_exists ) {
+if ( $_fleet->contains( $_user_boat_key )) {
     header("Location: /account_boat_availability_form.php?bkey=" . $_user_boat_key);
     exit;
 } else {

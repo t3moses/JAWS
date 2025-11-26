@@ -1,0 +1,156 @@
+<?php
+
+require_once __DIR__ . '/../../Csv/src/Csv.php';
+require_once __DIR__ . '/../../Crew/src/Crew.php';
+
+    class Squad {
+
+        public $crews = [];
+
+        public function __construct() {
+
+        /*
+        Instantiate the squad object with the contents of the squad database.
+        */
+
+           $this->load();
+
+        }
+
+        public function contains( $_crew_key ): bool {
+
+        /*
+        Returns true if the crew with the supplied key is in the squad.  Otherwise, return false.
+        */
+
+            foreach ( $this->crews as $_crew ) {
+                if ( $_crew->key === $_crew_key ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public function get_crew( $_crew_key ) : ?Crew {
+
+        /*
+        If the boat is in the fleet, return it.  Otherwise return null.
+        */
+
+            for ( $i = 0; $i < count( $this->crews ); $i++ ) {
+                if ( $this->crews[ $i ]->key === $_crew_key ) {
+                    return $this->crews[ $i ];
+                }
+            }
+            return null;
+
+        }
+
+        public function set_crew( $_crew ) {
+
+        /*
+        If the crew is in the fleet, replace it.  Otherwise append it.
+        */
+
+            for ( $i = 0; $i < count( $this->crews ); $i++ ) {
+                if ( $this->crews[ $i ]->key === $_crew->get_key() ) {
+                    $this->crews[ $i ] = $_crew;
+                    return;
+                }
+            }
+            $this->crews[] = $_crew;
+            return;
+            
+        }
+
+        private function load() : bool {
+
+            /*
+            Build the squad object as a list of crew objects from the contents of the CSV files.
+            */
+
+            $_property_names = array_keys(get_class_vars('Crew'));
+
+            $_filename = __DIR__ . '/../data/squad_data.csv';
+            $_handle = fopen( $_filename, "r" );
+
+            if ( !$_handle) {
+                $_handle = fopen( $_filename, "w" );
+                fputcsv( $_handle, $_property_names, ',', '"', '\\');
+                fclose( $_handle );
+                $_handle = fopen( $_filename, "r" );
+            }
+            $_header = fgetcsv($_handle, 0, ',','"', '\\');
+
+            if( $_header !== $_property_names ) {
+                return false;
+            }
+
+            $_season = new Season();
+            $_event_ids = $_season->get_event_ids();
+
+            while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
+
+                $_crew = new Crew();
+
+                for( $i = 0; $i < count( $_property_names ); $i++ ) {
+
+                    $_property_name = $_property_names[ $i ];
+                    if ( is_array( $_crew->$_property_name )) {
+                        $_ex_property_name = explode( ';', $_property_values[ $i ]);
+
+                        if ( $_property_names[ $i ] === 'available' || $_property_names[ $i ] === 'history' ) {
+                            $_crew->$_property_name = array_combine( $_event_ids, $_ex_property_name);
+                        }
+                        else {
+                            $_crew->$_property_name = $_ex_property_name;
+                        }
+
+                    }
+                    else {
+                        $_crew->$_property_name = $_property_values[ $i ];
+                    }
+                }
+                $this->crews[] = $_crew;
+            }            
+            fclose($_handle);
+            return true;
+        }
+
+
+        public function save(): void {
+
+            /*
+            Write the squad object to the CSV files.
+            */
+
+            $_property_names = array_keys(get_class_vars('Crew'));
+
+            $_filename = __DIR__ . '/../data/squad_data.csv';
+            $_handle = fopen( $_filename, "w" );
+            fputcsv( $_handle, $_property_names, ',', '"', '\\');
+
+            foreach( $this->crews as $_crew ) {
+                $_ex_property_values = [];
+                $_property_values = array_values( get_object_vars( $_crew ));
+                foreach( $_property_values as $_property_value ) {
+                    if ( is_array( $_property_value )) {
+                        $_ex_property_value = implode(';', $_property_value );
+                        $_ex_property_values[] = $_ex_property_value;
+                    }
+                    else {
+                        $_ex_property_values[] = $_property_value;
+                    }
+                }
+                fputcsv( $_handle, $_ex_property_values, ',', '"', '\\' );
+            } 
+            fclose($_handle);
+            return;
+        }
+
+        public function __destruct() {
+            $this->save();
+        }
+    }
+
+?>
