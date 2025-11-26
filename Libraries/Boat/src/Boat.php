@@ -14,9 +14,9 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public $min_berths;
         public $max_berths;
         public $assistance_required;
-        public $rank;
-        public $berths = [];
-        public $history = [];
+        public $rank = []; // Indexed array
+        public $berths = []; // Associative array
+        public $history = []; // Associative array
 
         public function __construct( ) {
 
@@ -103,7 +103,6 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public function set_all_berths( $_berths ) {
             $_season = new Season();
             $_event_ids = $_season->get_event_ids();
-            $this->berths[ 'key' ] = $this->key;
             foreach( $_event_ids as $_event_id ) {
                 $this->berths[ $_event_id ] = $_berths;
             }
@@ -121,7 +120,6 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public function set_all_history( $_history ) {
             $_season = new Season();
             $_event_ids = $_season->get_event_ids();
-            $this->history[ 'key' ] = $this->key;
             foreach( $_event_ids as $_event_id ) {
                 $this->history[ $_event_id ] = $_history;
             }

@@ -61,7 +61,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             return;
         }
 
-        public function load() : void {
+        public function load() : bool {
 
             /*
             Build the squad object as a list of crew objects from the contents of the CSV files.
@@ -81,18 +81,31 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             $_header = fgetcsv($_handle, 0, ',','"', '\\');
 
             if( $_header !== $_property_names ) {
-                die( 'The fleet CSV data file is inconsistent with the fleet class' );
+                return false;
             }
+
+            $_season = new Season();
+            $_event_ids = $_season->get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 
                 $_boat = new Boat();
 
                 for( $i = 0; $i < count( $_property_names ); $i++ ) {
+
                     $_property_name = $_property_names[ $i ];
                     if ( is_array( $_boat->$_property_name )) {
+                        $_ex_property_name = explode( ';', $_property_values[ $i ]);                        
                         $_boat->$_property_name = explode( ';', $_property_values[ $i ]);    
+
+                        if ( $_property_names[ $i ] === 'berths' || $_property_names[ $i ] === 'history' ) {
+                            $_boat->$_property_name = array_combine( $_event_ids, $_ex_property_name);
+                        }
+                        else {
+                            $_boat->$_property_name = $_ex_property_name;
+                        }
                     }
+
                     else {
                         $_boat->$_property_name = $_property_values[ $i ];
                     }
@@ -100,7 +113,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
                 $this->boats[] = $_boat;
             }            
             fclose($_handle);
-            return;
+            return true;
         }
 
         public function save(): void {

@@ -36,7 +36,8 @@ $_boat = boat_from_post();
 $_season = new Season();
 $_number_of_events = $_season->get_event_count();
 $_event_ids = $_season->get_event_ids();
-
+$_rank = [0,0];
+$_boat->set_rank( $_rank );
 $_boat->set_all_berths( $_boat->get_max_berths() );
 $_boat->set_all_history( '' );
 

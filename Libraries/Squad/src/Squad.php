@@ -105,11 +105,11 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
                         else {
                             $_crew->$_property_name = $_ex_property_name;
                         }
-
                     }
                     else {
                         $_crew->$_property_name = $_property_values[ $i ];
                     }
+                    
                 }
                 $this->crews[] = $_crew;
             }            
