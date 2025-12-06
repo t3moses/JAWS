@@ -1,5 +1,10 @@
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\boat as boat;
+use nsc\sdc\fleet as fleet;
+use nsc\sdc\season as season;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -10,21 +15,22 @@ header("Expires: 0");
 require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
 require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
+require_once __DIR__ . '/Libraries/Name/src/Name.php';
 
 function boat_from_post() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-        $_boat = new Boat( );
-        $_boat->set_key( $_POST['boat_key'] ?? '' );
-        $_boat->set_owner_first_name( $_POST['owner_first_name'] ?? '' );
-        $_boat->set_owner_last_name( $_POST['owner_last_name'] ?? '' );
-        $_boat->set_display_name( $_POST['display_name'] ?? '' );
-        $_boat->set_owner_email( $_POST['owner_email'] ?? '' );
-        $_boat->set_owner_mobile( $_POST['owner_mobile'] ?? '' );
-        $_boat->set_min_berths( $_POST['min_berths'] ?? '' );
-        $_boat->set_max_berths( $_POST['max_berths'] ?? '' );
-        $_boat->set_assistance_required( $_POST['assistance_required'] ?? '');
+        $_boat = new boat\Boat( );
+        $_boat->set_key( name\safe($_POST['boat_key']) ?? '' );
+        $_boat->set_owner_first_name( name\safe($_POST['owner_first_name']) ?? '' );
+        $_boat->set_owner_last_name( name\safe($_POST['owner_last_name']) ?? '' );
+        $_boat->set_display_name( name\safe($_POST['display_name']) ?? '' );
+        $_boat->set_owner_email( name\safe($_POST['owner_email']) ?? '' );
+        $_boat->set_owner_mobile( name\safe($_POST['owner_mobile']) ?? '' );
+        $_boat->set_min_berths( name\safe($_POST['min_berths']) ?? '' );
+        $_boat->set_max_berths( name\safe($_POST['max_berths']) ?? '' );
+        $_boat->set_assistance_required( name\safe($_POST['assistance_required']) ?? '');
         
         return $_boat;
     }
@@ -33,15 +39,22 @@ function boat_from_post() {
 
 $_boat = boat_from_post();
 
-$_season = new Season();
+$_season = new season\Season();
 $_number_of_events = $_season->get_event_count();
 $_event_ids = $_season->get_event_ids();
-$_rank = [0,0];
-$_boat->set_rank( $_rank );
+if( $_boat->is_flex()) {
+    $_flex = true;
+    $_boat->set_rank( 0, 0 );
+}
+else {
+    $_flex = false;
+    $_boat->set_rank( 0, 1 );
+}
+$_boat->set_rank( 1, 0 ); // frequency
 $_boat->set_all_berths( $_boat->get_max_berths() );
 $_boat->set_all_history( '' );
 
-$_fleet = new Fleet();
+$_fleet = new fleet\Fleet();
 $_fleet->set_boat( $_boat );
 $_fleet->save();
 
@@ -59,6 +72,9 @@ $_fleet->save();
             <p class = "p_class" ><?php echo $_boat->get_display_name() ?>'s account has been created</p>
         </div>
         <div>
+
+            <p class = "p_class" ><?php if ( $_flex ) { echo 'You are also registered as a crew member'; } ?></p></br>
+
             <p class = "p_class" >Owner first name: <?php echo $_boat->get_owner_first_name() ?></p></br>
             <p class = "p_class" >Owner last name: <?php echo $_boat->get_owner_last_name() ?></p></br>
             <p class = "p_class" >Boat name: <?php echo $_boat->get_display_name()?></p></br>

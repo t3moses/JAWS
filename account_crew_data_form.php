@@ -1,5 +1,8 @@
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\crew as crew;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -21,8 +24,8 @@ function crew_name_array_from_get_url() {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Retrieve form data
-        $_cname[ 'fname' ] = $_GET['fname'] ?? '';
-        $_cname[ 'lname' ] = $_GET['lname'] ?? '';
+        $_cname[ 'fname' ] = name\safe($_GET['fname']) ?? '';
+        $_cname[ 'lname' ] = name\safe($_GET['lname']) ?? '';
 
         // Validate the data
         if (empty( $_cname[ 'fname' ]) && empty( $_cname[ 'lname' ])) {
@@ -36,9 +39,9 @@ function crew_name_array_from_get_url() {
 
 $_user_crew_name = crew_name_array_from_get_url();
 
-$_user_crew_key = key_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
-$_display_name = display_name_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
-$_crew = new Crew();
+$_user_crew_key = name\key_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
+$_display_name = name\display_name_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
+$_crew = new crew\Crew();
 $_crew->set_default();
 $_crew->set_key( $_user_crew_key );
 $_crew->set_first_name( $_user_crew_name[ 'fname' ] );
@@ -66,14 +69,14 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
             <label class = "label_class" for="membership_number">Membership number:</label>
             <input class = "text_class" type="text" id="membership_number" name="membership_number" value="<?php echo $_crew->get_membership_number(); ?>"></br>
 
-            <label class = "label_class" for="skill">Skill:</label>
+            <label class = "label_class" for="skill">Sailing background:</label>
             <select class = "select_class" name="skill" id="skill">
-                <option value="0" <?php if($_crew->get_skill() == '0') echo 'selected'; ?>>New</option>
-                <option value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>Crew</option>
-                <option value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>Skipper</option>
+                <option value="0" <?php if($_crew->get_skill() == '0') echo 'selected'; ?>>I am new to sailing</option>
+                <option value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>I am effective as a crew member</option>
+                <option value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>I am effective as a first mate</option>
             </select></br>
-
-            <label class = "label_class" for="experience">Experience:</label>
+ 
+            <label class = "label_class" for="experience">Tell us about your qualifications and experience:</label>
             <textarea class = "textarea_class" name="experience" id="experience" rows="10"><?php echo $_crew->get_experience(); ?></textarea></br>
 
             <input class = "button_class" type="submit" value="Next"> 

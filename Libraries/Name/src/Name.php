@@ -1,44 +1,51 @@
 <?php
 
-    function csv_safe( $_unsafe_string ) {
+namespace nsc\sdc\name;
 
-        // Remove commas and newlines from the string.
+    function safe( $_raw_input ) {
 
-        $_safe_string = '';
-        for( $_index = 0; $_index < strlen( $_unsafe_string ); $_index++ ) {
-            if ( $_unsafe_string[ $_index ] === ',' ) {
-                $_safe_string .= '+u002C';
+        $_special = htmlspecialchars( $_raw_input );
+
+        $_safe_input = '';
+        for( $_i = 0; $_i < strlen( $_raw_input ); $_i++ ) {
+            if ( $_raw_input[ $_i ] === ',' ) {
+                $_safe_input .= '+u002C';
                 }
-            elseif ( $_unsafe_string[ $_index ] === "\n" ) {
-                $_safe_string .= '+u2028';
+            elseif ( $_raw_input[ $_i ] === "\x0D" ) {
+                $_safe_input .= '+u2028';
+            }
+            elseif ( $_raw_input[ $_i ] === "\x0A" ) {
+                // Omit the character.
             }
             else {
-                $_safe_string .= $_unsafe_string[ $_index ] ;
+                $_safe_input .= $_raw_input[ $_i ] ;
             }
-        }
-        return $_safe_string;
+        }        
+
+        return $_safe_input;
     }
 
-    function user_safe( $_user_unsafe ) {
+    function unsafe( $_safe_input ){
 
-        // Remove unsafe characters from the string.
+        $_raw_input = str_replace( '+u002C', ',', $_safe_input );
+        $_raw_input = str_replace( '+u2028', "\x0D\x0A", $_raw_input );
+        return $_raw_input;
 
-        return htmlspecialchars( $_user_unsafe );
     }
 
     function key_from_string( $_string ) {
 
         // Create a sanitized database key from a string.
 
-        return strtolower( csv_safe( preg_replace('/\s+/', '', user_safe ( $_string ))));
+        return strtolower( safe( preg_replace('/\s+/', '', $_string )));
     }
 
     function key_from_strings( $_fname, $_lname ) {
 
         // Create a database key from the first two elements of the string array.
     
-        return strtolower( preg_replace('/\s+/', '', csv_safe( user_safe( $_fname,))) . 
-        preg_replace('/\s+/', '', csv_safe( user_safe( $_lname,))));
+        return strtolower( preg_replace('/\s+/', '', safe( $_fname )) . 
+        preg_replace('/\s+/', '', safe( $_lname)));
     }
 
     function display_name_from_string( $_string ) {
@@ -54,19 +61,5 @@
         return $_first_part . $_second_part;
     }
 
-    function subject_attribute_from_file( $_subject_key, $_attribute_name, $_lst_asa ) {
-
-    // $_lst_asa is a list of associative arrays.
-    // Find the list entry whose key matches $_subject_key.
-    // And return the requested attribute.
-
-        $_asa_exists = false;
-        foreach ( $_lst_asa as $_asa ) {
-            if ( $_asa[ 'key' ] === $_subject_key ) {
-                return $_asa[ $_attribute_name ];
-            }
-        }
-        return $_asa_exists;
-    }
 
 ?>

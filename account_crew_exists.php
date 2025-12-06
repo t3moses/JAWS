@@ -1,5 +1,8 @@
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\squad as squad;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -45,11 +48,11 @@ function crew_name_from_post() {
 
 // Convert the first and last names entered by the user into a key.
 $_user_name_arr = crew_name_from_post();
-$_user_crew_key = key_from_strings( $_user_name_arr[ 'fname' ], $_user_name_arr[ 'lname' ] );
+$_user_crew_key = name\key_from_strings( $_user_name_arr[ 'fname' ], $_user_name_arr[ 'lname' ] );
 
 $_query_string = http_build_query( $_user_name_arr );
 
-$_squad = new Squad;
+$_squad = new squad\Squad;
 
 
 // Pass on the key or name to the next step.

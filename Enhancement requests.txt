@@ -11,7 +11,13 @@
 011: Provide an admininstrator interface.
 012: Email crew info to owners at 1000 on event day.
 013: Email reminder to crew members at 1300 one day before event day.
-014: Implement mandatory policy.
+014: Implement mandatory policy. RESOLVED
 015: Implement discretionary policy.
 016: Email tickets to the administrator at 1300 on event day.
-017: In all user input, replace ',' with '+u002C' and "\n" with '+u2028'.  RESOLVED
+017: In all user input, replace ',' with '+u002C' and "\n" with '+u2028'. RESOLVED
+018: Move html page generator to its own namespace from Season.php.
+019: Generate html page for the entire season.
+020: Update boat history based on $_flotilla.
+021: Update crew history based on $_flotilla.
+022: Add boat history to rank, based on boat history.
+023: Add crew history to rank, based on crew history.

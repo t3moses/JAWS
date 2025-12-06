@@ -1,5 +1,8 @@
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\fleet as fleet;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -37,9 +40,9 @@ function boat_name_from_post() {
 }
 
 $_user_boat_name = boat_name_from_post();
-$_user_boat_key = key_from_string( $_user_boat_name );
+$_user_boat_key = name\key_from_string( $_user_boat_name );
 
-$_fleet = new Fleet();
+$_fleet = new fleet\Fleet();
 
 if ( $_fleet->contains( $_user_boat_key )) {
     header("Location: /account_boat_availability_form.php?bkey=" . $_user_boat_key);

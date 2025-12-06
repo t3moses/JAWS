@@ -1,5 +1,8 @@
 <?php
 
+use nsc\sdc\fleet as fleet;
+use nsc\sdc\season as season;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -49,8 +52,8 @@ $_user_arr = explode( "&avail=", $_user_str );
 $_user_str = implode( ",", $_user_arr );
 $_user_boat_key = array_shift( $_user_arr );
 
-$_fleet = new Fleet();
-$_season = new Season();
+$_fleet = new fleet\Fleet();
+$_season = new season\Season();
 $_event_ids = $_season->get_event_ids();
 $_boat = $_fleet->get_boat( $_user_boat_key );
 

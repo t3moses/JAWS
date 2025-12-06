@@ -22,17 +22,12 @@ put program.html
 cd css
 put css/styles.css
 chmod 664 styles.css
-cd ../config
-put config/config.php
-put config/boats_availability.csv
-put config/boats_data.csv
-put config/crews_availability.csv
-put config/crews_data.csv
+cd /Libraries/Fleet/data
+put fleet_data.csv
+chmod 664 fleet_data.csv
+cd /../../Squad/data
+put squad_data.csv
+chmod 664 squad_data.csv
 chmod 664 config.php
-chmod 664 boats_availability.csv
-chmod 664 boats_availability.csv
-chmod 664 boats_data.csv
-chmod 664 crews_availability.csv
-chmod 664 crews_data.csv
 bye
 EOF

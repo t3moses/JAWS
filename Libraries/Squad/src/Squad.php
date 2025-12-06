@@ -1,5 +1,10 @@
 <?php
 
+namespace nsc\sdc\squad;
+
+use nsc\sdc\crew as crew;
+use nsc\sdc\season as season;
+
 require_once __DIR__ . '/../../Csv/src/Csv.php';
 require_once __DIR__ . '/../../Crew/src/Crew.php';
 
@@ -31,7 +36,7 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             return false;
         }
 
-        public function get_crew( $_crew_key ) : ?Crew {
+        public function get_crew( $_crew_key ) : ?crew\Crew {
 
         /*
         If the boat is in the fleet, return it.  Otherwise return null.
@@ -63,13 +68,30 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             
         }
 
+        function get_available( $_event_id ) : ?array {
+
+            /*
+            Return the list of crews avilable on the event day.
+            */
+
+            $_available_crews = [];
+            foreach( $this->crews as $_crew ) {
+                $_available_crew = $_crew->available[ $_event_id ];
+                if ( $_available_crew !== 'N' ) {
+                    $_available_crews[] = $_crew;
+                }
+            }
+
+            return $_available_crews;
+        }
+
         private function load() : bool {
 
             /*
             Build the squad object as a list of crew objects from the contents of the CSV files.
             */
 
-            $_property_names = array_keys(get_class_vars('Crew'));
+            $_property_names = array_keys(get_class_vars('nsc\sdc\crew\Crew'));
 
             $_filename = __DIR__ . '/../data/squad_data.csv';
             $_handle = fopen( $_filename, "r" );
@@ -86,12 +108,12 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
                 return false;
             }
 
-            $_season = new Season();
+            $_season = new season\Season();
             $_event_ids = $_season->get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 
-                $_crew = new Crew();
+                $_crew = new crew\Crew();
 
                 for( $i = 0; $i < count( $_property_names ); $i++ ) {
 
@@ -124,7 +146,7 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             Write the squad object to the CSV files.
             */
 
-            $_property_names = array_keys(get_class_vars('Crew'));
+            $_property_names = array_keys(get_class_vars('nsc\sdc\crew\Crew'));
 
             $_filename = __DIR__ . '/../data/squad_data.csv';
             $_handle = fopen( $_filename, "w" );

@@ -1,6 +1,9 @@
 
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\boat as boat;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -9,7 +12,7 @@ header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
-require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
+// require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
 
 /*
 
@@ -27,7 +30,7 @@ function boat_name_from_get_url() {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         // Retrieve form data
-        $_boat_name = $_GET['bname'] ?? '';
+        $_boat_name = name\safe($_GET['bname']) ?? '';
 
         // Validate the data
         if (empty($_boat_name)) {
@@ -40,9 +43,9 @@ function boat_name_from_get_url() {
 }
 
 $_user_boat_name = boat_name_from_get_url();
-$_boat_key = key_from_string( $_user_boat_name );
-$_display_name = display_name_from_string( $_user_boat_name );
-$_boat = new Boat();
+$_boat_key = name\key_from_string( $_user_boat_name );
+$_display_name = name\display_name_from_string( $_user_boat_name );
+$_boat = new boat\Boat();
 $_boat->set_default();
 $_boat->set_key( $_boat_key );
 $_boat->set_display_name( $_display_name );

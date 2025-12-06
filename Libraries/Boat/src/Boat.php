@@ -1,7 +1,16 @@
 <?php
 
+namespace nsc\sdc\boat;
+
+use nsc\sdc\name as name;
+use nsc\sdc\season as season;
+use nsc\sdc\squad as squad;
+
+
+require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Season/src/Season.php';
-require_once __DIR__ . '/../../Fleet/src/Fleet.php';
+require_once __DIR__ . '/../../Squad/src/Squad.php';
+require_once __DIR__ . '/../../Name/src/Name.php';
 
     class Boat {
 
@@ -13,6 +22,7 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public $owner_mobile;
         public $min_berths;
         public $max_berths;
+        public $occupied_berths;
         public $assistance_required;
         public $rank = []; // Indexed array
         public $berths = []; // Associative array
@@ -43,6 +53,9 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public function get_owner_last_name() {
             return $this->owner_last_name;
         }
+        public function get_owner_key() {
+            return name\key_from_strings( $this->owner_first_name, $this->owner_last_name );
+        }
         public function get_owner_email() {
             return $this->owner_email;
         }
@@ -64,7 +77,7 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public function get_assistance_required() {
             return $this->assistance_required;
         }
-        public function get_priority() {
+        public function get_rank() {
             return $this->rank;
         }
         public function get_history( $_event_id ) : string {
@@ -101,7 +114,7 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
             return $this->berths[ $_event_id ] = $_berths;
         }
         public function set_all_berths( $_berths ) {
-            $_season = new Season();
+            $_season = new season\Season();
             $_event_ids = $_season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->berths[ $_event_id ] = $_berths;
@@ -111,20 +124,55 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
         public function set_assistance_required( $_assistance_required ) {
              $this->assistance_required = $_assistance_required;
         }
-        public function set_rank( $_rank) {
-            return $this->rank = $_rank;
+        public function set_rank( $_dim, $_rank) {
+            return $this->rank[ $_dim ] = $_rank;
         }
         public function set_history( $_event_id, $_history ) {
             return $this->history[ $_event_id ] = $_history;
         }
         public function set_all_history( $_history ) {
-            $_season = new Season();
+            $_season = new season\Season();
             $_event_ids = $_season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->history[ $_event_id ] = $_history;
             }
             return $this->berths;
         }
+
+        public function is_flex() : bool {
+
+            /*
+            If the boat owner is also a crew, return true and update the boat and crew rank tensors
+            */
+
+            $_squad = new squad\Squad();
+            foreach( $_squad->crews as $_crew ) {
+                if ( $this->get_owner_key() === $_crew->get_key() ) {
+                    $_crew->set_rank( 1, 0 );
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public function get_absence() : int {
+
+            /*
+            Return the number of past events in which the boat was available
+            Also update the rank tensor
+            */
+
+            $_season = new season\Season();
+            $_past_events = $_season->get_past_events();
+            $_absence = count( $_past_events );
+            foreach( $_past_events as $_past_event ) {
+                if ( $this->history[ $_past_event ] !== null ) {
+                    $_absence--;
+                }
+            }
+            return $_absence;
+        }
+
     }
 
 ?>

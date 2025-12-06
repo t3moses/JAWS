@@ -1,5 +1,9 @@
 <?php
 
+use nsc\sdc\name as name;
+use nsc\sdc\crew as crew;
+use nsc\sdc\squad as squad;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -16,14 +20,14 @@ function crew_from_post() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
-        $_crew = new Crew();
-        $_crew->set_key( $_POST['crew_key'] ?? '' );
-        $_crew->set_first_name( $_POST['first_name'] ?? '' );
-        $_crew->set_last_name( $_POST['last_name'] ?? '' );
-        $_crew->set_email( $_POST['email'] ?? '' );
-        $_crew->set_membership_number( $_POST['membership_number'] ?? '');
-        $_crew->set_skill( $_POST['skill'] ?? '' );
-        $_crew->set_experience( $_POST['experience'] ?? '' );
+        $_crew = new crew\Crew();
+        $_crew->set_key( name\safe($_POST['crew_key']) ?? '' );
+        $_crew->set_first_name( name\safe($_POST['first_name']) ?? '' );
+        $_crew->set_last_name( name\safe($_POST['last_name']) ?? '' );
+        $_crew->set_email( name\safe($_POST['email']) ?? '' );
+        $_crew->set_membership_number( name\safe($_POST['membership_number']) ?? '');
+        $_crew->set_skill( name\safe($_POST['skill']) ?? '' );
+        $_crew->set_experience( name\safe($_POST['experience']) ?? '' );
         
         return $_crew;
     }
@@ -32,15 +36,29 @@ function crew_from_post() {
 
 $_crew = crew_from_post();
 
-$_squad = new Squad();
+$_squad = new squad\Squad();
 
-$_crew->set_display_name( display_name_from_strings( $_crew->get_first_name(), $_crew->get_last_name()));
+$_crew->set_display_name( name\display_name_from_strings( $_crew->get_first_name(), $_crew->get_last_name()));
 $_crew->set_partner_key( '' );
 $_crew->set_whitelist( '' );
-$_rank = [0,0];
-$_crew->set_rank( $_rank );
-$_crew->set_all_available( 'No' );
-$_crew->set_all_history( '.' );
+if( $_crew->is_member()) {
+    $_crew->set_rank( 0, 1 );
+}
+else {
+    $_crew->set_rank( 0, 0 );
+}
+if( $_crew->is_flex()) {
+    $_flex = true;
+    $_crew->set_rank( 1, 0 );
+}
+else {
+    $_flex = false;
+    $_crew->set_rank( 1, 1 );
+}
+$_crew->set_rank( 2, 1 ); // reputation
+$_crew->set_rank( 3, 0 ); // frequency
+$_crew->set_all_available( 'N' );
+$_crew->set_all_history( '' );
 
 $_squad->set_crew( $_crew );
 $_squad->save();
@@ -60,10 +78,13 @@ $_squad->save();
             <p class = "p_class" >Username: <?php echo $_crew->get_display_name(); ?></p></br>
         </div>
         <div>
+
+            <p class = "p_class" ><?php if ( $_flex ) { echo 'You are also registered as a boat owner'; } ?></p></br>
+
             <p class = "p_class" >Email address: <?php echo $_crew->get_email(); ?></p></br>
             <p class = "p_class" >Membership number: <?php echo $_crew->get_membership_number(); ?></p></br>
             <p class = "p_class" >Skill: <?php echo $_crew->get_skill(); ?></p></br>
-            <p class = "p_class" >Experience: <?php echo $_crew->get_experience(); ?></p></br>
+            <p class = "p_class" >Experience: <?php echo name\unsafe( $_crew->get_experience()); ?></p></br>
         </div>
         <div>
             <button class = "button_class" type="button" onclick="window.location.href='/account_crew_availability_form.php?ckey=<?php echo $_crew->get_key()?>'">Next</button>

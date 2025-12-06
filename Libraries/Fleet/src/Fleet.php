@@ -1,11 +1,16 @@
 <?php
 
+namespace nsc\sdc\fleet;
+
+use nsc\sdc\boat as boat;
+use nsc\sdc\season as season;
+
 require_once __DIR__ . '/../../Csv/src/Csv.php';
 require_once __DIR__ . '/../../Boat/src/Boat.php';
 
     class Fleet {
 
-        private $boats = [];
+        public $boats = [];
 
         public function __construct() {
 
@@ -24,17 +29,17 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
         */
 
             foreach ( $this->boats as $_boat ) {
-                if ( $_boat->key === $_boat_key ) {
+                if ( $_boat->get_key() === $_boat_key ) {
                     return true;
                 }
             }
             return false;
         }
 
-        public function get_boat( $_boat_key ) : ?Boat{
+        public function get_boat( $_boat_key ) : ?boat\Boat{
 
         /*
-        If the boat is in the fleet, return it.  Otherwise return null.
+        If the boat is in the fleet, return the boat object.  Otherwise return null.
         */
 
             for ( $i = 0; $i < count( $this->boats ); $i++ ) {
@@ -45,10 +50,10 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             return null;
         }
 
-        public function set_boat( Boat $_boat ) : void {
+        public function set_boat( boat\Boat $_boat ) : void {
 
         /*
-        If the boat is in the fleet, replace it.  Otherwise append it.
+        If the boat object is in the fleet, replace it.  Otherwise append it.
         */
 
             for ( $i = 0; $i < count( $this->boats ); $i++ ) {
@@ -61,13 +66,29 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             return;
         }
 
+        function get_available( $_event_id ) : ?array {
+
+            /*
+            Return the list of boat objects with available berths on the event day.
+            */
+
+            $_available_boats = [];
+            foreach( $this->boats as $_boat ) {
+                $_berths = $_boat->get_berths( $_event_id );
+                if ( $_berths !== 0 ) {
+                    $_available_boats[] = $_boat;
+                }
+            }
+            return $_available_boats;
+        }
+
         public function load() : bool {
 
             /*
             Build the squad object as a list of crew objects from the contents of the CSV files.
             */
 
-            $_property_names = array_keys(get_class_vars('Boat'));
+            $_property_names = array_keys(get_class_vars('nsc\sdc\boat\Boat'));
 
             $_filename = __DIR__ . '/../data/fleet_data.csv';
             $_handle = fopen( $_filename, "r" );
@@ -78,18 +99,20 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
                 fclose( $_handle );
                 $_handle = fopen( $_filename, "r" );
             }
+
             $_header = fgetcsv($_handle, 0, ',','"', '\\');
 
             if( $_header !== $_property_names ) {
+                fclose($_handle);
                 return false;
             }
 
-            $_season = new Season();
+            $_season = new season\Season();
             $_event_ids = $_season->get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 
-                $_boat = new Boat();
+                $_boat = new boat\Boat();
 
                 for( $i = 0; $i < count( $_property_names ); $i++ ) {
 
@@ -122,7 +145,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             Write the squad object to the CSV files.
             */
 
-            $_property_names = array_keys(get_class_vars('Boat'));
+            $_property_names = array_keys(get_class_vars('nsc\sdc\boat\Boat'));
 
             $_filename = __DIR__ . '/../data/fleet_data.csv';
             $_handle = fopen( $_filename, "w" );
