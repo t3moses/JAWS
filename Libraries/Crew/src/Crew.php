@@ -4,9 +4,11 @@ namespace nsc\sdc\crew;
 
 use nsc\sdc\season as season;
 use nsc\sdc\fleet as fleet;
+use nsc\sdc\name as name;
 
 require_once __DIR__ . '/../../Season/src/Season.php';
 require_once __DIR__ . '/../../Fleet/src/Fleet.php';
+require_once __DIR__ . '/../../Name/src/Name.php';
 
     class Crew {
 
@@ -205,7 +207,7 @@ require_once __DIR__ . '/../../Fleet/src/Fleet.php';
 
             $_fleet = new fleet\Fleet();
             foreach( $_fleet->boats as $_boat ) {
-                $_owner_key = key_from_strings( $_boat->owner_first_name, $_boat->owner_last_name );
+                $_owner_key = name\key_from_strings( $_boat->owner_first_name, $_boat->owner_last_name );
                 if ( $_owner_key === $this->key ) {
                     $_boat->set_rank( 0, 0 );
                     return true;

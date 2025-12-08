@@ -17,6 +17,7 @@ require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 
+
 function boat_from_post() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -68,6 +69,9 @@ $_fleet->save();
         <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
+        <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
         <div>
             <p class = "p_class" ><?php echo $_boat->get_display_name() ?>'s account has been created</p>
         </div>

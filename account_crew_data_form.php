@@ -56,6 +56,9 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
         <link rel="stylesheet" href="css/styles.css?v=010">
     </head>
     <body>
+        <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
 
         <form class = "form_class" method="post" action="account_crew_data_update.php">
 

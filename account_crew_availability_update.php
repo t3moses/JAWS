@@ -81,6 +81,9 @@ $_squad->save();
     </head>
     <body>
         <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
+        <div>
             <p class = "p_class" ><?php echo $_crew->get_display_name(); ?>'s availability has been updated</p>
         </div>
 <!--
@@ -100,7 +103,7 @@ Loop through the list of events, displaying the event value.
             </div>
         <?php } ?>
         <div>
-            <button type = "button" class = "button_class" onclick = "window.location.href='/program.html'">Done</button>
+            <button type = "button" class = "button_class" onclick = "window.location.href='/season_update.php'">Next</button>
         </div>
     </body>
 </html>

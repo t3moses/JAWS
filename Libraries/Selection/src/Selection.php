@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
 
     class Selection {
 
+        private $event_id;
         private $selected_boats;
         private $selected_crews;
         private $waitlist_boats;
@@ -26,7 +27,8 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
         private function get_max_berths( $_boats ) {
             $_max_berths = 0;
             foreach( $_boats as $_boat ) {
-                $_max_berths += $_boat->max_berths;
+//                $_max_berths += $_boat->max_berths;
+                $_max_berths += $_boat->berths[ $this->event_id ];
             }
             return $_max_berths;
         }
@@ -133,9 +135,9 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             }
 
             if ( $_all_berths === $_crew_count ) {
-                $this->selected_boats = $_boats;
-                $this->selected_crews = $_crews;
-                $this->waitlist_boats[] = $_waitlist_boats;
+                $this->selected_boats = array_reverse( $_boats );
+                $this->selected_crews = array_reverse( $_crews );
+                $this->waitlist_boats[] = array_reverse( $_waitlist_boats );
                 $this->waitlist_crews = [];
                 return;
             }
@@ -150,17 +152,17 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             // We need to cut crews, starting with the lowest ranked crew
 
             foreach( $_boats as $_boat ) {
-                $_boat->occupied_berths = $_boat->max_berths;
+                $_boat->occupied_berths = $_boat->berths[ $this->event_id ];
             }
             $_all_berths = $this->get_max_berths( $_boats );
             $_excess_crews = count( $_crews ) - $_all_berths;
             $_waitlist_crews = array_slice( $_crews, 0, $_excess_crews );
             $_crews = array_slice( $_crews, $_excess_crews );
 
-            $this->selected_boats = $_boats;
-            $this->selected_crews = $_crews;
+            $this->selected_boats = array_reverse( $_boats );
+            $this->selected_crews = array_reverse( $_crews );
             $this->waitlist_boats = [];
-            $this->waitlist_crews = $_waitlist_crews;
+            $this->waitlist_crews = array_reverse( $_waitlist_crews );
         }
 
         private function case_3( $_boats, $_crews ) {
@@ -185,14 +187,15 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
                 $_augmented_boat->occupied_berths++;
                 $_all_berths++;
             }
-            $this->selected_boats = $_boats;
-            $this->selected_crews = $_crews;
+            $this->selected_boats = array_reverse( $_boats );
+            $this->selected_crews = array_reverse( $_crews );
             $this->waitlist_boats = [];
             $this->waitlist_crews = [];
         }
 
         public function select( $_event_id  ) {
 
+            $this->event_id = $_event_id;
             $_fleet = new fleet\Fleet();
             $_squad = new squad\Squad();
             $_boats = $_fleet->get_available( $_event_id );

@@ -136,7 +136,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             foreach( $_event_ids as $_event_id ) {
                 $this->history[ $_event_id ] = $_history;
             }
-            return $this->berths;
+            return $this->history;
         }
 
         public function is_flex() : bool {

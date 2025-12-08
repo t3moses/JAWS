@@ -12,7 +12,6 @@ header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
-// require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
 
 /*
 
@@ -59,6 +58,9 @@ $_boat->set_display_name( $_display_name );
         <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
+        <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
         <p class = "p_class" >Boat name: <?php echo $_boat->get_display_name()?></p>
         <form method="post" action="account_boat_data_update.php">
 

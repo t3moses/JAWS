@@ -1,6 +1,6 @@
 /*
 
-v=011
+v=013
 
 */
 
@@ -94,12 +94,9 @@ v=011
     font-size: 1.6rem;
     border-collapse: collapse;
 }
-
-.table_class tr:nth-child(even) { background-color: #FFFFFF; }
-.table_class tr:nth-child(odd) { background-color: #DDDDDD; }
-
 .th_class{
     background-color: #FFFFFF;
+    border: 2px solid #000000;
 }
 .td_class{
     margin-top: 2%;
@@ -109,3 +106,4 @@ v=011
     text-align: left;
     padding: 8px;
 }
+tr:nth-child(even) {background-color: #FFFFFF;}

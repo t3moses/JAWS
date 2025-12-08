@@ -75,10 +75,13 @@ $_squad->save();
     </head>
     <body>
         <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
+        <div>
             <p class = "p_class" >Username: <?php echo $_crew->get_display_name(); ?></p></br>
         </div>
         <div>
-
+            
             <p class = "p_class" ><?php if ( $_flex ) { echo 'You are also registered as a boat owner'; } ?></p></br>
 
             <p class = "p_class" >Email address: <?php echo $_crew->get_email(); ?></p></br>

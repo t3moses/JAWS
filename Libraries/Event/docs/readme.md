@@ -1,4 +1,5 @@
-Season data structure:
+An instance of the event class builds the flotillas data structure.
+It is called by season_update.php.
 
 {
     "flotillas" : [ // list of flotilla in the season

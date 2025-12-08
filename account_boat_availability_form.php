@@ -11,7 +11,6 @@ header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
 require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
-
 /*
 
 ARRIVE HERE ONLY IF THE BOAT DOES CURRENTLY HAVE AN ACCOUNT.
@@ -58,6 +57,9 @@ $_event_ids = $_season->get_event_ids();
         <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
+        <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
         <p class = "p_class" >Boat name: <?php echo $_display_name; ?></p>
         <form method="get" action="account_boat_availability_update.php">
             <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_boat_key; ?>"required>

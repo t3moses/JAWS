@@ -18,8 +18,6 @@ $_event_ids = $_season->get_event_ids();
 
 foreach( $_event_ids as $_event_id ) {
 
-    echo $_event_id . ' - ';
-
     $_select->select( $_event_id );
 
     $_selected_boats = $_select->get_selected_boats();

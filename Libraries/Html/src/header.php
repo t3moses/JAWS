@@ -1,0 +1,11 @@
+<?php
+
+function header_img() {
+
+    return "<div><a href='/../../../program.html'>
+    <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page'
+    width = '10%' height = '10%'></a></div>";
+
+}
+
+?>

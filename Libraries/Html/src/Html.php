@@ -2,6 +2,8 @@
 
 namespace nsc\sdc\html;
 
+include __DIR__ . "/header.php";
+
 function get_max_crew_count( $_flotilla ) {
     $_max_crew_count = 0;
     foreach( $_flotilla[ 'crewed_boats' ] as $_crewed_boat ) {
@@ -17,8 +19,9 @@ function encode_top() {
     $_top = '';
     $_top .= "<!DOCTYPE html><html><head>";
     $_top .= "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-    $_top .= "<link rel='stylesheet' href='/../../../css/styles.css?v=013'></head>";
+    $_top .= "<link rel='stylesheet' href='/../../../css/styles.css?v=017'></head>";
     $_top .= "<body>";
+    $_top .= header_img();
 
     return $_top;
 }
@@ -40,19 +43,11 @@ function encode_flotilla( $_flotilla ) {
 
     $_body = "<h2>" . "Date: " . $_flotilla[ 'event_id' ] . "</h2>";
 
-    $_body .= "<table class = 'table_class' width = " . $_table_width . "%><th><tr class = 'tr_class'>";
-    for ( $_column = 0; $_column < $_table_column_count; $_column++ ) { // for each column in the first row of the table
-        if ( $_column === 0 ) {
-            $_body .= "<td class = 'td_class' width = " . $_column_width . "%>Boat</td>";
-        }
-        elseif ( $_column === 1 ) {
-            $_body .= "<td class = 'td_class' width = " . $_column_width . "%>Crew</td>";
-        }
-        else {
-            $_body .= "<td class = 'td_class' width = " . $_column_width . "%></td>";
-        }
-    }
-    $_body .= "</tr></th>";
+    $_body .= "<table class = 'table_class' width = " . $_table_width . "%><tr>";
+    $_body .= "<th class = 'th_class' width = " . $_column_width . "%>Boat</th>";
+    $_body .= "<th class = 'th_class' colspan = $_table_column_count - 1>Crew</th>";
+    $_body .= "</tr>";
+
     foreach ( $_flotilla[ 'crewed_boats' ] as $_crewed_boat ) { // for each boat in the flotilla
         $_body .= "<tr><td class = 'td_class' >" . $_crewed_boat[ 'boat' ]->display_name . "</td>";
         foreach ( $_crewed_boat[ 'crews' ] as $_crew ) {
@@ -66,15 +61,15 @@ function encode_flotilla( $_flotilla ) {
     }
     $_body .= "</table>";
 
-    $_waitlist_row_count = ceil( count( $_flotilla[ 'waitlist' ] ) / $_max_crew_count );
+    $_waitlist_row_count = ceil( count( $_flotilla[ 'waitlist' ] ) / $_table_column_count );
     if ( $_waitlist_row_count != 0 ) {
         $_body .= "<h2>" . "Waitlist" . "</h2>";
         $_body .= "<table class = 'table_class' width = " . $_table_width . "%>";
         for ( $_row = 0; $_row < $_waitlist_row_count; $_row++ ) {
-            $_body .= "<tr class = 'tr_class'>";
+            $_body .= "<tr>";
             for( $_column = 0; $_column < $_table_column_count; $_column++ ) {
                 $_cell = $_table_column_count * $_row + $_column;
-                if ( $_cell <= count( $_flotilla[ 'waitlist' ])) {
+                if ( $_cell < count( $_flotilla[ 'waitlist' ])) {
                     $_body .= "<td class = 'td_class' width = " . $_column_width . "%>" . $_flotilla[ 'waitlist' ][ $_cell ]->display_name . "</td>";
                 } else {
                     $_body .= "<td class = 'td_class' width = " . $_column_width . "%></td>";

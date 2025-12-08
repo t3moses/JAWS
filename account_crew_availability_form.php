@@ -57,6 +57,9 @@ $_event_ids = $_season->get_event_ids();
         <link rel="stylesheet" href="css/styles.css?v=004">
     </head>
     <body>
+        <div>
+            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+        </div>
         <p class = "p_class" >Username: <?php echo $_crew->get_display_name(); ?></p>
         <form method="get" action="account_crew_availability_update.php">
             <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_crew_key; ?>"required>
