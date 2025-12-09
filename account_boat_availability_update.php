@@ -73,7 +73,9 @@ $_fleet->save();
     </head>
     <body>
         <div>
-            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+            <a href='/../../../program.html'>
+                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            </a>
         </div>
         <div>
             <p class = "p_class" ><?php echo $_boat->get_display_name(); ?>'s availability has been updated</p>

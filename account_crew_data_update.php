@@ -42,10 +42,10 @@ $_crew->set_display_name( name\display_name_from_strings( $_crew->get_first_name
 $_crew->set_partner_key( '' );
 $_crew->set_whitelist( '' );
 if( $_crew->is_member()) {
-    $_crew->set_rank( 0, 1 );
+    $_crew->set_rank( 2, 1 );
 }
 else {
-    $_crew->set_rank( 0, 0 );
+    $_crew->set_rank( 2, 0 );
 }
 if( $_crew->is_flex()) {
     $_flex = true;
@@ -55,8 +55,8 @@ else {
     $_flex = false;
     $_crew->set_rank( 1, 1 );
 }
-$_crew->set_rank( 2, 1 ); // reputation
-$_crew->set_rank( 3, 0 ); // frequency
+$_crew->set_rank( 0, 1 ); // commitment
+$_crew->set_rank( 3, 0 ); // absence
 $_crew->set_all_available( 'N' );
 $_crew->set_all_history( '' );
 
@@ -75,7 +75,9 @@ $_squad->save();
     </head>
     <body>
         <div>
-            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+            <a href='/../../../program.html'>
+                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            </a>
         </div>
         <div>
             <p class = "p_class" >Username: <?php echo $_crew->get_display_name(); ?></p></br>

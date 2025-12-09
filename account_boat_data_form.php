@@ -59,7 +59,9 @@ $_boat->set_display_name( $_display_name );
     </head>
     <body>
         <div>
-            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+            <a href='/../../../program.html'>
+                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            </a>
         </div>
         <p class = "p_class" >Boat name: <?php echo $_boat->get_display_name()?></p>
         <form method="post" action="account_boat_data_update.php">

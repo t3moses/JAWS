@@ -223,7 +223,6 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             Also update the rank tensor
             */
 
-            $_absence = 0;
             $_season = new season\Season();
             $_past_events = $_season->get_past_events();
             $_absence = count( $_past_events );

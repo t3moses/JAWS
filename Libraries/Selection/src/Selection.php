@@ -33,6 +33,18 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             return $_max_berths;
         }
 
+        private function update_boats_absence_rank( $_boats ) {
+            foreach( $_boats as $_boat ) {
+                $_boat->set_rank( 1, $_boat->get_absence() );
+            }
+        }
+
+        private function update_crews_absence_rank( $_crews ) {
+            foreach( $_crews as $_crew ) {
+                $_crew->set_rank( 3, $_crew->get_absence() );
+            }
+        }
+
         private function shuffle( $_list, $_seed ) {
 
             if( $_seed !== null ) {
@@ -200,6 +212,10 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             $_squad = new squad\Squad();
             $_boats = $_fleet->get_available( $_event_id );
             $_crews = $_squad->get_available( $_event_id );
+
+            $this->update_boats_absence_rank( $_boats );
+            $this->update_crews_absence_rank( $_crews );
+
             $_shuffled_boats = $this->shuffle( $_boats, $_event_id );
             $_sorted_boats = $this->bubble( $_shuffled_boats );
             $_shuffled_crews = $this->shuffle( $_crews, $_event_id );

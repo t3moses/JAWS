@@ -4,5 +4,7 @@ Dimension 1 indicates whether the crew is flexible (0) or inflexible (1).  Flexi
 Dimension 2 indicates whether the crew is a non-member (0) or a member (1).  Members get priority over non-members.
 Dimension 3 indicates absence, i.e. the number of events that the crew has missed.  Absent crews are given higher priority than frequent ones.
 Rank is used to set crew priority.  Where two or more crew members have the same rank, they are ordered randomly.
-
 Ex 1. [1,1,0,0] The crew did not sign-up early and has not been a no-show.  They have not registered as a boat owner.  They are a non-member.  And they have missed none of the past events.
+The commitment rank component is set to 1 during registration.  The admin can set it to 0.  It can be set to 2 during crew availability update.  This needs persistent storage.
+The flexibility amd membership rank components are set during registration.  These both need persistent storage.
+The absence rank compnent is set during registration.  It is updated by the Selection instance every time an event flotilla is calculated for which the crew is available.

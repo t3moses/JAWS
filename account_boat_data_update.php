@@ -44,16 +44,15 @@ $_season = new season\Season();
 $_number_of_events = $_season->get_event_count();
 $_event_ids = $_season->get_event_ids();
 if( $_boat->is_flex()) {
-    $_flex = true;
     $_boat->set_rank( 0, 0 );
 }
 else {
-    $_flex = false;
     $_boat->set_rank( 0, 1 );
 }
-$_boat->set_rank( 1, 0 ); // frequency
 $_boat->set_all_berths( $_boat->get_max_berths() );
 $_boat->set_all_history( '' );
+$_absence = $_boat->get_absence();
+$_boat->set_rank( 1, $_absence );
 
 $_fleet = new fleet\Fleet();
 $_fleet->set_boat( $_boat );
@@ -70,7 +69,9 @@ $_fleet->save();
     </head>
     <body>
         <div>
-            <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '10%' height = '10%'></a>
+            <a href='/../../../program.html'>
+                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            </a>
         </div>
         <div>
             <p class = "p_class" ><?php echo $_boat->get_display_name() ?>'s account has been created</p>
