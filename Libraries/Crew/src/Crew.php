@@ -227,7 +227,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             $_past_events = $_season->get_past_events();
             $_absence = count( $_past_events );
             foreach( $_past_events as $_past_event ) {
-                if ( $this->history[ $_past_event ] !== null ) {
+                if ( $this->history[ $_past_event ] !== '' ) {
                     $_absence--;
                 }
             }

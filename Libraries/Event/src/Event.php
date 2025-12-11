@@ -1,13 +1,13 @@
 <?php
 
 namespace nsc\sdc\event;
-
+/*
 use nsc\sdc\fleet as fleet;
 use nsc\sdc\squad as squad;
 
 require_once __DIR__ . '/../../Fleet/src/Fleet.php';
 require_once __DIR__ . '/../../Squad/src/Squad.php';
-
+*/
 
     Class Event {
 

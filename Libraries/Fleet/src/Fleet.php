@@ -82,6 +82,19 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             return $_available_boats;
         }
 
+        public function update_history( $_event_id, $_flotilla ) {
+
+            foreach( $this->boats as $_boat ) {
+                $_boat->history[ $_event_id ] = '';
+                foreach( $_flotilla[ 'crewed_boats' ] as $_crewed_boat ) {
+                    if ( $_crewed_boat[ 'boat' ]->key === $_boat->key ) {
+                        $_boat->history[ $_event_id ] = 'Y';
+                        break;
+                    }
+                }
+            }
+        }
+
         public function load() : bool {
 
             /*
@@ -124,7 +137,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
                         if ( $_property_names[ $i ] === 'berths' || $_property_names[ $i ] === 'history' ) {
                             $_boat->$_property_name = array_combine( $_event_ids, $_ex_property_name);
                         }
-                        else {
+                        else { // must be rank
                             $_boat->$_property_name = $_ex_property_name;
                         }
                     }
@@ -142,7 +155,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
         public function save(): void {
 
             /*
-            Write the squad object to the CSV files.
+            Write the fleet object to the CSV files.
             */
 
             $_property_names = array_keys(get_class_vars('nsc\sdc\boat\Boat'));
@@ -168,11 +181,11 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             fclose($_handle);
             return;
         }
-            
+/*            
         public function __destruct() {
             $this->save();
         }
-
+*/
     }
 
 ?>

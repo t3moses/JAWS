@@ -49,24 +49,17 @@ if ( str_starts_with( $_user_str, "key=" )) {
     $_user_str = substr( $_user_str, strlen( "key=" ));
 }
 $_user_arr = explode( "&avail=", $_user_str );
-// $_user_str = implode( ",", $_user_arr );
 $_user_crew_key = array_shift( $_user_arr );
 
 $_squad = new squad\Squad();
 $_season = new season\Season();
-$_event_ids = $_season->get_event_ids();
+$_event_ids = $_season->get_future_events();
 $_crew = $_squad->get_crew( $_user_crew_key );
-
-/* $_available = array_combine( $_event_ids, $_user_arr );
-foreach ( $_event_ids as $_event_id ){
-    $_crew->set_available( $_event_id, $_available[ $_event_id ] );
-}
-*/
 
 for( $i = 0; $i < count( $_user_arr ); $i++ ) {
     $_crew->set_available( $_event_ids[ $i ], $_user_arr[ $i ] );
 }
-// $_crew->set_all_available( $_user_arr );
+
 $_squad->set_crew( $_crew );
 $_squad->save();
 

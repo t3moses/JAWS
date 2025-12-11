@@ -4,6 +4,7 @@ namespace nsc\sdc\season;
 
     class Season {
 
+        private $source;
         private $time;
         private $year;
         private $start_time;
@@ -12,27 +13,27 @@ namespace nsc\sdc\season;
 
         public function __construct() {
 
-            $_config_fname = __DIR__ . '/../../Config/data/config.json';
+            $_config_fname = __DIR__ . '/../data/config.json';
             $_config_file = file_get_contents( $_config_fname );
             $config_data = json_decode( $_config_file, true );
-            $this->year = $config_data[ 'config' ][ 'year' ];            
+            $this->source = $config_data[ 'config' ][ 'source' ];
+
+            if ( $this->source === 'simulated ') {
+                $this->year = $config_data[ 'config' ][ 'year' ];
+                $this->time = strtotime( $config_data[ 'config' ][ 'year' ] . '-' . $config_data[ 'config' ][ 'month' ] . '-' .  $config_data[ 'config' ][ 'day' ]);
+            } else {
+                $this->year = $config_data[ 'config' ][ 'year' ];
+                $this->time = time( );
+            }         
             $this->start_time = $config_data[ 'config' ][ 'start_time' ];
             $this->event_ids = $config_data[ 'config' ][ 'event_ids' ];
-            $this->time = time( );
-            
+
         }
 
-        public function set_time( $_utime ) {
-            $this->time = $_utime;
-        }
-        public function get_time() {
-            return $this->time;
-        }
         public function get_event_time( string $_event_id ) {
 
-            $_date_time = new \DateTime();
-            $_time = $_date_time->createFromFormat('Y D M d H i s', $this->year . ' ' . $_event_id . ' ' . $this->start_time);
-            $_utime = $_time->getTimestamp();
+            $_date = date_create_from_format( 'Y D M j H i s', $this->year . ' ' . $_event_id . ' ' . $this->start_time );
+            $_utime = $_date->format('U');
             return $_utime;
         }
 
@@ -58,7 +59,9 @@ namespace nsc\sdc\season;
             $_event_ids = $this->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $_event_time = $this->get_event_time( $_event_id );
-                if ( $_event_time > $this->time ) {
+
+                    if ( $_event_time > $this->time ) {
+
                     $_future_events[] = $_event_id;
                 }
             }

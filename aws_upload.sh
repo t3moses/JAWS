@@ -19,7 +19,7 @@ put program.html
 put season_update.php
 cd css
 put css/styles.css
-chmod 664 styles.css
-cd -r /Libraries
+chmod 770 styles.css
+cd -R /Libraries
 bye
 EOF

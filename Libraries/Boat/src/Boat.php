@@ -125,7 +125,8 @@ require_once __DIR__ . '/../../Name/src/Name.php';
              $this->assistance_required = $_assistance_required;
         }
         public function set_rank( $_dim, $_rank) {
-            return $this->rank[ $_dim ] = $_rank;
+            $this->rank[ $_dim ] = $_rank;
+            return $this->rank;
         }
         public function set_history( $_event_id, $_history ) {
             return $this->history[ $_event_id ] = $_history;
@@ -142,7 +143,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
         public function is_flex() : bool {
 
             /*
-            If the boat owner is also a crew, return true and update the boat and crew rank tensors
+            If the boat owner is also a crew, return true and update the crew rank tensors
             */
 
             $_squad = new squad\Squad();
@@ -165,8 +166,10 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             $_season = new season\Season();
             $_past_events = $_season->get_past_events();
             $_absence = count( $_past_events );
+
             foreach( $_past_events as $_past_event ) {
-                if ( $this->history[ $_past_event ] !== null ) {
+
+                if ( $this->history[ $_past_event ] !== '' ) {
                     $_absence--;
                 }
             }

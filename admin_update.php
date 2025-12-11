@@ -23,12 +23,20 @@ $_season = new season\Season();
 
     $_date = date_from_post();
 
-    if ( $_date[ 'source' ] === "simulated" ) {
-        $_utime = strtotime( $_date[ 'year' ] . '-' . $_date[ 'month' ] . '-' .  $_date[ 'day' ]);
-        $_season->set_time( $_utime );
-    }
+        if ( $_date[ 'source' ] === "simulated" ) {
 
-    $_event_id = $_season->get_next_event();
+            $_config_fname = __DIR__ . '/Libraries/Season/data/config.json';
+            $_config_file = file_get_contents( $_config_fname );
+            $config_data = json_decode( $_config_file, true );
+
+            $config_data[ 'config' ][ 'source' ] = 'simulated ';
+            $config_data[ 'config' ][ 'year' ] = $_date[ 'year' ];
+            $config_data[ 'config' ][ 'month' ] = $_date[ 'month' ];
+            $config_data[ 'config' ][ 'day' ] = $_date[ 'day' ];
+
+            file_put_contents( $_config_fname, json_encode( $config_data ));
+
+    }
 
     header( "Location: /program.html" );
     exit;

@@ -27,7 +27,6 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
         private function get_max_berths( $_boats ) {
             $_max_berths = 0;
             foreach( $_boats as $_boat ) {
-//                $_max_berths += $_boat->max_berths;
                 $_max_berths += $_boat->berths[ $this->event_id ];
             }
             return $_max_berths;
@@ -35,13 +34,13 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
 
         private function update_boats_absence_rank( $_boats ) {
             foreach( $_boats as $_boat ) {
-                $_boat->set_rank( 1, $_boat->get_absence() );
+                $_boat->set_rank( 1, (string)$_boat->get_absence() );
             }
         }
 
         private function update_crews_absence_rank( $_crews ) {
             foreach( $_crews as $_crew ) {
-                $_crew->set_rank( 3, $_crew->get_absence() );
+                $_crew->set_rank( 3, (string)$_crew->get_absence() );
             }
         }
 
@@ -67,10 +66,10 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             $_dimensions = count( $_rank_1 );
             for ( $_i = 0; $_i < $_dimensions; $_i++ ) {
 
-                if ( $_rank_1[ $_i ] > $_rank_2[ $_i ] ) {
+                if ( (int)$_rank_1[ $_i ] > (int)$_rank_2[ $_i ] ) {
                     return true;
                 }
-                elseif ( $_rank_1[ $_i ] < $_rank_2[ $_i ] ) {
+                elseif ( (int)$_rank_1[ $_i ] < (int)$_rank_2[ $_i ] ) {
                     return false;
                 }
 
@@ -215,6 +214,8 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
 
             $this->update_boats_absence_rank( $_boats );
             $this->update_crews_absence_rank( $_crews );
+
+            $_fleet->save();
 
             $_shuffled_boats = $this->shuffle( $_boats, $_event_id );
             $_sorted_boats = $this->bubble( $_shuffled_boats );

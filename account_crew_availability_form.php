@@ -45,8 +45,7 @@ $_display_name = $_crew->get_display_name();
 $_available = $_crew->get_all_available();
 
 $_season = new season\Season();
-$_event_ids = $_season->get_event_ids();
-
+$_event_ids = $_season->get_future_events();
 
 ?>
 

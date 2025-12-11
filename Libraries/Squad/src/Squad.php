@@ -85,6 +85,24 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             return $_available_crews;
         }
 
+        public function update_history( $_event_id, $_flotilla ) {
+
+// Traverse the squad array.  Set all values for the event_id to '',
+// except any in flotilla, which are set to 'Y'.
+
+            foreach( $this->crews as $_squad_crew ) {
+                $_squad_crew->history[ $_event_id ] = '';
+                foreach( $_flotilla[ 'crewed_boats' ] as $_crewed_boat ) {
+                    foreach( $_crewed_boat[ 'crews' ] as $_flotilla_crew ) {
+                        if ( $_flotilla_crew->key === $_squad_crew->key ) {
+                            $_squad_crew->history[ $_event_id ] = $_crewed_boat[ 'boat' ]->key;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         private function load() : bool {
 
             /*
