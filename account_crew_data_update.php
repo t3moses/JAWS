@@ -33,31 +33,29 @@ function crew_from_post() {
     }
 }
 
-
-$_crew = crew_from_post();
-
 $_squad = new squad\Squad();
 
+$_crew = crew_from_post();
 $_crew->set_display_name( name\display_name_from_strings( $_crew->get_first_name(), $_crew->get_last_name()));
 $_crew->set_partner_key( '' );
 $_crew->set_whitelist( '' );
 if( $_crew->is_member()) {
-    $_crew->set_rank( 2, 1 );
+    $_crew->set_rank( CREW_RANK_MEMBERSHIP_DIMENSION, MEMBER );
 }
 else {
-    $_crew->set_rank( 2, 0 );
+    $_crew->set_rank( CREW_RANK_MEMBERSHIP_DIMENSION, NON_MEMBER );
 }
 if( $_crew->is_flex()) {
     $_flex = true;
-    $_crew->set_rank( 1, 0 );
+    $_crew->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, FLEXIBLE );
 }
 else {
     $_flex = false;
-    $_crew->set_rank( 1, 1 );
+    $_crew->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, INFLEXIBLE );
 }
-$_crew->set_rank( 0, 1 ); // commitment
-$_crew->set_rank( 3, 0 ); // absence
-$_crew->set_all_available( 'N' );
+$_crew->set_rank( CREW_RANK_COMMITMENT_DIMENSION, AVAILABLE );
+$_crew->set_rank( CREW_RANK_ABSENCE_DIMENSION , 0 );
+$_crew->set_all_available( UNAVAILABLE );
 $_crew->set_all_history( '' );
 
 $_squad->set_crew( $_crew );

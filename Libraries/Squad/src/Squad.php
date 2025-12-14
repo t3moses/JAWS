@@ -11,14 +11,15 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
     class Squad {
 
         public $crews = [];
+        private $season;
 
         public function __construct() {
 
         /*
         Instantiate the squad object with the contents of the squad database.
         */
-
-           $this->load();
+            $this->season = new season\Season();
+            $this->load();
 
         }
 
@@ -71,13 +72,13 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
         function get_available( $_event_id ) : ?array {
 
             /*
-            Return the list of crews avilable on the event day.
+            Return the list of crews available on the event day.
             */
 
             $_available_crews = [];
             foreach( $this->crews as $_crew ) {
                 $_available_crew = $_crew->available[ $_event_id ];
-                if ( $_available_crew !== 'N' ) {
+                if ( $_available_crew !== '0' ) {
                     $_available_crews[] = $_crew;
                 }
             }
@@ -85,10 +86,29 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             return $_available_crews;
         }
 
+        public function update_absence_rank( $_crews ) {
+            foreach ( $_crews as $_crew ) {
+                $_crew->update_absence_rank();
+            }
+
+        }
+
+        public function update_commitment_rank( $_crews ) {
+            foreach ( $_crews as $_crew ) {
+                $_crew->update_commitment_rank();
+            }
+        }
+
+        public function update_availability( $_crews, $_commitment ) {
+            foreach( $_crews as $_crew ) {
+                $_crew->update_availability( $_commitment );
+            }
+        }
+
         public function update_history( $_event_id, $_flotilla ) {
 
-// Traverse the squad array.  Set all values for the event_id to '',
-// except any in flotilla, which are set to 'Y'.
+        // Traverse the squad array.  Set all values for the event_id to '',
+        // except any in flotilla, which are set to 'Y'.
 
             foreach( $this->crews as $_squad_crew ) {
                 $_squad_crew->history[ $_event_id ] = '';
@@ -126,8 +146,8 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
                 return false;
             }
 
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+
+            $_event_ids = $this->season->get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 
@@ -187,10 +207,11 @@ require_once __DIR__ . '/../../Crew/src/Crew.php';
             fclose($_handle);
             return;
         }
-
+/*
         public function __destruct() {
             $this->save();
         }
+*/
     }
 
 ?>

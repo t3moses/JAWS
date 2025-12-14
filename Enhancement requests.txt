@@ -19,15 +19,17 @@
 019: Generate html page for the entire season. RESOLVED
 020: Update boat history based on $_flotilla. RESOLVED
 021: Update crew history based on $_flotilla. RESOLVED
-022: Add boat absence to rank, based on boat history.
-023: Add crew absence to rank, based on crew history.
+022: Add boat absence to rank, based on boat history. DONE
+023: Add crew absence to rank, based on crew history. DONE
 024: If crew waitlist fills a row, then an empty row is appended. RESOLVED
 025: Boat occupancy does not always correspond with the registered number of berths, Selection line 153
 should use the occupied berths, not max berths. RESOLVED
 026: Update every boat's and crew's rank before selecting boats and crews. RESOLVED
 027: Update the history for each boat and crew after each flotilla definition. RESOLVED
 028: In season_update.php, just update future events. RESOLVED
-029: In season_update.php, update squad and fleet histories for the next event. RESOLVEd
-030: WHen someone logs in, check database integrity.  If corrupted, stop and email admin.
-031: Make crew availability a num,ber reflecting commitment: no-show(0), late registration (1), early registration (2).
-Set the value during registration and set rank to this value when selecting crew.
+029: In season_update.php, update squad and fleet histories for the next event. RESOLVED
+030: When someone logs in, check database integrity.  If corrupted, stop and email admin.
+031: Make crew availability a number reflecting commitment: no-show(0), late registration (1), early registration (2). DONE
+032: For boats (as for crews), availability pages should only show future events. DONE
+033: Add all boats to the crew whitelist when a crew registers.
+034: Add the boat to all crew whitelists when a boat registers.

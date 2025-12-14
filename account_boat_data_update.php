@@ -37,24 +37,22 @@ function boat_from_post() {
     }
 }
 
+$_season = new season\Season();
+$_fleet = new fleet\Fleet();
 
 $_boat = boat_from_post();
-
-$_season = new season\Season();
 $_number_of_events = $_season->get_event_count();
 $_event_ids = $_season->get_event_ids();
 if( $_boat->is_flex()) {
-    $_boat->set_rank( 0, 0 );
+    $_boat->set_rank( BOAT_RANK_FLEXIBILITY_DIMENSION, FLEXIBLE );
 }
 else {
-    $_boat->set_rank( 0, 1 );
+    $_boat->set_rank( BOAT_RANK_FLEXIBILITY_DIMENSION, INFLEXIBLE );
 }
 $_boat->set_all_berths( $_boat->get_max_berths() );
 $_boat->set_all_history( '' );
-$_absence = $_boat->get_absence();
-$_boat->set_rank( 1, $_absence );
+$_boat->update_absence_rank();
 
-$_fleet = new fleet\Fleet();
 $_fleet->set_boat( $_boat );
 $_fleet->save();
 

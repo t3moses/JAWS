@@ -37,11 +37,11 @@ function crew_name_array_from_get_url() {
     }
 }
 
-$_user_crew_name = crew_name_array_from_get_url();
+$_crew = new crew\Crew();
 
+$_user_crew_name = crew_name_array_from_get_url();
 $_user_crew_key = name\key_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
 $_display_name = name\display_name_from_strings( $_user_crew_name[ 'fname' ], $_user_crew_name[ 'lname' ] );
-$_crew = new crew\Crew();
 $_crew->set_default();
 $_crew->set_key( $_user_crew_key );
 $_crew->set_first_name( $_user_crew_name[ 'fname' ] );

@@ -8,6 +8,13 @@ use nsc\sdc\squad as squad;
 require_once __DIR__ . '/../../Fleet/src/Fleet.php';
 require_once __DIR__ . '/../../Squad/src/Squad.php';
 
+const BOAT_RANK_FLEXIBILITY_DIMENSION = 0;
+const BOAT_RANK_ABSENCE_DIMENSION = 1;
+const CREW_RANK_COMMITMENT_DIMENSION = 0;
+const CREW_RANK_FLEXIBILITY_DIMENSION = 1;
+const CREW_RANK_MEMBERSHIP_DIMENSION = 2;
+const CREW_RANK_ABSENCE_DIMENSION = 3;
+
     class Selection {
 
         private $event_id;
@@ -27,21 +34,9 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
         private function get_max_berths( $_boats ) {
             $_max_berths = 0;
             foreach( $_boats as $_boat ) {
-                $_max_berths += $_boat->berths[ $this->event_id ];
+                $_max_berths += (int)$_boat->berths[ $this->event_id ];
             }
             return $_max_berths;
-        }
-
-        private function update_boats_absence_rank( $_boats ) {
-            foreach( $_boats as $_boat ) {
-                $_boat->set_rank( 1, (string)$_boat->get_absence() );
-            }
-        }
-
-        private function update_crews_absence_rank( $_crews ) {
-            foreach( $_crews as $_crew ) {
-                $_crew->set_rank( 3, (string)$_crew->get_absence() );
-            }
         }
 
         private function shuffle( $_list, $_seed ) {
@@ -204,18 +199,16 @@ require_once __DIR__ . '/../../Squad/src/Squad.php';
             $this->waitlist_crews = [];
         }
 
-        public function select( $_event_id  ) {
+        public function select( $_fleet, $_squad, $_event_id  ) {
 
             $this->event_id = $_event_id;
-            $_fleet = new fleet\Fleet();
-            $_squad = new squad\Squad();
+
             $_boats = $_fleet->get_available( $_event_id );
             $_crews = $_squad->get_available( $_event_id );
 
-            $this->update_boats_absence_rank( $_boats );
-            $this->update_crews_absence_rank( $_crews );
-
-            $_fleet->save();
+            $_fleet->update_absence_rank( $_boats );
+            $_squad->update_absence_rank( $_crews );
+            $_squad->update_commitment_rank( $_crews );
 
             $_shuffled_boats = $this->shuffle( $_boats, $_event_id );
             $_sorted_boats = $this->bubble( $_shuffled_boats );

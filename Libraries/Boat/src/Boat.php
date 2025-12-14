@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
 
     class Boat {
 
+        private $season;
         public $key;
         public $display_name;
         public $owner_first_name;
@@ -29,7 +30,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
         public $history = []; // Associative array
 
         public function __construct( ) {
-
+            $this->season = new season\Season();
         }
         public function set_default() {
             $this->key = '';
@@ -68,7 +69,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
         public function get_max_berths() {
             return $this->max_berths;
         }
-        public function get_berths( $_event_id ) : int {
+        public function get_berths( $_event_id ) : string {
             return $this->berths[ $_event_id ];
         }
         public function get_all_berths() : array {
@@ -114,8 +115,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return $this->berths[ $_event_id ] = $_berths;
         }
         public function set_all_berths( $_berths ) {
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+            $_event_ids = $this->season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->berths[ $_event_id ] = $_berths;
             }
@@ -126,18 +126,15 @@ require_once __DIR__ . '/../../Name/src/Name.php';
         }
         public function set_rank( $_dim, $_rank) {
             $this->rank[ $_dim ] = $_rank;
-            return $this->rank;
         }
         public function set_history( $_event_id, $_history ) {
             return $this->history[ $_event_id ] = $_history;
         }
         public function set_all_history( $_history ) {
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+            $_event_ids = $this->season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->history[ $_event_id ] = $_history;
             }
-            return $this->history;
         }
 
         public function is_flex() : bool {
@@ -156,24 +153,16 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return false;
         }
 
-        public function get_absence() : int {
+        public function update_absence_rank() {
 
-            /*
-            Return the number of past events in which the boat was available
-            Also update the rank tensor
-            */
-
-            $_season = new season\Season();
-            $_past_events = $_season->get_past_events();
-            $_absence = count( $_past_events );
-
-            foreach( $_past_events as $_past_event ) {
-
-                if ( $this->history[ $_past_event ] !== '' ) {
-                    $_absence--;
+            $_past_events = $this->season->get_past_events();
+            $_absences = 0;
+            foreach( $_past_events as $_event_id ){
+                if ($this->history[ $_event_id ] === '' ) {
+                    $_absences++;
                 }
             }
-            return $_absence;
+            $this->set_rank( BOAT_RANK_ABSENCE_DIMENSION, $_absences );
         }
 
     }

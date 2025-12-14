@@ -1,3 +1,23 @@
+Boat data comprises:
+key (derived from user-input boat name)
+display_name (derived from user-input boat name)
+owner_first_name
+owner_last_name
+owner_email
+owner_mobile
+min_berths
+max_berths
+occupied_berths
+assistance_required
+rank
+    flexibility - derived from owner first and last names and squad data
+    absence - derived from history
+berths
+history
+
+Underived variables have set and get functions.
+Derived variables additionaly have update functions, which (in turn) call the correspoonding set functions.
+
 A boat's rank is a tensor with shape {2,e} (where e is the number of events in the season).
 Dimension 0 indicates whether the boat is flexible (0) or inflexible (1).  The owners of flexible boats are also registered as crew.  Inflexible boats take priority ov flexible ones.
 Dimension 1 indicates absence, i.e. the number of events that the boat has missed.  Absent boats take priority over frequent ones.

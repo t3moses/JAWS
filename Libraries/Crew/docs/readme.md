@@ -1,3 +1,26 @@
+Crew data comprises:
+key - derived from first name, last name
+display_name - derived from first name, last name
+first_name
+last_name
+partner_key
+email
+membership_number,
+rank
+    commitment - derived from available
+    flexible - derived from key and fleet during registration
+    membership - derived from membership number during registration
+    absence - derived from history
+skill
+experience,
+available,
+history,
+whitelist
+
+Underived variables have set and get functions.
+Derived variables additionaly have update functions, which (in turn) call the correspoonding set functions.
+
+
 A crew's rank is a tensor with shape {3,2,2,e} (where e is the number of events in the season).
 Dimension 0 indicates commitment.  No-shows are assigned the value 0.  Those who sign-up for an event more than five days in advance are assigned the value 2.  All others are assigned the value 1.
 Dimension 1 indicates whether the crew is flexible (0) or inflexible (1).  Flexible crew are also registered as a boat owner.  Inflexible crew get priority over flexible ones.

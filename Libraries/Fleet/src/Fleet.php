@@ -11,14 +11,14 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
     class Fleet {
 
         public $boats = [];
+        private $season;
 
         public function __construct() {
-
         /*
         Instantiate the fleet object with the contents of the fleet database.
         */
-
-           $this->load();
+            $this->season = new season\Season();
+            $this->load();
 
         }
 
@@ -75,11 +75,17 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             $_available_boats = [];
             foreach( $this->boats as $_boat ) {
                 $_berths = $_boat->get_berths( $_event_id );
-                if ( $_berths !== 0 ) {
+                if ( $_berths !== '0' ) {
                     $_available_boats[] = $_boat;
                 }
             }
             return $_available_boats;
+        }
+
+        public function update_absence_rank( $_boats ) {
+            foreach( $_boats as $_boat ) {
+                $_boat->update_absence_rank();
+            }
         }
 
         public function update_history( $_event_id, $_flotilla ) {
@@ -120,8 +126,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
                 return false;
             }
 
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+            $_event_ids = $this->season->get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 
@@ -181,11 +186,7 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
             fclose($_handle);
             return;
         }
-/*            
-        public function __destruct() {
-            $this->save();
-        }
-*/
+
     }
 
 ?>

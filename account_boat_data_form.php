@@ -41,10 +41,11 @@ function boat_name_from_get_url() {
     }
 }
 
+$_boat = new boat\Boat();
+
 $_user_boat_name = boat_name_from_get_url();
 $_boat_key = name\key_from_string( $_user_boat_name );
 $_display_name = name\display_name_from_string( $_user_boat_name );
-$_boat = new boat\Boat();
 $_boat->set_default();
 $_boat->set_key( $_boat_key );
 $_boat->set_display_name( $_display_name );

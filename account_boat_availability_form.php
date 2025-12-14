@@ -34,19 +34,17 @@ function boat_key_from_get_url() {
     }
 }
 
+$_season = new season\Season();
+$_fleet = new fleet\Fleet();
+
 // Get the boat key provided through the get url query string.
 // Get the boat name corresponding to the boat key for display at the top of the html form.
 
 $_user_boat_key = boat_key_from_get_url();
-
-$_fleet = new fleet\Fleet();
 $_boat = $_fleet->get_boat( $_user_boat_key );
 $_display_name = $_boat->get_display_name();
-
 $_berths = $_boat->get_all_berths();
-
-$_season = new season\Season();
-$_event_ids = $_season->get_event_ids();
+$_event_ids = $_season->get_future_events();
 
 ?>
 
@@ -82,13 +80,13 @@ offering a choice of the number of availablr spaces.
                     <div class='column'>
                         <select class = select_class name=avail id=avail>
 
-                            <option value = 0 <?php if($_berths[ $_event_id ] === '0' ) { echo ' selected'; } ?>>0</option>
-                            <option value = 1 <?php if($_berths[ $_event_id ] === '1' ) { echo ' selected'; } ?>>1</option>
-                            <option value = 2 <?php if($_berths[ $_event_id ] === '2' ) { echo ' selected'; } ?>>2</option>
-                            <option value = 3 <?php if($_berths[ $_event_id ] === '3' ) { echo ' selected'; } ?>>3</option>
-                            <option value = 4 <?php if($_berths[ $_event_id ] === '4' ) { echo ' selected'; } ?>>4</option>
-                            <option value = 5 <?php if($_berths[ $_event_id ] === '5' ) { echo ' selected'; } ?>>5</option>
-                            <option value = 6 <?php if($_berths[ $_event_id ] === '6' ) { echo ' selected'; } ?>>6</option>
+                            <option value = '0' <?php if($_berths[ $_event_id ] === '0' ) { echo ' selected'; } ?>>0</option>
+                            <option value = '1' <?php if($_berths[ $_event_id ] === '1' ) { echo ' selected'; } ?>>1</option>
+                            <option value = '2' <?php if($_berths[ $_event_id ] === '2' ) { echo ' selected'; } ?>>2</option>
+                            <option value = '3' <?php if($_berths[ $_event_id ] === '3' ) { echo ' selected'; } ?>>3</option>
+                            <option value = '4' <?php if($_berths[ $_event_id ] === '4' ) { echo ' selected'; } ?>>4</option>
+                            <option value = '5' <?php if($_berths[ $_event_id ] === '5' ) { echo ' selected'; } ?>>5</option>
+                            <option value = '6' <?php if($_berths[ $_event_id ] === '6' ) { echo ' selected'; } ?>>6</option>
 
                         </select></br>
                     </div>

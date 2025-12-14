@@ -53,6 +53,7 @@ $_user_crew_key = array_shift( $_user_arr );
 
 $_squad = new squad\Squad();
 $_season = new season\Season();
+
 $_event_ids = $_season->get_future_events();
 $_crew = $_squad->get_crew( $_user_crew_key );
 
@@ -89,10 +90,10 @@ Loop through the list of events, displaying the event value.
         <?php for ( $i = 0; $i < count($_event_ids); $i++ ) { ?>
             <div class='flex-container'>
                 <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $i ]; ?></p></div>
-                <div class='column'><p class = "p_class" > <?php if( $_crew->get_available( $_event_ids[ $i ]) === 'Y' ) {
-                echo 'I am available'; }
-                else {
+                <div class='column'><p class = "p_class" > <?php if( $_crew->get_available( $_event_ids[ $i ]) === '0' ) {
                 echo 'I am not available'; }
+                else {
+                echo 'I am available'; }
                 ?></p></div>
                 </div>
             </div>

@@ -25,9 +25,10 @@ require_once __DIR__ . '/../../Name/src/Name.php';
         public $available = []; // Associative array
         public $history = []; // Associative array
         public $whitelist = []; // Indexed array
+        private $season;
 
         public function __construct( ) {
-
+            $this->season = new season\Season();
         }
         public function set_default() {
 
@@ -72,16 +73,16 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return $this->rank;
         }
         public function get_commitment_level() {
-            return $this->get_rank( 0 );
+            return $this->get_rank( CREW_RANK_COMMITMENT_DIMENSION );
         }
         public function get_flex_level() {
-            return $this->get_rank( 1 );
+            return $this->get_rank( CREW_RANK_FLEXIBILITY_DIMENSION );
         }
         public function get_membership_level() {
-            return $this->get_rank( 2 );
+            return $this->get_rank( CREW_RANK_MEMBERSHIP_DIMENSION );
         }
         public function get_absence_level() {
-            return $this->get_rank( 3 );
+            return $this->get_rank( CREW_RANK_ABSENCE_DIMENSION );
         }
         public function get_whitelist() {
             return $this->whitelist;
@@ -117,10 +118,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             $this->email = $_email;
         }
         public function set_rank( $_dim, int $_level ) {
-            return $this->rank[ $_dim ] = $_level;
-        }
-        public function set_commitment_level( $_level ) {
-            $this->set_rank( 0, $_level );
+            $this->rank[ $_dim ] = $_level;
         }
         public function set_flex_level( ) {
             if( $this->is_flex() ) {
@@ -138,10 +136,6 @@ require_once __DIR__ . '/../../Name/src/Name.php';
                 $this->set_rank( 2, 0 );
             }
         }
-        public function set_absence_level( ) {
-            $_level = $this->get_absence();
-            $this->set_rank( 3, $_level );
-        }
         public function set_whitelist( $_whitelist) {
             return $this->whitelist = $_whitelist;
         }
@@ -158,8 +152,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return $this->available[ $_event_id ] = $_available;
         }
         public function set_all_available( $_available ) {
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+            $_event_ids = $this->season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->set_available( $_event_id, $_available );
             }
@@ -169,8 +162,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return $this->history[ $_event_id ] = $_history;
         }
         public function set_all_history( $_history ) {
-            $_season = new season\Season();
-            $_event_ids = $_season->get_event_ids();
+            $_event_ids = $this->season->get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->set_history( $_event_id, $_history );
             }
@@ -209,29 +201,37 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             foreach( $_fleet->boats as $_boat ) {
                 $_owner_key = name\key_from_strings( $_boat->owner_first_name, $_boat->owner_last_name );
                 if ( $_owner_key === $this->key ) {
-                    $_boat->set_rank( 0, 0 );
+                    $this->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, 0 );
+                    $_boat->set_rank( BOAT_RANK_FLEXIBILITY_DIMENSION, 0 );
                     return true;
                 }
             }
             return false;
         }
 
-        public function get_absence() : int {
+        public function update_absence_rank() {
 
-            /*
-            Return the number of past events in which the crew was assigned
-            Also update the rank tensor
-            */
-
-            $_season = new season\Season();
-            $_past_events = $_season->get_past_events();
-            $_absence = count( $_past_events );
-            foreach( $_past_events as $_past_event ) {
-                if ( $this->history[ $_past_event ] !== '' ) {
-                    $_absence--;
+            $_past_events = $this->season->get_past_events();
+            $_absences = 0;
+            foreach( $_past_events as $_event_id ){
+                if ($this->history[ $_event_id ] === '' ) {
+                    $_absences++;
                 }
             }
-            return $_absence;
+            $this->set_rank( CREW_RANK_ABSENCE_DIMENSION, $_absences );
+        }
+
+        public function update_commitment_rank() {
+            $_commitment = $this->available[ $this->season->get_next_event() ];
+            $this->set_rank( CREW_RANK_COMMITMENT_DIMENSION, $_commitment );
+        }
+
+        public function update_availability( $_commitment ) {
+
+        // Load the rank commitment component from the crew's next event availability
+
+            $_event_id = $this->season->get_next_event();
+            $this->set_available( $_event_id, $_commitment );
         }
 
     }

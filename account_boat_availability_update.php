@@ -41,21 +41,20 @@ function string_from_get_url() {
     }
 }
 
+$_fleet = new fleet\Fleet();
+$_season = new season\Season();
+
 $_user_str = string_from_get_url();
 
 // Convert the query array back into a comma-separated string
+
 if ( str_starts_with( $_user_str, "key=" )) {
     $_user_str = substr( $_user_str, strlen( "key=" ));
 }
 $_user_arr = explode( "&avail=", $_user_str );
-$_user_str = implode( ",", $_user_arr );
 $_user_boat_key = array_shift( $_user_arr );
-
-$_fleet = new fleet\Fleet();
-$_season = new season\Season();
-$_event_ids = $_season->get_event_ids();
+$_event_ids = $_season->get_future_events();
 $_boat = $_fleet->get_boat( $_user_boat_key );
-
 $_berths = array_combine( $_event_ids, $_user_arr );
 foreach ( $_event_ids as $_event_id ){
     $_boat->set_berths( $_event_id, $_berths[ $_event_id ] );

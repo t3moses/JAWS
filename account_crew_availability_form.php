@@ -38,13 +38,11 @@ function crew_key_from_get_url() {
 $_user_crew_key = crew_key_from_get_url();
 
 $_squad = new squad\Squad();
-$_crew = $_squad->get_crew( $_user_crew_key );
-
-$_display_name = $_crew->get_display_name();
-
-$_available = $_crew->get_all_available();
-
 $_season = new season\Season();
+
+$_crew = $_squad->get_crew( $_user_crew_key );
+$_display_name = $_crew->get_display_name();
+$_available = $_crew->get_all_available();
 $_event_ids = $_season->get_future_events();
 
 ?>
@@ -85,8 +83,8 @@ offering a choice betweenAvailable and not available.
                     <div class='column'>
                         <select class = select_class name=avail id=avail>
 
-                            <option value = "N" <?php if( $_available[ $_event_id  ] === 'N' ) { echo ' selected'; } ?>>No</option>
-                            <option value = "Y" <?php if( $_available[ $_event_id  ] !== 'N' ) { echo ' selected'; } ?>>Yes</option>
+                            <option value = "0" <?php if( $_available[ $_event_id  ] === '0' ) { echo ' selected'; } ?>>No</option>
+                            <option value = "2" <?php if( $_available[ $_event_id  ] !== '0' ) { echo ' selected'; } ?>>Yes</option>
 
                         </select></br>
                     </div>

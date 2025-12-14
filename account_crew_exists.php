@@ -46,14 +46,13 @@ function crew_name_from_post() {
     }
 }
 
+$_squad = new squad\Squad;
+
 // Convert the first and last names entered by the user into a key.
 $_user_name_arr = crew_name_from_post();
 $_user_crew_key = name\key_from_strings( $_user_name_arr[ 'fname' ], $_user_name_arr[ 'lname' ] );
 
 $_query_string = http_build_query( $_user_name_arr );
-
-$_squad = new squad\Squad;
-
 
 // Pass on the key or name to the next step.
 
