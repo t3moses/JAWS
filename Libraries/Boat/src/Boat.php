@@ -5,12 +5,14 @@ namespace nsc\sdc\boat;
 use nsc\sdc\name as name;
 use nsc\sdc\season as season;
 use nsc\sdc\squad as squad;
+use nsc\sdc\config as config;
 
 
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Season/src/Season.php';
 require_once __DIR__ . '/../../Squad/src/Squad.php';
 require_once __DIR__ . '/../../Name/src/Name.php';
+require_once __DIR__ . '/../../Config/src/Config.php';
 
     class Boat {
 
@@ -136,7 +138,14 @@ require_once __DIR__ . '/../../Name/src/Name.php';
                 $this->history[ $_event_id ] = $_history;
             }
         }
-
+        public function update_whitelist() {
+            // Append the boat key to all crew whitelists
+            $_squad = new squad\Squad();
+            foreach( $_squad->crews as $_crew ) {
+                $_crew->set_whitelist( $this->key );
+            }
+            $_squad->save();
+        }
         public function is_flex() : bool {
 
             /*
@@ -162,7 +171,7 @@ require_once __DIR__ . '/../../Name/src/Name.php';
                     $_absences++;
                 }
             }
-            $this->set_rank( BOAT_RANK_ABSENCE_DIMENSION, $_absences );
+            $this->set_rank( config\Config::BOAT_RANK_ABSENCE_DIMENSION, $_absences );
         }
 
     }

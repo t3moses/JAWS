@@ -5,10 +5,12 @@ namespace nsc\sdc\crew;
 use nsc\sdc\season as season;
 use nsc\sdc\fleet as fleet;
 use nsc\sdc\name as name;
+use nsc\sdc\config as config;
 
 require_once __DIR__ . '/../../Season/src/Season.php';
 require_once __DIR__ . '/../../Fleet/src/Fleet.php';
 require_once __DIR__ . '/../../Name/src/Name.php';
+require_once __DIR__ . '/../../Config/src/Config.php';
 
     class Crew {
 
@@ -73,16 +75,16 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             return $this->rank;
         }
         public function get_commitment_level() {
-            return $this->get_rank( CREW_RANK_COMMITMENT_DIMENSION );
+            return $this->get_rank( config\Config::CREW_RANK_COMMITMENT_DIMENSION );
         }
         public function get_flex_level() {
-            return $this->get_rank( CREW_RANK_FLEXIBILITY_DIMENSION );
+            return $this->get_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION );
         }
         public function get_membership_level() {
-            return $this->get_rank( CREW_RANK_MEMBERSHIP_DIMENSION );
+            return $this->get_rank( config\Config::CREW_RANK_MEMBERSHIP_DIMENSION );
         }
         public function get_absence_level() {
-            return $this->get_rank( CREW_RANK_ABSENCE_DIMENSION );
+            return $this->get_rank( config\Config::CREW_RANK_ABSENCE_DIMENSION );
         }
         public function get_whitelist() {
             return $this->whitelist;
@@ -136,8 +138,17 @@ require_once __DIR__ . '/../../Name/src/Name.php';
                 $this->set_rank( 2, 0 );
             }
         }
-        public function set_whitelist( $_whitelist) {
-            return $this->whitelist = $_whitelist;
+        public function set_whitelist( $_boat_key ) {
+            // Append the new boat key to the crew whitelist
+            $this->whitelist[] = $_boat_key;
+        }
+        public function update_whitelist() {
+            // Create a whitelist for the new crew from existing boat keys
+            $_fleet = new fleet\Fleet();
+            $this->whitelist = [];
+            foreach( $_fleet->boats as $_boat ) {
+                $this->whitelist[] = $_boat->key;
+            }
         }
         public function set_membership_number( $_membership_number) {
             return $this->membership_number = $_membership_number;
@@ -196,13 +207,12 @@ require_once __DIR__ . '/../../Name/src/Name.php';
             /*
             If the crew is also a boat owner, return true and update the crew and boat rank tensors
             */
-
             $_fleet = new fleet\Fleet();
             foreach( $_fleet->boats as $_boat ) {
                 $_owner_key = name\key_from_strings( $_boat->owner_first_name, $_boat->owner_last_name );
                 if ( $_owner_key === $this->key ) {
-                    $this->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, 0 );
-                    $_boat->set_rank( BOAT_RANK_FLEXIBILITY_DIMENSION, 0 );
+                    $this->set_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION, 0 );
+                    $_boat->set_rank( config\Config::BOAT_RANK_FLEXIBILITY_DIMENSION, 0 );
                     return true;
                 }
             }
@@ -218,12 +228,12 @@ require_once __DIR__ . '/../../Name/src/Name.php';
                     $_absences++;
                 }
             }
-            $this->set_rank( CREW_RANK_ABSENCE_DIMENSION, $_absences );
+            $this->set_rank( config\Config::CREW_RANK_ABSENCE_DIMENSION, $_absences );
         }
 
         public function update_commitment_rank() {
             $_commitment = $this->available[ $this->season->get_next_event() ];
-            $this->set_rank( CREW_RANK_COMMITMENT_DIMENSION, $_commitment );
+            $this->set_rank( config\Config::CREW_RANK_COMMITMENT_DIMENSION, $_commitment );
         }
 
         public function update_availability( $_commitment ) {

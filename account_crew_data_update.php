@@ -3,6 +3,7 @@
 use nsc\sdc\name as name;
 use nsc\sdc\crew as crew;
 use nsc\sdc\squad as squad;
+use nsc\sdc\config as config;
 
 // Prevent caching of this page
 
@@ -13,6 +14,7 @@ header("Expires: 0");
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Crew/src/Crew.php';
 require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
+require_once __DIR__ . '/Libraries/Config/src/Config.php';
 
 function crew_from_post() {
 
@@ -38,25 +40,25 @@ $_squad = new squad\Squad();
 $_crew = crew_from_post();
 $_crew->set_display_name( name\display_name_from_strings( $_crew->get_first_name(), $_crew->get_last_name()));
 $_crew->set_partner_key( '' );
-$_crew->set_whitelist( '' );
 if( $_crew->is_member()) {
-    $_crew->set_rank( CREW_RANK_MEMBERSHIP_DIMENSION, MEMBER );
+    $_crew->set_rank( config\Config::CREW_RANK_MEMBERSHIP_DIMENSION, config\Config::MEMBER );
 }
 else {
-    $_crew->set_rank( CREW_RANK_MEMBERSHIP_DIMENSION, NON_MEMBER );
+    $_crew->set_rank( config\Config::CREW_RANK_MEMBERSHIP_DIMENSION, config\Config::NON_MEMBER );
 }
 if( $_crew->is_flex()) {
     $_flex = true;
-    $_crew->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, FLEXIBLE );
+    $_crew->set_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION, config\Config::FLEXIBLE );
 }
 else {
     $_flex = false;
-    $_crew->set_rank( CREW_RANK_FLEXIBILITY_DIMENSION, INFLEXIBLE );
+    $_crew->set_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION, config\Config::INFLEXIBLE );
 }
-$_crew->set_rank( CREW_RANK_COMMITMENT_DIMENSION, AVAILABLE );
-$_crew->set_rank( CREW_RANK_ABSENCE_DIMENSION , 0 );
-$_crew->set_all_available( UNAVAILABLE );
+$_crew->set_rank( config\Config::CREW_RANK_COMMITMENT_DIMENSION, config\Config::AVAILABLE );
+$_crew->set_rank( config\Config::CREW_RANK_ABSENCE_DIMENSION , 0 );
+$_crew->set_all_available( config\Config::UNAVAILABLE );
 $_crew->set_all_history( '' );
+$_crew->update_whitelist();
 
 $_squad->set_crew( $_crew );
 $_squad->save();

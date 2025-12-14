@@ -31,5 +31,5 @@ should use the occupied berths, not max berths. RESOLVED
 030: When someone logs in, check database integrity.  If corrupted, stop and email admin.
 031: Make crew availability a number reflecting commitment: no-show(0), late registration (1), early registration (2). DONE
 032: For boats (as for crews), availability pages should only show future events. DONE
-033: Add all boats to the crew whitelist when a crew registers.
-034: Add the boat to all crew whitelists when a boat registers.
+033: Add all boats to the crew whitelist when a crew registers. DONE
+034: Add the boat to all crew whitelists when a boat registers. DONE
