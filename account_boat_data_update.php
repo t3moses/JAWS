@@ -4,7 +4,7 @@ use nsc\sdc\name as name;
 use nsc\sdc\boat as boat;
 use nsc\sdc\fleet as fleet;
 use nsc\sdc\season as season;
-use nsc\sdc\config as config;
+use nsc\sdc\config\rank as rank;
 
 // Prevent caching of this page
 
@@ -17,7 +17,7 @@ require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
 require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
-require_once __DIR__ . '/Libraries/Config/src/Config.php';
+require_once __DIR__ . '/Libraries/Config/src/Rank.php';
 
 
 function boat_from_post() {
@@ -45,12 +45,13 @@ $_fleet = new fleet\Fleet();
 $_boat = boat_from_post();
 $_number_of_events = $_season->get_event_count();
 $_event_ids = $_season->get_event_ids();
-$_flex = $_boat->is_flex();
-if( $_flex ) {
-    $_boat->set_rank( config\Config::BOAT_RANK_FLEXIBILITY_DIMENSION, config\Config::FLEXIBLE );
+if( $_boat->is_flex() ) {
+    $_flex = true;
+    $_boat->set_rank( rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, rank\Rank::FLEXIBLE );
 }
 else {
-    $_boat->set_rank( config\Config::BOAT_RANK_FLEXIBILITY_DIMENSION, config\Config::INFLEXIBLE );
+    $_flex = false;
+    $_boat->set_rank( rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
 }
 $_boat->set_all_berths( $_boat->get_max_berths() );
 $_boat->set_all_history( '' );

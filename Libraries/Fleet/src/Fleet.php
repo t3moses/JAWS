@@ -7,17 +7,16 @@ use nsc\sdc\season as season;
 
 require_once __DIR__ . '/../../Csv/src/Csv.php';
 require_once __DIR__ . '/../../Boat/src/Boat.php';
+require_once __DIR__ . '/../../Season/src/Season.php';
 
     class Fleet {
 
         public $boats = [];
-        private $season;
 
         public function __construct() {
         /*
         Instantiate the fleet object with the contents of the fleet database.
         */
-            $this->season = new season\Season();
             $this->load();
 
         }
@@ -126,7 +125,8 @@ require_once __DIR__ . '/../../Boat/src/Boat.php';
                 return false;
             }
 
-            $_event_ids = $this->season->get_event_ids();
+            season\Season::load_season_data();
+            $_event_ids = season\Season::get_event_ids();
 
             while (($_property_values = fgetcsv($_handle, 0, ',','"', '\\')) !== false) {
 

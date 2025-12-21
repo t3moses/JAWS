@@ -77,8 +77,8 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
             <label class = "label_class" for="skill">Sailing background:</label>
             <select class = "select_class" name="skill" id="skill">
                 <option value="0" <?php if($_crew->get_skill() == '0') echo 'selected'; ?>>I am new to sailing</option>
-                <option value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>I am effective as a crew member</option>
-                <option value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>I am effective as a first mate</option>
+                <option value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>I am a capable crew member</option>
+                <option value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>I am a capable first mate</option>
             </select></br>
  
             <label class = "label_class" for="experience">Tell us about your qualifications and experience:</label>

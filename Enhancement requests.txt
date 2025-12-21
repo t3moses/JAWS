@@ -33,3 +33,4 @@ should use the occupied berths, not max berths. RESOLVED
 032: For boats (as for crews), availability pages should only show future events. DONE
 033: Add all boats to the crew whitelist when a crew registers. DONE
 034: Add the boat to all crew whitelists when a boat registers. DONE
+035: When crew or boat is found to be flexible, mark the other entity as flexible.

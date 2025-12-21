@@ -5,18 +5,17 @@ namespace nsc\sdc\boat;
 use nsc\sdc\name as name;
 use nsc\sdc\season as season;
 use nsc\sdc\squad as squad;
-use nsc\sdc\config as config;
+use nsc\sdc\config\rank as rank;
 
 
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Season/src/Season.php';
 require_once __DIR__ . '/../../Squad/src/Squad.php';
 require_once __DIR__ . '/../../Name/src/Name.php';
-require_once __DIR__ . '/../../Config/src/Config.php';
+require_once __DIR__ . '/../../Config/src/Rank.php';
 
     class Boat {
 
-        private $season;
         public $key;
         public $display_name;
         public $owner_first_name;
@@ -32,7 +31,6 @@ require_once __DIR__ . '/../../Config/src/Config.php';
         public $history = []; // Associative array
 
         public function __construct( ) {
-            $this->season = new season\Season();
         }
         public function set_default() {
             $this->key = '';
@@ -117,7 +115,7 @@ require_once __DIR__ . '/../../Config/src/Config.php';
             return $this->berths[ $_event_id ] = $_berths;
         }
         public function set_all_berths( $_berths ) {
-            $_event_ids = $this->season->get_event_ids();
+            $_event_ids = season\Season::get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->berths[ $_event_id ] = $_berths;
             }
@@ -133,7 +131,7 @@ require_once __DIR__ . '/../../Config/src/Config.php';
             return $this->history[ $_event_id ] = $_history;
         }
         public function set_all_history( $_history ) {
-            $_event_ids = $this->season->get_event_ids();
+            $_event_ids = season\Season::get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $this->history[ $_event_id ] = $_history;
             }
@@ -164,14 +162,14 @@ require_once __DIR__ . '/../../Config/src/Config.php';
 
         public function update_absence_rank() {
 
-            $_past_events = $this->season->get_past_events();
+            $_past_events = season\Season::get_past_events();
             $_absences = 0;
             foreach( $_past_events as $_event_id ){
                 if ($this->history[ $_event_id ] === '' ) {
                     $_absences++;
                 }
             }
-            $this->set_rank( config\Config::BOAT_RANK_ABSENCE_DIMENSION, $_absences );
+            $this->set_rank( rank\Rank::BOAT_RANK_ABSENCE_DIMENSION, $_absences );
         }
 
     }

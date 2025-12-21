@@ -100,7 +100,7 @@ $_boat->set_display_name( $_display_name );
                 <option value="6" <?php if($_boat->get_max_berths() == '6') echo 'selected'; ?>>6</option>
             </select></br>
 
-            <label class = "label_class" for="assistance_required">Request assistance:</label>
+            <label class = "label_class" for="assistance_required">I need support from a capable crew member:</label>
             <select class = "select_class" name="assistance_required" id="assistance_required">
                 <option value="Yes" <?php if($_boat->get_assistance_required() == 'Yes') echo 'selected'; ?>>Yes</option>
                 <option value="No" <?php if($_boat->get_assistance_required() == 'No') echo 'selected'; ?>>No</option>

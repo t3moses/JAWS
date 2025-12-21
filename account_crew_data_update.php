@@ -3,7 +3,7 @@
 use nsc\sdc\name as name;
 use nsc\sdc\crew as crew;
 use nsc\sdc\squad as squad;
-use nsc\sdc\config as config;
+use nsc\sdc\config\rank as rank;
 
 // Prevent caching of this page
 
@@ -14,7 +14,7 @@ header("Expires: 0");
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Crew/src/Crew.php';
 require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
-require_once __DIR__ . '/Libraries/Config/src/Config.php';
+require_once __DIR__ . '/Libraries/Config/src/Rank.php';
 
 function crew_from_post() {
 
@@ -41,22 +41,22 @@ $_crew = crew_from_post();
 $_crew->set_display_name( name\display_name_from_strings( $_crew->get_first_name(), $_crew->get_last_name()));
 $_crew->set_partner_key( '' );
 if( $_crew->is_member()) {
-    $_crew->set_rank( config\Config::CREW_RANK_MEMBERSHIP_DIMENSION, config\Config::MEMBER );
+    $_crew->set_rank( rank\Rank::CREW_RANK_MEMBERSHIP_DIMENSION, rank\Rank::MEMBER );
 }
 else {
-    $_crew->set_rank( config\Config::CREW_RANK_MEMBERSHIP_DIMENSION, config\Config::NON_MEMBER );
+    $_crew->set_rank( rank\Rank::CREW_RANK_MEMBERSHIP_DIMENSION, rank\Rank::NON_MEMBER );
 }
 if( $_crew->is_flex()) {
     $_flex = true;
-    $_crew->set_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION, config\Config::FLEXIBLE );
+    $_crew->set_rank( rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION, rank\Rank::FLEXIBLE );
 }
 else {
     $_flex = false;
-    $_crew->set_rank( config\Config::CREW_RANK_FLEXIBILITY_DIMENSION, config\Config::INFLEXIBLE );
+    $_crew->set_rank( rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
 }
-$_crew->set_rank( config\Config::CREW_RANK_COMMITMENT_DIMENSION, config\Config::AVAILABLE );
-$_crew->set_rank( config\Config::CREW_RANK_ABSENCE_DIMENSION , 0 );
-$_crew->set_all_available( config\Config::UNAVAILABLE );
+$_crew->set_rank( rank\Rank::CREW_RANK_COMMITMENT_DIMENSION, rank\Rank::UNAVAILABLE );
+$_crew->set_rank( rank\Rank::CREW_RANK_ABSENCE_DIMENSION , 0 );
+$_crew->set_all_available( rank\Rank::UNAVAILABLE );
 $_crew->set_all_history( '' );
 $_crew->update_whitelist();
 

@@ -1,0 +1,105 @@
+Rule: ASSIST
+
+sa  ta  ib
+ib  ta  ib
+Found grad
+ma  ta  ib
+hb  ta  ib
+pa  ta  ib
+ta  ta  ib
+Found loss
+ab  ta  ib
+mb  ta  ib
+kb  ta  ib
+ob  ta  ib
+lb  ta  ib
+aa  ta  ib
+ba  ta  ib
+oa  ta  ib
+pb  ta  ib
+Swapping ta and ib
+
+Rule: WHITELIST
+
+sa  ta  ab
+ta  ta  ab
+Found loss
+ma  ta  ab
+hb  ta  ab
+pa  ta  ab
+ib  ta  ab
+ab  ta  ab
+Found grad
+mb  ta  ab
+kb  ta  ab
+ob  ta  ab
+lb  ta  ab
+aa  ta  ab
+ba  ta  ab
+oa  ta  ab
+pb  ta  ab
+Swapping ta and ab
+
+Rule: SKILL
+
+sa  sa  ob
+Found loss
+ab  sa  ob
+ma  sa  ob
+hb  sa  ob
+pa  sa  ob
+ib  sa  ob
+ta  sa  ob
+mb  sa  ob
+kb  sa  ob
+ob  sa  ob
+Found grad
+lb  sa  ob
+aa  sa  ob
+ba  sa  ob
+oa  sa  ob
+pb  sa  ob
+Swapping sa and ob
+
+Rule: PARTNER
+
+ob  sa  pb
+ab  sa  pb
+ma  sa  pb
+hb  sa  pb
+pa  sa  pb
+ib  sa  pb
+ta  sa  pb
+mb  sa  pb
+kb  sa  pb
+sa  sa  pb
+Found loss
+lb  sa  pb
+aa  sa  pb
+ba  sa  pb
+oa  sa  pb
+pb  sa  pb
+Found grad
+Swapping sa and pb
+
+Rule: REPEAT
+
+ob  lb  ta
+ab  lb  ta
+ma  lb  ta
+hb  lb  ta
+pa  lb  ta
+ib  lb  ta
+ta  lb  ta
+Found grad
+mb  lb  ta
+kb  lb  ta
+pb  lb  ta
+lb  lb  ta
+Found loss
+aa  lb  ta
+ba  lb  ta
+oa  lb  ta
+sa  lb  ta
+Swapping lb and ta
+

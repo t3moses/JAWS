@@ -1,8 +1,8 @@
 <?php
 
-namespace nsc\sdc\config;
+namespace nsc\sdc\config\rank;
 
-Class Config {
+Class Rank {
 
     const BOAT_RANK_FLEXIBILITY_DIMENSION = 0;
     const BOAT_RANK_ABSENCE_DIMENSION = 1;
