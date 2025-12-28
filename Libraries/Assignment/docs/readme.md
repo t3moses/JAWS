@@ -1,10 +1,4 @@
 
-Selected crew objects have the following resources:
-
-boat: the boat to which the crew is assigned
-loss: (5-vector indicating conformance with each of the five rules)
-grad: (5-vector indicating influence on conformance with each of the five rules)
-
 The rules are listed in decreasing order of importance.
 
 The objective is to minimize loss, placing most emphasis on the most important rules.
@@ -19,37 +13,32 @@ Loss dimensions (higher numbers reflect higher loss):
 
 3: Partner.  Equal to 1 if the crew’s partner is assigned to the same boat.  Otherwise, 0.
 
-4: Repeat: Equal to the number of times the crew has been assigned to the this boat.
+4: Repeat: Equal to the number of times the crew has been assigned to this boat.
 
 Grad dimensions (higher numbers reflect better capability to reduce loss):
 
 0: Assistance.  The crew's skill level.
 
-1: Whitelist.  Equal to the number of boats on the crew’s whitelist.
+1: Whitelist.  Equal to the number of boats on the crew’s whitelist.  (Note: the more boats on the whitelist, the less likely this crew member will cause a whitelist violation.)
 
-2: Skill.  Median skill level - mod( crew skill - median skill level ) (Note: maximum if the crew skill level is at the median.)
+2: Skill.  Median skill level - mod( crew skill - median skill level ).  (Note: maximum if the crew skill level is equal to the median value.)
 
 3: Partner.  Equal to 1 if the crew does not have a partner in the program.  Otherwise 0.
 
-4: Repeat.  Equal to the number of the crew's absences. (Note: the more absences, the less likely this crew will cause a repeat.)
+4: Repeat.  Equal to the number of the crew's absences. (Note: the more absences, the less likely this crew member will cause a repeat.)
 
 
-Assignment algorithm (called by season_update() : flotilla )
+For each rule in turn, starting with the most significant one ...
 
-flotilla contains the initial assignment of selected boats and crew for the next event.
+1. The assignment algorithm identifies the crew member with the highest loss
 
-for rule[ i = 0 : r-1 ]
-  for selected crew[ j = 0 : n-1 ]
-    calculate grad for rule i
-    calculate initial loss for rule i
-  sort grad_list // by decreasing grad
-  for selected crew[ j = 0 : n-1 ]
-    sort loss_list // by decreasing loss
-    crew_s = grad_list[ 0 ] // the crew whose grad under rule i is greatest.
-    crew_d = loss_list[ 0 ] // the crew whose loss under rule i is greatest.
-    if crew_d->loss > crew_s->loss
-      crew_d->boat <-> crew_s->boat
-      recalculate crew_s->loss
-      recalculate crew_d->loss
-      delete crew_s from grad_list
-    else break // move on to next rule
+If the highest loss is 0, it jumps to the next rule.
+
+It also orders the crews by grad in descening order.
+
+It identifies the crew member on a different boat with the highest grad.  If its grad is 0, it jumps to the next rule.
+
+Otherwise, it swaps the two crew members.
+
+This pair is then swapped.
+

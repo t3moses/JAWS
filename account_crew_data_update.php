@@ -27,6 +27,8 @@ function crew_from_post() {
         $_crew->set_first_name( name\safe($_POST['first_name']) ?? '' );
         $_crew->set_last_name( name\safe($_POST['last_name']) ?? '' );
         $_crew->set_email( name\safe($_POST['email']) ?? '' );
+        $_crew->set_mobile( name\safe($_POST['mobile']) ?? '' );
+        $_crew->set_social_preference( name\safe($_POST['social_preference']) ?? '' );
         $_crew->set_membership_number( name\safe($_POST['membership_number']) ?? '');
         $_crew->set_skill( name\safe($_POST['skill']) ?? '' );
         $_crew->set_experience( name\safe($_POST['experience']) ?? '' );
@@ -87,7 +89,9 @@ $_squad->save();
             <p class = "p_class" ><?php if ( $_flex ) { echo 'You are also registered as a boat owner'; } ?></p></br>
 
             <p class = "p_class" >Email address: <?php echo $_crew->get_email(); ?></p></br>
+            <p class = "p_class" >Mobile number: <?php echo $_crew->get_mobile(); ?></p></br>
             <p class = "p_class" >Membership number: <?php echo $_crew->get_membership_number(); ?></p></br>
+            <p class = "p_class" >Whatsapp: <?php echo $_crew->get_social_preference(); ?></p></br>
             <p class = "p_class" >Skill: <?php echo $_crew->get_skill(); ?></p></br>
             <p class = "p_class" >Experience: <?php echo name\unsafe( $_crew->get_experience()); ?></p></br>
         </div>

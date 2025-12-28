@@ -26,6 +26,7 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         public $max_berths;
         public $occupied_berths;
         public $assistance_required;
+        public $social_preference;
         public $rank = []; // Indexed array
         public $berths = []; // Associative array
         public $history = []; // Associative array
@@ -41,6 +42,7 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
             $this->min_berths = 1;
             $this->max_berths = 1;
             $this->assistance_required = 'No';
+            $this->social_preference = 'No';
         }
         public function get_key() {
             return $this->key;
@@ -77,6 +79,9 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         }
         public function get_assistance_required() {
             return $this->assistance_required;
+        }
+        public function get_social_preference() {
+            return $this->social_preference;
         }
         public function get_rank() {
             return $this->rank;
@@ -123,6 +128,9 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         }
         public function set_assistance_required( $_assistance_required ) {
              $this->assistance_required = $_assistance_required;
+        }
+        public function set_social_preference( $_social_preference) {
+             $this->social_preference = $_social_preference;
         }
         public function set_rank( $_dim, $_rank) {
             $this->rank[ $_dim ] = $_rank;

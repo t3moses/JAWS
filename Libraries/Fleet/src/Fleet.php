@@ -106,6 +106,8 @@ require_once __DIR__ . '/../../Season/src/Season.php';
             Build the squad object as a list of crew objects from the contents of the CSV files.
             */
 
+            $f = fopen( __DIR__ . "/../docs/debug.txt", "w" );
+
             $_property_names = array_keys(get_class_vars('nsc\sdc\boat\Boat'));
 
             $_filename = __DIR__ . '/../data/fleet_data.csv';
@@ -119,6 +121,10 @@ require_once __DIR__ . '/../../Season/src/Season.php';
             }
 
             $_header = fgetcsv($_handle, 0, ',','"', '\\');
+
+            fwrite( $f, print_r($_property_names, true) . "\n" );
+            fwrite( $f, print_r($_header, true) . "\n" );
+            fclose( $f );
 
             if( $_header !== $_property_names ) {
                 fclose($_handle);
@@ -154,6 +160,7 @@ require_once __DIR__ . '/../../Season/src/Season.php';
                 $this->boats[] = $_boat;
             }            
             fclose($_handle);
+
             return true;
         }
 

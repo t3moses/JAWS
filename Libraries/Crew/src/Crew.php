@@ -20,6 +20,8 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         public $last_name;
         public $partner_key;
         public $email;
+        public $mobile;
+        public $social_preference;
         public $membership_number;
         public $rank = []; // Indexed array
         public $skill;
@@ -35,6 +37,8 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
             $this->last_name = '';
             $this->partner_key = '';
             $this->email = '';
+            $this->mobile = '';
+            $this->social_preference = 'No';
             $this->membership_number = '';
             $this->skill = 0;
             $this->experience = '';
@@ -57,6 +61,12 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         }
         public function get_email() {
             return $this->email;
+        }
+        public function get_mobile() {
+            return $this->mobile;
+        }
+        public function get_social_preference() {
+            return $this->social_preference;
         }
         public function get_membership_number() {
             return $this->membership_number;
@@ -115,27 +125,15 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         public function set_email( $_email ) {
             $this->email = $_email;
         }
+        public function set_mobile( $_mobile ) {
+            $this->mobile = $_mobile;
+        }
+        public function set_social_preference( $_social_preference ) {
+            $this->social_preference = $_social_preference;
+        }
         public function set_rank( $_dim, int $_level ) {
             $this->rank[ $_dim ] = $_level;
         }
-/*
-        public function set_flex_level( ) {
-            if( $this->is_flex() ) {
-                $this->set_rank( 1, 0 );
-            }
-            else {
-                $this->set_rank( 1, 1 );
-            }
-        }
-        public function set_membership_level( ){
-            if ( $this->is_member() ) {
-                $this->set_rank( 2, 1 );
-            }
-            else {
-                $this->set_rank( 2, 0 );
-            }
-        }
-*/
         public function set_whitelist( $_boat_key ) {
             // Append the new boat key to the crew whitelist
             $this->whitelist[] = $_boat_key;

@@ -34,6 +34,7 @@ function boat_from_post() {
         $_boat->set_min_berths( name\safe($_POST['min_berths']) ?? '' );
         $_boat->set_max_berths( name\safe($_POST['max_berths']) ?? '' );
         $_boat->set_assistance_required( name\safe($_POST['assistance_required']) ?? '');
+        $_boat->set_social_preference( name\safe($_POST['social_preference']) ?? '');
         
         return $_boat;
     }
@@ -91,6 +92,7 @@ $_fleet->save();
             <p class = "p_class" >Min berths: <?php echo $_boat->get_min_berths() ?></p></br>
             <p class = "p_class" >Max berths: <?php echo $_boat->get_max_berths() ?></p></br>
             <p class = "p_class" >Assistance: <?php echo $_boat->get_assistance_required() ?></p>
+            <p class = "p_class" >Whatsapp: <?php echo $_boat->get_social_preference() ?></p>
         </div>
         <div>
             <button class="button_class" type="button" onclick="window.location.href='/account_boat_availability_form.php?bkey=<?php echo $_boat->key; ?>'">Next</button>

@@ -106,6 +106,12 @@ $_boat->set_display_name( $_display_name );
                 <option value="No" <?php if($_boat->get_assistance_required() == 'No') echo 'selected'; ?>>No</option>
             </select></br>
 
+            <label class = "label_class" for="social_preference">Enrol me in the program's Whatsapp group:</label>
+            <select class = "select_class" name="social_preference" id="social_preferences">
+                <option value="Yes" <?php if($_boat->get_social_preference() == 'Yes') echo 'selected'; ?>>Yes</option>
+                <option value="No" <?php if($_boat->get_social_preference() == 'No') echo 'selected'; ?>>No</option>
+            </select></br>
+
             <input class = "button_class" type="submit" value="Next">
         </form>
     </body>
