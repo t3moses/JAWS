@@ -1,6 +1,6 @@
 001: Send confirmation emails from nsc-sdc@nsc.ca.
 002: Refine the types of email and phone number input fields and mark required where appropriate. RESOLVED
-003: Translate the Matthew discretionaru policy to PHP.
+003: Translate the Matthew discretionaru policy to PHP.  RESOLVED
 004: Add username to account_crew_availability_update.php. RESOLVED
 005: Clean up html for account_boat.html. RESOLVED
 006: Add boat name to account_boat_data_update.php and account_boat_availability_update.php. REDSOLVED
@@ -8,11 +8,11 @@
 008: Leave a margin on the right of the experience textarea. RESOLVED
 009: Implement a user authentication scheme.
 010: Block user input after 1000 on event day.
-011: Provide an admininstrator interface.
+011: Provide an admininstrator interface.  STARTED
 012: Email crew info to owners at 1000 on event day.
 013: Email reminder to crew members at 1300 one day before event day.
 014: Implement selection policy. RESOLVED
-015: Implement assignment policy.
+015: Implement assignment policy. STARTED
 016: Email tickets to the administrator at 1300 on event day.
 017: In all user input, replace ',' with '+u002C' and "\n" with '+u2028'. RESOLVED
 018: Move html page generator to its own namespace from Season.php. RESOLVED
@@ -22,7 +22,7 @@
 022: Add boat absence to rank, based on boat history. DONE
 023: Add crew absence to rank, based on crew history. DONE
 024: If crew waitlist fills a row, then an empty row is appended. RESOLVED
-025: Boat occupancy does not always correspond with the registered number of berths, Selection line 153
+025: Boat occupancy does not always correspond with the registered number of berths, Selection line 153.  DONE
 should use the occupied berths, not max berths. RESOLVED
 026: Update every boat's and crew's rank before selecting boats and crews. RESOLVED
 027: Update the history for each boat and crew after each flotilla definition. RESOLVED
@@ -34,3 +34,4 @@ should use the occupied berths, not max berths. RESOLVED
 033: Add all boats to the crew whitelist when a crew registers. DONE
 034: Add the boat to all crew whitelists when a boat registers. DONE
 035: When crew or boat is found to be flexible, mark the other entity as flexible.
+036: 

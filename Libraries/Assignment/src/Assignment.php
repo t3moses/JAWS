@@ -25,9 +25,9 @@ Class Assignment {
 
         foreach( $_flotilla[ 'crewed_boats' ] as $_crewed_boat ) {
 
-            fwrite( $this->f, "Boat: " . $_crewed_boat[ 'boat' ]->key . "\n" );
+            fwrite( $this->f, "Boat: " . $_crewed_boat[ 'boat' ]->key . " " . $_crewed_boat[ 'boat' ]->assistance_required . "\n" );
             foreach( $_crewed_boat[ 'crews' ] as $_cb_crew ) {
-                fwrite( $this->f, "  Crew: " . $_cb_crew->key . "\n" );
+                fwrite( $this->f, "  Crew: " . $_cb_crew->key . " " . $_cb_crew->skill . "\n" );
             }
             fwrite( $this->f, "\n" );
 
@@ -231,6 +231,32 @@ Class Assignment {
             }
         }
 
+        fwrite( $f, "Initial Assignment:\n\n" );
+        $this->pretty_print( $_flotilla );
+/*
+        Identify any crewed boats that
+        a. require assistance and
+        b. have one or more crew with a skill of MAX_SKILL,
+        and remove one ofthose crew from the unlocked crews list.
+*/
+        for( $_i = 0; $_i < count( $_flotilla[ 'crewed_boats' ]); $_i++ ) {
+            $_crewed_boat = $_flotilla[ 'crewed_boats' ][ $_i ];
+            if ( $_crewed_boat[ 'boat' ]->assistance_required === 'Yes' ) {
+                for( $_j = 0; $_j < count( $_crewed_boat[ 'crews' ]); $_j++ ) {
+                    $_crew = $_crewed_boat[ 'crews' ][ $_j ];
+                    if ( (int)$_crew->skill === self::MAX_SKILL ) {
+                        // Remove this crew from the unlocked crews list
+                        unset( $unlocked_crews[ array_search( $_crew->key, $unlocked_crews ) ] );
+                        $unlocked_crews = array_values( $unlocked_crews ); // Reindex the array
+                        break; // Only remove one crew per boat
+                    }
+                }
+            }
+        }
+
+        fwrite( $f, "After initial step:\n\n" );
+        $this->pretty_print( $_flotilla );
+
         foreach ( Rule::cases() as $_rule ) {
 
             while ( count( $unlocked_crews ) > 1 ) {
@@ -271,41 +297,36 @@ Class Assignment {
                     fwrite( $f, "Top Loss Crew: " . $_top_loss_crew->key . " Loss: " . array_values( $this->losses )[0] . "\n" );
                     fwrite( $f, "Top Grad Crew: " . ( $_top_grad_crew ? $_top_grad_crew->key : "None" ) . " Grad: " . ( $_top_grad_crew ? array_values( $this->grads )[0] : "None" ) . "\n" );
 
-                    if ( $_top_grad_crew === null ) break; // No valid swap found, move to next rule
+                    // Find the crew and boat indices and objects corresponding to the top loss and grad crews
 
-                    else {
-
-                        // Find the crew and boat indices and objects corresponding to the top loss and grad crews
-
-                        for( $_i = 0; $_i < count( $_flotilla[ 'crewed_boats' ]); $_i++ ) {
-                            $_crewed_boat = $_flotilla[ 'crewed_boats' ][ $_i ];
-                            for( $_j = 0; $_j < count( $_crewed_boat[ 'crews' ]); $_j++ ) {
-                                $_cb_crew = $_crewed_boat[ 'crews' ][ $_j ];
-                                if ( $_cb_crew === $_top_loss_crew ) {
-                                    $_top_loss_boat_index = $_i;
-                                    $_top_loss_boat = $_crewed_boat[ 'boat' ];
-                                    $_top_loss_crew_index = $_j;
-                                    $_top_loss_crew_copy = clone $_cb_crew;
-                                }
-                                if ( $_cb_crew == $_top_grad_crew ) {
-                                    $_top_grad_boat_index = $_i;
-                                    $_top_grad_boat = $_crewed_boat[ 'boat' ];
-                                    $_top_grad_crew_index = $_j;
-                                    $_top_grad_crew_copy = clone $_cb_crew;
-                                }
+                    for( $_i = 0; $_i < count( $_flotilla[ 'crewed_boats' ]); $_i++ ) {
+                        $_crewed_boat = $_flotilla[ 'crewed_boats' ][ $_i ];
+                        for( $_j = 0; $_j < count( $_crewed_boat[ 'crews' ]); $_j++ ) {
+                            $_cb_crew = $_crewed_boat[ 'crews' ][ $_j ];
+                            if ( $_cb_crew === $_top_loss_crew ) {
+                                $_top_loss_boat_index = $_i;
+                                $_top_loss_boat = $_crewed_boat[ 'boat' ];
+                                $_top_loss_crew_index = $_j;
+                                $_top_loss_crew_copy = clone $_cb_crew;
+                            }
+                            if ( $_cb_crew == $_top_grad_crew ) {
+                                $_top_grad_boat_index = $_i;
+                                $_top_grad_boat = $_crewed_boat[ 'boat' ];
+                                $_top_grad_crew_index = $_j;
+                                $_top_grad_crew_copy = clone $_cb_crew;
                             }
                         }
-
-                        fwrite( $f, "Crews: " . implode( ",", $unlocked_crews ) . "\n" );
-
-                        $_flotilla[ 'crewed_boats' ][ $_top_loss_boat_index ][ 'crews' ][ $_top_loss_crew_index ] = $_top_grad_crew_copy;
-                        $_flotilla[ 'crewed_boats' ][ $_top_grad_boat_index ][ 'crews' ][ $_top_grad_crew_index ] = $_top_loss_crew_copy;
-                        array_splice( $unlocked_crews, array_search( $_top_grad_crew_copy->key, $unlocked_crews ), 1 );
-
-                        fwrite( $f, "Swap: " . $_top_loss_boat->key . " " . $_top_loss_crew_copy->key . " " .
-                        $_top_grad_boat->key . " " . $_top_grad_crew_copy->key . "\n\n" );
-
                     }
+
+                    fwrite( $f, "Crews: " . implode( ",", $unlocked_crews ) . "\n" );
+
+                    $_flotilla[ 'crewed_boats' ][ $_top_loss_boat_index ][ 'crews' ][ $_top_loss_crew_index ] = $_top_grad_crew_copy;
+                    $_flotilla[ 'crewed_boats' ][ $_top_grad_boat_index ][ 'crews' ][ $_top_grad_crew_index ] = $_top_loss_crew_copy;
+                    array_splice( $unlocked_crews, array_search( $_top_grad_crew_copy->key, $unlocked_crews ), 1 );
+
+                    fwrite( $f, "Swap: " . $_top_loss_boat->key . " " . $_top_loss_crew_copy->key . " " .
+                    $_top_grad_boat->key . " " . $_top_grad_crew_copy->key . "\n\n" );
+
                 }
 
             $this->pretty_print( $_flotilla );

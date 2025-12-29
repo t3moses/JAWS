@@ -1,28 +1,46 @@
-Rule: ASSIST
+Initial Assignment:
 
-Top Loss Crew: ta Loss: 2
-Top Grad Crew: ib Grad: 2
-Crews: ta,kb,oa,ib,sa,ab,hb,ob,lb,pb,mb
-Swap: boat6 ta boat12 ib
+Boat: boat6 Yes
+  Crew: lb 0
+  Crew: ba 0
+  Crew: pb 2
 
-Boat: boat6
-  Crew: ib
-  Crew: kb
-  Crew: oa
+Boat: boat12 Yes
+  Crew: ob 2
+  Crew: kb 0
+  Crew: ib 2
+  Crew: mb 1
 
-Boat: boat12
-  Crew: ta
-  Crew: sa
-  Crew: ab
-  Crew: hb
+Boat: boat2 No
+  Crew: ab 2
+  Crew: ta 0
 
-Boat: boat2
-  Crew: ob
-  Crew: lb
+Boat: boat1 No
+  Crew: hb 1
+  Crew: oa 0
+  Crew: sa 0
 
-Boat: boat1
-  Crew: pb
-  Crew: mb
+After initial step:
+
+Boat: boat6 Yes
+  Crew: lb 0
+  Crew: ba 0
+  Crew: pb 2
+
+Boat: boat12 Yes
+  Crew: ob 2
+  Crew: kb 0
+  Crew: ib 2
+  Crew: mb 1
+
+Boat: boat2 No
+  Crew: ab 2
+  Crew: ta 0
+
+Boat: boat1 No
+  Crew: hb 1
+  Crew: oa 0
+  Crew: sa 0
 
 Rule: ASSIST
 
@@ -30,55 +48,57 @@ Rule: WHITELIST
 
 Rule: SKILL
 
-Top Loss Crew: kb Loss: 1
-Top Grad Crew: hb Grad: 1
-Crews: ta,kb,oa,sa,ab,hb,ob,lb,pb,mb
-Swap: boat6 kb boat12 hb
+Top Loss Crew: lb Loss: 1
+Top Grad Crew: mb Grad: 1
+Crews: lb,ba,kb,ib,mb,ab,ta,hb,oa,sa
+Swap: boat6 lb boat12 mb
 
-Boat: boat6
-  Crew: ib
-  Crew: hb
-  Crew: oa
+Boat: boat6 Yes
+  Crew: mb 1
+  Crew: ba 0
+  Crew: pb 2
 
-Boat: boat12
-  Crew: ta
-  Crew: sa
-  Crew: ab
-  Crew: kb
+Boat: boat12 Yes
+  Crew: ob 2
+  Crew: kb 0
+  Crew: ib 2
+  Crew: lb 0
 
-Boat: boat2
-  Crew: ob
-  Crew: lb
+Boat: boat2 No
+  Crew: ab 2
+  Crew: ta 0
 
-Boat: boat1
-  Crew: pb
-  Crew: mb
+Boat: boat1 No
+  Crew: hb 1
+  Crew: oa 0
+  Crew: sa 0
 
 Rule: SKILL
 
-Top Loss Crew: oa Loss: 1
-Top Grad Crew: mb Grad: 1
-Crews: ta,kb,oa,sa,ab,ob,lb,pb,mb
-Swap: boat6 oa boat1 mb
+Top Loss Crew: ba Loss: 1
+Top Grad Crew: hb Grad: 1
+Crews: lb,ba,kb,ib,ab,ta,hb,oa,sa
+Swap: boat6 ba boat1 hb
 
-Boat: boat6
-  Crew: ib
-  Crew: hb
-  Crew: mb
+Boat: boat6 Yes
+  Crew: mb 1
+  Crew: hb 1
+  Crew: pb 2
 
-Boat: boat12
-  Crew: ta
-  Crew: sa
-  Crew: ab
-  Crew: kb
+Boat: boat12 Yes
+  Crew: ob 2
+  Crew: kb 0
+  Crew: ib 2
+  Crew: lb 0
 
-Boat: boat2
-  Crew: ob
-  Crew: lb
+Boat: boat2 No
+  Crew: ab 2
+  Crew: ta 0
 
-Boat: boat1
-  Crew: pb
-  Crew: oa
+Boat: boat1 No
+  Crew: ba 0
+  Crew: oa 0
+  Crew: sa 0
 
 Rule: SKILL
 
@@ -86,81 +106,30 @@ Rule: PARTNER
 
 Rule: REPEAT
 
-Top Loss Crew: sa Loss: 2
+Top Loss Crew: kb Loss: 2
 Top Grad Crew: ta Grad: 17
-Crews: ta,kb,oa,sa,ab,ob,lb,pb
-Swap: boat12 sa boat12 ta
+Crews: lb,ba,kb,ib,ab,ta,oa,sa
+Swap: boat12 kb boat2 ta
 
-Boat: boat6
-  Crew: ib
-  Crew: hb
-  Crew: mb
+Boat: boat6 Yes
+  Crew: mb 1
+  Crew: hb 1
+  Crew: pb 2
 
-Boat: boat12
-  Crew: sa
-  Crew: ta
-  Crew: ab
-  Crew: kb
+Boat: boat12 Yes
+  Crew: ob 2
+  Crew: ta 0
+  Crew: ib 2
+  Crew: lb 0
 
-Boat: boat2
-  Crew: ob
-  Crew: lb
+Boat: boat2 No
+  Crew: ab 2
+  Crew: kb 0
 
-Boat: boat1
-  Crew: pb
-  Crew: oa
-
-Rule: REPEAT
-
-Top Loss Crew: sa Loss: 2
-Top Grad Crew: pb Grad: 17
-Crews: kb,oa,sa,ab,ob,lb,pb
-Swap: boat12 sa boat1 pb
-
-Boat: boat6
-  Crew: ib
-  Crew: hb
-  Crew: mb
-
-Boat: boat12
-  Crew: sa
-  Crew: pb
-  Crew: ab
-  Crew: kb
-
-Boat: boat2
-  Crew: ob
-  Crew: lb
-
-Boat: boat1
-  Crew: sa
-  Crew: oa
-
-Rule: REPEAT
-
-Top Loss Crew: lb Loss: 2
-Top Grad Crew: oa Grad: 16
-Crews: kb,oa,sa,ab,ob,lb
-Swap: boat2 lb boat1 oa
-
-Boat: boat6
-  Crew: ib
-  Crew: hb
-  Crew: mb
-
-Boat: boat12
-  Crew: sa
-  Crew: pb
-  Crew: ab
-  Crew: kb
-
-Boat: boat2
-  Crew: ob
-  Crew: oa
-
-Boat: boat1
-  Crew: sa
-  Crew: lb
+Boat: boat1 No
+  Crew: ba 0
+  Crew: oa 0
+  Crew: sa 0
 
 Rule: REPEAT
 
