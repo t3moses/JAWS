@@ -52,16 +52,16 @@ $_event_ids = $_season->get_future_events();
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <a href='/../../../program.html'>
-                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            <a href='/program.html'>
+                <img src='/Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
             </a>
         </div>
         <p class = "p_class" >Boat name: <?php echo $_display_name; ?></p>
-        <form method="get" action="account_boat_availability_update.php">
+        <form method="get" action="/account_boat_availability_update.php">
             <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_boat_key; ?>"required>
 
 <!--

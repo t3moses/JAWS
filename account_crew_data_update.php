@@ -4,6 +4,7 @@ use nsc\sdc\name as name;
 use nsc\sdc\crew as crew;
 use nsc\sdc\squad as squad;
 use nsc\sdc\config\rank as rank;
+use nsc\sdc\mail as mail;
 
 // Prevent caching of this page
 
@@ -15,6 +16,7 @@ require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Crew/src/Crew.php';
 require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
 require_once __DIR__ . '/Libraries/Config/src/Rank.php';
+require_once __DIR__ . '/Libraries/Mail/src/Mail.php';
 
 function crew_from_post() {
 
@@ -65,6 +67,7 @@ $_crew->update_whitelist();
 $_squad->set_crew( $_crew );
 $_squad->save();
 
+mail\Mail::send_new_subscriber_email();
 
 ?>
 
@@ -73,12 +76,12 @@ $_squad->save();
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <a href='/../../../program.html'>
-                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            <a href='/program.html'>
+                <img src='/Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
             </a>
         </div>
         <div>

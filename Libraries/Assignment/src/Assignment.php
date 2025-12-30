@@ -254,7 +254,9 @@ Class Assignment {
             }
         }
 
+        fwrite( $f, "Crews: " . implode( ",", $unlocked_crews ) . "\n\n" );
         fwrite( $f, "After initial step:\n\n" );
+
         $this->pretty_print( $_flotilla );
 
         foreach ( Rule::cases() as $_rule ) {

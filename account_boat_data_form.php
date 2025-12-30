@@ -56,12 +56,12 @@ $_boat->set_display_name( $_display_name );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=004">
     </head>
     <body>
         <div>
-            <a href='/../../../program.html'>
-                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            <a href='/program.html'>
+                <img src='/Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
             </a>
         </div>
         <p class = "p_class" >Boat name: <?php echo $_boat->get_display_name()?></p>

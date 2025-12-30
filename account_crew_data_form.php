@@ -53,16 +53,16 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="css/styles.css?v=010">
+        <link rel="stylesheet" href="/css/styles.css?v=010">
     </head>
     <body>
         <div>
-            <a href='/../../../program.html'>
-                <img src='/./Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
+            <a href='/program.html'>
+                <img src='/Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
             </a>
         </div>
 
-        <form class = "form_class" method="post" action="account_crew_data_update.php">
+        <form class = "form_class" method="post" action="/account_crew_data_update.php">
 
             <input class = "hidden_class" type="text" id="crew_key" name="crew_key" value="<?php echo $_crew->get_key(); ?>">
             <input class = "hidden_class" type="text" id="first_name" name="first_name" value="<?php echo $_crew->get_first_name(); ?>">
