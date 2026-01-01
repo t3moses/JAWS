@@ -67,7 +67,7 @@ $_crew->update_whitelist();
 $_squad->set_crew( $_crew );
 $_squad->save();
 
-mail\Mail::send_new_subscriber_email();
+mail\Mail::send_new_crew_email( $_crew );
 
 ?>
 

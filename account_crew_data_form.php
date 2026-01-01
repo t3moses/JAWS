@@ -72,7 +72,7 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
             <input class = "text_class"  type="email" id="email" name="email" value="<?php echo $_crew->get_email(); ?>"required></br>
 
             <label class = "label_class" for="mobile">Mobile number (optional):</label>
-            <input class = "text_class" type="text" id="mobile" name="mobile" value="<?php echo $_crew->get_mobile(); ?>"required></br>
+            <input class = "text_class" type="text" id="mobile" name="mobile" value="<?php echo $_crew->get_mobile(); ?>"></br>
 
             <label class = "label_class" for="social_preference">Enrol me in the program's Whatsapp group (requires mobile number):</label>
             <select class = "select_class" name="social_preference" id="social_preferences">

@@ -5,6 +5,7 @@ use nsc\sdc\boat as boat;
 use nsc\sdc\fleet as fleet;
 use nsc\sdc\season as season;
 use nsc\sdc\config\rank as rank;
+use nsc\sdc\mail as mail;
 
 // Prevent caching of this page
 
@@ -18,6 +19,7 @@ require_once __DIR__ . '/Libraries/Boat/src/Boat.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
 require_once __DIR__ . '/Libraries/Name/src/Name.php';
 require_once __DIR__ . '/Libraries/Config/src/Rank.php';
+require_once __DIR__ . '/Libraries/Mail/src/Mail.php';
 
 
 function boat_from_post() {
@@ -61,6 +63,8 @@ $_boat->update_whitelist();
 
 $_fleet->set_boat( $_boat );
 $_fleet->save();
+
+mail\Mail::send_new_boat_email( $_boat );
 
 ?>
 
