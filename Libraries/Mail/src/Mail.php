@@ -13,12 +13,12 @@ use PHPMailer\PHPMailer\Exception;
 
             $_html_body =
                 "<h2>New crew</h2></br>" .
-                "<p>" . $_crew->display_name . "</p></br>" .
-                "<p>" . $_crew->membership_number . "</p></br>" .
-                "<p>" . $_crew->skill . "</p></br>" .
-                "<p>" . $_crew->email . "</p></br>" .
-                "<p>" . $_crew->mobile . "</p></br>" .
-                "<p>" . $_crew->social_preference . "</p></br>";
+                "<p>Display name: " . $_crew->display_name . "</p>" .
+                "<p>Membership number: " . $_crew->membership_number . "</p>" .
+                "<p>Skill: " . $_crew->skill . "</p>" .
+                "<p>Email address: " . $_crew->email . "</p>" .
+                "<p>Mobile number: " . $_crew->mobile . "</p>" .
+                "<p>Social preference: " . $_crew->social_preference . "</p>";
 
             self::send_new_subscriber_email( $_html_body );
 
@@ -28,11 +28,10 @@ use PHPMailer\PHPMailer\Exception;
 
             $_html_body =
                 "<h2>New boat</h2></br>" .
-                "<p>" . $_boat->display_name . "</p></br>" .
-                "<p>" . $_boat->email . "</p></br>" .
-                "<p>" . $_boat->mobile . "</p></br>" .
-                "<p>" . $_boat->social_preference . "</p></br>";
-
+                "<p>Display name: " . $_boat->display_name . "</p>" .
+                "<p>Email address: " . $_boat->owner_email . "</p>" .
+                "<p>Mobile number: " . $_boat->owner_mobile . "</p>" .
+                "<p>Social preference: " . $_boat->social_preference . "</p>";
 
             self::send_new_subscriber_email( $_html_body );
 

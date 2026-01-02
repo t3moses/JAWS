@@ -51,7 +51,7 @@ $_event_ids = $_season->get_future_events();
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -83,8 +83,8 @@ offering a choice betweenAvailable and not available.
                     <div class='column'>
                         <select class = select_class name=avail id=avail>
 
-                            <option value = "0" <?php if( $_available[ $_event_id  ] === '0' ) { echo ' selected'; } ?>>No</option>
-                            <option value = "2" <?php if( $_available[ $_event_id  ] !== '0' ) { echo ' selected'; } ?>>Yes</option>
+                            <option class = "option_class" value = "0" <?php if( $_available[ $_event_id  ] === '0' ) { echo ' selected'; } ?>>No</option>
+                            <option class = "option_class" value = "2" <?php if( $_available[ $_event_id  ] !== '0' ) { echo ' selected'; } ?>>Yes</option>
 
                         </select></br>
                     </div>

@@ -76,7 +76,7 @@ mail\Mail::send_new_crew_email( $_crew );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -94,7 +94,7 @@ mail\Mail::send_new_crew_email( $_crew );
             <p class = "p_class" >Email address: <?php echo $_crew->get_email(); ?></p></br>
             <p class = "p_class" >Mobile number: <?php echo $_crew->get_mobile(); ?></p></br>
             <p class = "p_class" >Membership number: <?php echo $_crew->get_membership_number(); ?></p></br>
-            <p class = "p_class" >Whatsapp: <?php echo $_crew->get_social_preference(); ?></p></br>
+            <p class = "p_class" >WhatsApp: <?php echo $_crew->get_social_preference(); ?></p></br>
             <p class = "p_class" >Skill: <?php echo $_crew->get_skill(); ?></p></br>
             <p class = "p_class" >Experience: <?php echo name\unsafe( $_crew->get_experience()); ?></p></br>
         </div>

@@ -56,7 +56,7 @@ $_boat->set_display_name( $_display_name );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -85,31 +85,31 @@ $_boat->set_display_name( $_display_name );
 
             <label class = "label_class" for="min_berths">Min occupancy:</label>
             <select class = "select_class" name="min_berths" id="min_berths">
-                <option value="1" <?php if($_boat->get_min_berths() == '1') echo 'selected'; ?>>1</option>
-                <option value="2" <?php if($_boat->get_min_berths() == '2') echo 'selected'; ?>>2</option>
-                <option value="3" <?php if($_boat->get_min_berths() == '3') echo 'selected'; ?>>3</option>
+                <option class = "option_class" value="1" <?php if($_boat->get_min_berths() == '1') echo 'selected'; ?>>1</option>
+                <option class = "option_class" value="2" <?php if($_boat->get_min_berths() == '2') echo 'selected'; ?>>2</option>
+                <option class = "option_class" value="3" <?php if($_boat->get_min_berths() == '3') echo 'selected'; ?>>3</option>
             </select></br>
 
             <label class = "label_class" for="max_berths">Max occupancy:</label>
             <select class = "select_class" name="max_berths" id="max_berths">
-                <option value="1" <?php if($_boat->get_max_berths() == '1') echo 'selected'; ?>>1</option>
-                <option value="2" <?php if($_boat->get_max_berths() == '2') echo 'selected'; ?>>2</option>
-                <option value="3" <?php if($_boat->get_max_berths() == '3') echo 'selected'; ?>>3</option>
-                <option value="4" <?php if($_boat->get_max_berths() == '4') echo 'selected'; ?>>4</option>
-                <option value="5" <?php if($_boat->get_max_berths() == '5') echo 'selected'; ?>>5</option>
-                <option value="6" <?php if($_boat->get_max_berths() == '6') echo 'selected'; ?>>6</option>
+                <option class = "option_class" value="1" <?php if($_boat->get_max_berths() == '1') echo 'selected'; ?>>1</option>
+                <option class = "option_class" value="2" <?php if($_boat->get_max_berths() == '2') echo 'selected'; ?>>2</option>
+                <option class = "option_class"value="3" <?php if($_boat->get_max_berths() == '3') echo 'selected'; ?>>3</option>
+                <option class = "option_class" value="4" <?php if($_boat->get_max_berths() == '4') echo 'selected'; ?>>4</option>
+                <option class = "option_class" value="5" <?php if($_boat->get_max_berths() == '5') echo 'selected'; ?>>5</option>
+                <option class = "option_class" value="6" <?php if($_boat->get_max_berths() == '6') echo 'selected'; ?>>6</option>
             </select></br>
 
             <label class = "label_class" for="assistance_required">I need support from a capable crew member:</label>
             <select class = "select_class" name="assistance_required" id="assistance_required">
-                <option value="Yes" <?php if($_boat->get_assistance_required() == 'Yes') echo 'selected'; ?>>Yes</option>
-                <option value="No" <?php if($_boat->get_assistance_required() == 'No') echo 'selected'; ?>>No</option>
+                <option class = "option_class" value="Yes" <?php if($_boat->get_assistance_required() == 'Yes') echo 'selected'; ?>>Yes</option>
+                <option class = "option_class" value="No" <?php if($_boat->get_assistance_required() == 'No') echo 'selected'; ?>>No</option>
             </select></br>
 
-            <label class = "label_class" for="social_preference">Enrol me in the program's Whatsapp group:</label>
+            <label class = "label_class" for="social_preference">Enrol me in the program's WhatsApp group:</label>
             <select class = "select_class" name="social_preference" id="social_preferences">
-                <option value="Yes" <?php if($_boat->get_social_preference() == 'Yes') echo 'selected'; ?>>Yes</option>
-                <option value="No" <?php if($_boat->get_social_preference() == 'No') echo 'selected'; ?>>No</option>
+                <option class = "option_class" value="Yes" <?php if($_boat->get_social_preference() == 'Yes') echo 'selected'; ?>>Yes</option>
+                <option class = "option_class" value="No" <?php if($_boat->get_social_preference() == 'No') echo 'selected'; ?>>No</option>
             </select></br>
 
             <input class = "button_class" type="submit" value="Next">

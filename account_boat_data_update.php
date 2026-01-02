@@ -73,7 +73,7 @@ mail\Mail::send_new_boat_email( $_boat );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -95,8 +95,8 @@ mail\Mail::send_new_boat_email( $_boat );
             <p class = "p_class" >Mobile number: <?php echo $_boat->get_owner_mobile() ?></p></br>
             <p class = "p_class" >Min berths: <?php echo $_boat->get_min_berths() ?></p></br>
             <p class = "p_class" >Max berths: <?php echo $_boat->get_max_berths() ?></p></br>
-            <p class = "p_class" >Assistance: <?php echo $_boat->get_assistance_required() ?></p>
-            <p class = "p_class" >Whatsapp: <?php echo $_boat->get_social_preference() ?></p>
+            <p class = "p_class" >Assistance: <?php echo $_boat->get_assistance_required() ?></p></br>
+            <p class = "p_class" >WhatsApp: <?php echo $_boat->get_social_preference() ?></p>
         </div>
         <div>
             <button class="button_class" type="button" onclick="window.location.href='/account_boat_availability_form.php?bkey=<?php echo $_boat->key; ?>'">Next</button>

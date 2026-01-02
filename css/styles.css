@@ -1,6 +1,6 @@
 /*
 
-v=013
+v=014
 
 */
 
@@ -83,6 +83,9 @@ v=013
     border: 2px solid #000000;
     border-radius: 10px;
     font-size: 1.6rem;
+}
+option{
+    background-color: #FFFFFF;
 }
 .flex-container{
     display: flex; gap: 0px;

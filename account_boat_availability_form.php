@@ -52,7 +52,7 @@ $_event_ids = $_season->get_future_events();
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=004">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -80,13 +80,13 @@ offering a choice of the number of availablr spaces.
                     <div class='column'>
                         <select class = select_class name=avail id=avail>
 
-                            <option value = '0' <?php if($_berths[ $_event_id ] === '0' ) { echo ' selected'; } ?>>0</option>
-                            <option value = '1' <?php if($_berths[ $_event_id ] === '1' ) { echo ' selected'; } ?>>1</option>
-                            <option value = '2' <?php if($_berths[ $_event_id ] === '2' ) { echo ' selected'; } ?>>2</option>
-                            <option value = '3' <?php if($_berths[ $_event_id ] === '3' ) { echo ' selected'; } ?>>3</option>
-                            <option value = '4' <?php if($_berths[ $_event_id ] === '4' ) { echo ' selected'; } ?>>4</option>
-                            <option value = '5' <?php if($_berths[ $_event_id ] === '5' ) { echo ' selected'; } ?>>5</option>
-                            <option value = '6' <?php if($_berths[ $_event_id ] === '6' ) { echo ' selected'; } ?>>6</option>
+                            <option class = "option_class" value = '0' <?php if($_berths[ $_event_id ] === '0' ) { echo ' selected'; } ?>>0</option>
+                            <option class = "option_class" value = '1' <?php if($_berths[ $_event_id ] === '1' ) { echo ' selected'; } ?>>1</option>
+                            <option class = "option_class" value = '2' <?php if($_berths[ $_event_id ] === '2' ) { echo ' selected'; } ?>>2</option>
+                            <option class = "option_class" value = '3' <?php if($_berths[ $_event_id ] === '3' ) { echo ' selected'; } ?>>3</option>
+                            <option class = "option_class" value = '4' <?php if($_berths[ $_event_id ] === '4' ) { echo ' selected'; } ?>>4</option>
+                            <option class = "option_class" value = '5' <?php if($_berths[ $_event_id ] === '5' ) { echo ' selected'; } ?>>5</option>
+                            <option class = "option_class" value = '6' <?php if($_berths[ $_event_id ] === '6' ) { echo ' selected'; } ?>>6</option>
 
                         </select></br>
                     </div>

@@ -8,6 +8,8 @@ namespace nsc\sdc\season;
         private static $_time;
         private static $_year;
         private static $_start_time;
+        private static $_blackout_from;
+        private static $_blackout_to;
         private static array $_event_ids = [];
         private static array $_flotillas = []; // Associative array
 
@@ -23,8 +25,10 @@ namespace nsc\sdc\season;
                 self::$_time = strtotime( $config_data[ 'config' ][ 'year' ] . '-' . $config_data[ 'config' ][ 'month' ] . '-' .  $config_data[ 'config' ][ 'day' ]);
             } else {
                 self::$_time = time( );
-            }         
+            }
             self::$_start_time = $config_data[ 'config' ][ 'start_time' ];
+            self::$_blackout_from = $config_data[ 'config' ][ 'blackout_from' ];
+            self::$_blackout_to = $config_data[ 'config' ][ 'blackout_to' ];
             self::$_event_ids = $config_data[ 'config' ][ 'event_ids' ];
 
         }
@@ -34,6 +38,16 @@ namespace nsc\sdc\season;
             $_date = date_create_from_format( 'Y D M j H i s', self::$_year . ' ' . $_event_id . ' ' . self::$_start_time );
             $_utime = $_date->format('U');
             return $_utime;
+        }
+
+        public static function get_blackout_from( ) {
+
+            return strtotime('today ' . self::$_blackout_from );
+        }
+
+       public static function get_blackout_to( ) {
+
+            return strtotime('today ' . self::$_blackout_to );
         }
 
         public static function get_past_events( ) : ?array {

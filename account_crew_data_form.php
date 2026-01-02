@@ -53,7 +53,7 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/css/styles.css?v=010">
+        <link rel="stylesheet" href="/css/styles.css?v=14">
     </head>
     <body>
         <div>
@@ -74,10 +74,10 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
             <label class = "label_class" for="mobile">Mobile number (optional):</label>
             <input class = "text_class" type="text" id="mobile" name="mobile" value="<?php echo $_crew->get_mobile(); ?>"></br>
 
-            <label class = "label_class" for="social_preference">Enrol me in the program's Whatsapp group (requires mobile number):</label>
+            <label class = "label_class" for="social_preference">Enrol me in the program's WhatsApp group (requires mobile number):</label>
             <select class = "select_class" name="social_preference" id="social_preferences">
-                <option value="Yes" <?php if($_crew->get_social_preference() == 'Yes') echo 'selected'; ?>>Yes</option>
-                <option value="No" <?php if($_crew->get_social_preference() == 'No') echo 'selected'; ?>>No</option>
+                <option class = "option_class" value="Yes" <?php if($_crew->get_social_preference() == 'Yes') echo 'selected'; ?>>Yes</option>
+                <option class = "option_class" value="No" <?php if($_crew->get_social_preference() == 'No') echo 'selected'; ?>>No</option>
             </select></br>
 
             <label class = "label_class" for="membership_number">Membership number:</label>
@@ -85,9 +85,9 @@ $_crew->set_last_name( $_user_crew_name[ 'lname' ] );
 
             <label class = "label_class" for="skill">Sailing background:</label>
             <select class = "select_class" name="skill" id="skill">
-                <option value="0" <?php if($_crew->get_skill() == '0') echo 'selected'; ?>>I am new to sailing</option>
-                <option value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>I am a capable crew member</option>
-                <option value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>I am a capable first mate</option>
+                <option class = "option_class" value="0" <?php if($_crew->get_skill() == '0') echo 'selected'; ?>>I am new to sailing</option>
+                <option class = "option_class" value="1" <?php if($_crew->get_skill() == '1') echo 'selected'; ?>>I am a capable crew member</option>
+                <option class = "option_class" value="2" <?php if($_crew->get_skill() == '2') echo 'selected'; ?>>I am a capable first mate</option>
             </select></br>
  
             <label class = "label_class" for="experience">Tell us about your qualifications and experience:</label>
