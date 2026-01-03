@@ -7,7 +7,7 @@
 007: Improve the presentation on smart phones. RESOLVED
 008: Leave a margin on the right of the experience textarea. RESOLVED
 009: Implement a user authentication scheme.
-010: Block user input after 1000 on event day.
+010: Block user input after 1000 on event day. DONE
 011: Provide an admininstrator interface.  STARTED
 012: Prodcue a cron job to email crew info to owners at 1000 on event day.
 013: Email reminder to crew members at 1300 one day before event day.  DON'T BOTHER

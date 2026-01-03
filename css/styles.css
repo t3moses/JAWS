@@ -84,7 +84,7 @@ v=014
     border-radius: 10px;
     font-size: 1.6rem;
 }
-option{
+.option_class{
     background-color: #FFFFFF;
 }
 .flex-container{
