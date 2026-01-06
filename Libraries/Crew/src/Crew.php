@@ -227,8 +227,9 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
             $this->set_rank( rank\Rank::CREW_RANK_ABSENCE_DIMENSION, $_absences );
         }
 
-        public function update_commitment_rank() {
-            $_commitment = $this->available[ season\Season::get_next_event() ];
+        public function update_commitment_rank( $_event_id ) {
+            $_commitment = $this->available[ $_event_id ];
+//            $_commitment = $this->available[ season\Season::get_next_event() ];
             $this->set_rank( rank\Rank::CREW_RANK_COMMITMENT_DIMENSION, $_commitment );
         }
 

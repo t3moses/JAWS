@@ -83,14 +83,14 @@ $_boat->set_display_name( $_display_name );
             <label class = "label_class" for="mobile_number">Mobile number:</label>
             <input class = "text_class" type="tel" id="owner_mobile" name="owner_mobile" value="<?php echo $_boat->get_owner_mobile();?>"></br>
 
-            <label class = "label_class" for="min_berths">Min occupancy:</label>
+            <label class = "label_class" for="min_berths">Min berths:</label>
             <select class = "select_class" name="min_berths" id="min_berths">
                 <option class = "option_class" value="1" <?php if($_boat->get_min_berths() == '1') echo 'selected'; ?>>1</option>
                 <option class = "option_class" value="2" <?php if($_boat->get_min_berths() == '2') echo 'selected'; ?>>2</option>
                 <option class = "option_class" value="3" <?php if($_boat->get_min_berths() == '3') echo 'selected'; ?>>3</option>
             </select></br>
 
-            <label class = "label_class" for="max_berths">Max occupancy:</label>
+            <label class = "label_class" for="max_berths">Max berths:</label>
             <select class = "select_class" name="max_berths" id="max_berths">
                 <option class = "option_class" value="1" <?php if($_boat->get_max_berths() == '1') echo 'selected'; ?>>1</option>
                 <option class = "option_class" value="2" <?php if($_boat->get_max_berths() == '2') echo 'selected'; ?>>2</option>

@@ -42,16 +42,10 @@ const CREW_RANK_ABSENCE_DIMENSION = 3;
         private function shuffle( $_list, $_seed ) {
 
             if( $_seed !== null ) {
-                mt_srand( (int)$_seed );
+                mt_srand( crc32( $_seed ));
             }
 
-            $_temp = $_list;
-
-            for ( $_i = 0; $_i < count( $_list ); $_i++ ) {
-                $_source_index = mt_rand( 0, count( $_temp ) - 1 );
-                $_list[ $_i ] = $_temp[ $_source_index ];
-                array_splice( $_temp, $_source_index, 1 );
-            }
+            shuffle( $_list );
             return $_list;
 
         }
@@ -208,12 +202,13 @@ const CREW_RANK_ABSENCE_DIMENSION = 3;
 
             $_fleet->update_absence_rank( $_boats );
             $_squad->update_absence_rank( $_crews );
-            $_squad->update_commitment_rank( $_crews );
+            $_squad->update_commitment_rank( $_crews, $_event_id );
 
             $_shuffled_boats = $this->shuffle( $_boats, $_event_id );
             $_sorted_boats = $this->bubble( $_shuffled_boats );
             $_shuffled_crews = $this->shuffle( $_crews, $_event_id );
             $_sorted_crews = $this->bubble( $_shuffled_crews );
+
             $this->cut( $_sorted_boats, $_sorted_crews );
 
         }

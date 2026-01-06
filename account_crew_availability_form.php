@@ -38,12 +38,13 @@ function crew_key_from_get_url() {
 $_user_crew_key = crew_key_from_get_url();
 
 $_squad = new squad\Squad();
-$_season = new season\Season();
+
+season\Season::load_season_data();
 
 $_crew = $_squad->get_crew( $_user_crew_key );
 $_display_name = $_crew->get_display_name();
 $_available = $_crew->get_all_available();
-$_event_ids = $_season->get_future_events();
+$_event_ids = season\Season::get_future_events();
 
 ?>
 

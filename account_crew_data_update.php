@@ -58,6 +58,9 @@ else {
     $_flex = false;
     $_crew->set_rank( rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
 }
+if( $_crew->skill == 0 ) $_skill = "I am new to sailing";
+else if ( $_crew->skill == 1 ) $_skill = "I am a capable crew member";
+else $_skill = "I am a capable first mate";
 $_crew->set_rank( rank\Rank::CREW_RANK_COMMITMENT_DIMENSION, rank\Rank::UNAVAILABLE );
 $_crew->set_rank( rank\Rank::CREW_RANK_ABSENCE_DIMENSION , 0 );
 $_crew->set_all_available( rank\Rank::UNAVAILABLE );
@@ -95,7 +98,7 @@ mail\Mail::send_new_crew_email( $_crew );
             <p class = "p_class" >Mobile number: <?php echo $_crew->get_mobile(); ?></p></br>
             <p class = "p_class" >Membership number: <?php echo $_crew->get_membership_number(); ?></p></br>
             <p class = "p_class" >WhatsApp: <?php echo $_crew->get_social_preference(); ?></p></br>
-            <p class = "p_class" >Skill: <?php echo $_crew->get_skill(); ?></p></br>
+            <p class = "p_class" >Skill: <?php echo $_skill; ?></p></br>
             <p class = "p_class" >Experience: <?php echo name\unsafe( $_crew->get_experience()); ?></p></br>
         </div>
         <div>

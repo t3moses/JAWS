@@ -92,9 +92,9 @@ require_once __DIR__ . '/../../Season/src/Season.php';
 
         }
 
-        public function update_commitment_rank( $_crews ) {
+        public function update_commitment_rank( $_crews, $_event_id ) {
             foreach ( $_crews as $_crew ) {
-                $_crew->update_commitment_rank();
+                $_crew->update_commitment_rank( $_event_id );
             }
         }
 

@@ -32,8 +32,20 @@ Class Assignment {
                 fwrite( $this->f, "  Crew: " . $_cb_crew->key . " " . $_cb_crew->skill . "\n" );
             }
             fwrite( $this->f, "\n" );
-
         }
+    }
+
+    private function onboard( $crew, $crewed_boat ) {
+
+        // If $crew is onboard $crewed_boat, return true.  Otherwise, return false.
+
+        foreach( $crewed_boat[ 'crews' ] as $_cb_crew ) {
+            if ( $_cb_crew->key === $crew->key ) {
+                return true;
+            }
+        }
+        // $crew is not onboard $crewed_boat
+        return false;
 
     }
 
@@ -67,16 +79,60 @@ Class Assignment {
 
     private function replace_crew( $_a_crew, $_b_crew, $_crewed_boat ) {
 
-        // Return the crewed boat object with $_a_crew replaced by $_b_crew
+        // Return the $_crewed_boat array with $_a_crew replaced by $_b_crew
 
-        foreach( $_crewed_boat[ 'crews' ] as $_cb_crew ) {
-            if ( $_cb_crew->key === $_a_crew->key ) {
-                $_cb_crew = $_b_crew;
+        for( $i = 0; $i <= count( $_crewed_boat[ 'crews' ]); $i++ ){
+            if ( $_crewed_boat[ 'crews' ][ $i ]->key === $_a_crew->key ) {
+                $_crewed_boat[ 'crews' ][ $i ] = $_b_crew;
+                return $_crewed_boat;
             }
         }
-        return $_crewed_boat;
+        // $_a_crew is not onboard $_crewed_boat
+        die("Can't find crew to replace");
+    }
+
+    private function bad_rule_swap( $_rule, $_a_crew_key, $_b_crew_key ) {
+
+        // If swapping $_a_crew and $_b_crew results in an increased loss for
+        // either of them under $_rule, return true.  Otherwise return false.
+
+        $_a_crew = $this->crew_from_key( $_a_crew_key );
+        $_b_crew = $this->crew_from_key( $_b_crew_key );
+
+        $_a_crewed_boat_before = $this->crewed_boat_from_key( $_a_crew_key );
+        $_b_crewed_boat_before = $this->crewed_boat_from_key( $_b_crew_key );
+
+        $_a_boat_loss_before = $this->crew_loss( $_rule, $_a_crew, $_a_crewed_boat_before );
+        $_b_boat_loss_before = $this->crew_loss( $_rule, $_b_crew, $_b_crewed_boat_before );
+
+        $_a_crewed_boat_after = $this->replace_crew( $_a_crew, $_b_crew, $_a_crewed_boat_before );
+        $_b_crewed_boat_after = $this->replace_crew( $_b_crew, $_a_crew, $_b_crewed_boat_before );
+
+        $_a_boat_loss_after = $this->crew_loss( $_rule, $_b_crew, $_a_crewed_boat_after );
+        $_b_boat_loss_after = $this->crew_loss( $_rule, $_a_crew, $_b_crewed_boat_after );
+
+        if ( $_a_boat_loss_after > $_a_boat_loss_before ||
+            $_b_boat_loss_after > $_b_boat_loss_before ) return true;
+
+        return false;
     }
     
+    private function bad_swap( $_rule, $_a_crew_key, $_b_crew_key ) {
+
+        // If swapping $_a_crew and $_b_crew results in an increased loss for
+        // either of them under all rules up to and including $_rule, return true.
+        // Otherwise return false.
+
+        $_rules = Rule::cases();
+
+        $_rule_index = array_search( $_rule, $_rules, true );
+
+        for ($i = $_rule_index; $i >= 0; $i--) {
+            $_rule_name = Rule::cases()[ $i ];
+            if ( $this->bad_rule_swap( $_rule_name, $_a_crew_key, $_b_crew_key )) return true;
+        }
+        return false;
+    }
 
     private function skill_spread( $crewed_boat ) {
 
@@ -93,6 +149,10 @@ Class Assignment {
 
 
     public function crew_loss( $rule, $crew, $crewed_boat ) : int {
+
+        if ( $this->onboard( $crew, $crewed_boat ) === false ) {
+            die( "Trying to get loss for a crew that is not onboard" );
+        }
 
         if ( $rule === Rule::ASSIST ) {
             if ( $crewed_boat[ 'boat' ]->assistance_required === 'No' ){
@@ -129,7 +189,6 @@ Class Assignment {
             return 0; // not even high spread, so no to high skill loss
         }
 
-
         else if ( $rule === Rule::LOW_SKILL ) {
             if ( $this->skill_spread( $crewed_boat ) === self::MAX_SKILL ) {
                 if ( (int)$crew->skill === 0 ) {
@@ -162,7 +221,6 @@ Class Assignment {
             }
             return 0;
         }
-
         else return 0;
     }
 
@@ -171,33 +229,26 @@ Class Assignment {
         if ( $rule === Rule::ASSIST ) {
             return (int)$crew->skill;
         }
+
         else if ( $rule === Rule::WHITELIST ) {
             return count( $crew->whitelist );
         }
+
         else if ( $rule === Rule::HIGH_SKILL ) {
-            if ( $this->skill_spread( $crewed_boat ) === self::MAX_SKILL ) {
-                if ( (int)$crew->skill === self::MAX_SKILL ) {
-                    return 0; // skill is max so no to grad
-                }
-                else {
-                    return 1; // skill is low or middle, so yes to high skill grad
-                }
+            if ( (int)$crew->skill === self::MAX_SKILL ) {
+                return 0; // skill is max so no to grad
             }
             else {
-                return 0;
+                return 1; // skill is low or middle, so yes to high skill grad
             }
         }
+
         else if ( $rule === Rule::LOW_SKILL ) {
-            if ( $this->skill_spread( $crewed_boat ) === self::MAX_SKILL ) {
-                if ( (int)$crew->skill === 0 ) {
-                    return 0; // skill is 0, so no to low skill grad
-                }
-                else {
-                    return 1; // skill is high or middle, so yes to low skill grad
-                }
+            if ( (int)$crew->skill === 0 ) {
+                return 0; // skill is 0, so no to low skill grad
             }
             else {
-                return 0;
+                return 1; // skill is high or middle, so yes to low skill grad
             }
         }
 
@@ -208,6 +259,7 @@ Class Assignment {
                 return 0;
             }
         }
+
         else if ( $rule === Rule::REPEAT ) {
             return array_count_values( $crew->history )[NULL] ?? 0;
         }
@@ -253,24 +305,18 @@ Class Assignment {
                continue; // Same boat, try next candidate
             }
 
-            // If the candidate crew does not reduce loss, try the next candidate crew
+            // If the candidate crew ( b_crew ) does not reduce loss, try the next candidate.
             // Otherwise, return the candidate crew
 
-            $_b_crew = $this->crew_from_key( $_b_crew_key );
-
-            $_ab_crewed_boat = $this->replace_crew( $_a_crew, $_b_crew, $_a_crewed_boat );
-            $_b_loss = $this->crew_loss( $_rule, $_b_crew, $_ab_crewed_boat );
-            if ( $_b_loss >= array_values( $_losses )[ 0 ] ) {
-                continue; // Does not reduce loss, try next candidate
-            } else {
-                return $_b_crew; // Valid swap found
+            if ( $this->bad_swap( $_rule, $_a_crew_key, $_b_crew_key )) {
+                continue;
+            }
+            else {
+                return $this->crew_from_key( $_b_crew_key ); // Valid swap found
             }
         }
-
         fwrite( $this->f, "No valid swap found\n\n" );
-
         return null; // No valid swap found
-
     }
 
     public function assign( $_flotilla ) {

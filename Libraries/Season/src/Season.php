@@ -21,7 +21,7 @@ namespace nsc\sdc\season;
             self::$_source = $config_data[ 'config' ][ 'source' ];
             self::$_year = $config_data[ 'config' ][ 'year' ];
 
-            if ( self::$_source === 'simulated ') {
+            if ( str_contains( self::$_source, 'simul' )) {
                 self::$_time = strtotime( $config_data[ 'config' ][ 'year' ] . '-' . $config_data[ 'config' ][ 'month' ] . '-' .  $config_data[ 'config' ][ 'day' ]);
             } else {
                 self::$_time = time( );
@@ -56,7 +56,7 @@ namespace nsc\sdc\season;
             $_event_ids = self::get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $_event_time = self::get_event_time( $_event_id );
-                if ( $_event_time < time() ) {
+                if ( $_event_time < self::$_time ) {
                     $_past_events[] = $_event_id;
                 }
                 else {
@@ -72,9 +72,7 @@ namespace nsc\sdc\season;
             $_event_ids = self::get_event_ids();
             foreach( $_event_ids as $_event_id ) {
                 $_event_time = self::get_event_time( $_event_id );
-
-                    if ( $_event_time > self::$_time ) {
-
+                if ( $_event_time > self::$_time ) {
                     $_future_events[] = $_event_id;
                 }
             }

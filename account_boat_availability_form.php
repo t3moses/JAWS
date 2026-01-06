@@ -34,7 +34,6 @@ function boat_key_from_get_url() {
     }
 }
 
-$_season = new season\Season();
 $_fleet = new fleet\Fleet();
 
 // Get the boat key provided through the get url query string.
@@ -44,7 +43,8 @@ $_user_boat_key = boat_key_from_get_url();
 $_boat = $_fleet->get_boat( $_user_boat_key );
 $_display_name = $_boat->get_display_name();
 $_berths = $_boat->get_all_berths();
-$_event_ids = $_season->get_future_events();
+season\Season::load_season_data();
+$_event_ids = season\Season::get_future_events();
 
 ?>
 

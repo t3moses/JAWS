@@ -2,7 +2,7 @@
 
 namespace nsc\sdc\config\rank;
 
-Class Rank {
+abstract Class Rank {
 
     const BOAT_RANK_FLEXIBILITY_DIMENSION = 0;
     const BOAT_RANK_ABSENCE_DIMENSION = 1;

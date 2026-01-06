@@ -42,7 +42,8 @@ function string_from_get_url() {
 }
 
 $_fleet = new fleet\Fleet();
-$_season = new season\Season();
+
+season\Season::load_season_data();
 
 $_user_str = string_from_get_url();
 
@@ -53,7 +54,7 @@ if ( str_starts_with( $_user_str, "key=" )) {
 }
 $_user_arr = explode( "&avail=", $_user_str );
 $_user_boat_key = array_shift( $_user_arr );
-$_event_ids = $_season->get_future_events();
+$_event_ids = season\Season::get_future_events();
 $_boat = $_fleet->get_boat( $_user_boat_key );
 $_berths = array_combine( $_event_ids, $_user_arr );
 foreach ( $_event_ids as $_event_id ){

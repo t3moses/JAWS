@@ -52,9 +52,10 @@ $_user_arr = explode( "&avail=", $_user_str );
 $_user_crew_key = array_shift( $_user_arr );
 
 $_squad = new squad\Squad();
-$_season = new season\Season();
 
-$_event_ids = $_season->get_future_events();
+season\Season::load_season_data();
+
+$_event_ids = season\Season::get_future_events();
 $_crew = $_squad->get_crew( $_user_crew_key );
 
 for( $i = 0; $i < count( $_user_arr ); $i++ ) {

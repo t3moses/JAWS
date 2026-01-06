@@ -4,8 +4,6 @@ namespace nsc\sdc\name;
 
     function safe( $_raw_input ) {
 
-        $_special = htmlspecialchars( $_raw_input );
-
         $_safe_input = '';
         for( $_i = 0; $_i < strlen( $_raw_input ); $_i++ ) {
             if ( $_raw_input[ $_i ] === ',' ) {

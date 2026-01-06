@@ -37,3 +37,8 @@ should use the occupied berths, not max berths. RESOLVED
 036: Replace the skill rule with low_skill and a high_skill rules.  DONE
 037: Add subscriber detail to the notification email. DONE
 038: Replace the crew when deciding if a swap will increase loss.  See: Assignment.php, best_swap((, l 201.  DONE
+039: The same crew is assigned to the wait list for all future events.
+    See selection.php 228.  Use event id, not next event.  DONE
+040: With a simulated date of 2026-06-01, the program still calculates for the first event. DONE
+041: Later swaps result in violation of earlier rules (Assignment 256). DONE
+042: All classes, with the exception of Boat and Crew, should be abstract, with static methods and properties.
