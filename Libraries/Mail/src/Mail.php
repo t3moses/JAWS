@@ -18,7 +18,12 @@ use PHPMailer\PHPMailer\Exception;
                 "<p>Skill: " . $_crew->skill . "</p>" .
                 "<p>Email address: " . $_crew->email . "</p>" .
                 "<p>Mobile number: " . $_crew->mobile . "</p>" .
-                "<p>Social preference: " . $_crew->social_preference . "</p>";
+                "<p>Social preference: " . $_crew->social_preference . "</p>" .
+                "<p>Paste:</p>" .
+                "</p>" .
+                "<p>aws ses verify-email-identity --email-address" . " " . $_crew->email . "</p>" .
+                "</p>" .
+                "<p>into the SES command line.</p>";
 
             self::send_new_subscriber_email( $_html_body );
 
@@ -31,7 +36,13 @@ use PHPMailer\PHPMailer\Exception;
                 "<p>Display name: " . $_boat->display_name . "</p>" .
                 "<p>Email address: " . $_boat->owner_email . "</p>" .
                 "<p>Mobile number: " . $_boat->owner_mobile . "</p>" .
-                "<p>Social preference: " . $_boat->social_preference . "</p>";
+                "<p>Social preference: " . $_boat->social_preference . "</p>" .
+                "<p>Paste:</p>" .
+                "</p>" .
+                "<p>aws ses verify-email-identity --email-address" . " " . $_boat->owner_email . "</p>" .
+                "</p>" .
+                "<p>into the SES command line.</p>";
+
 
             self::send_new_subscriber_email( $_html_body );
 

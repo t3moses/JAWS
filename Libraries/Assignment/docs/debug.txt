@@ -1,70 +1,130 @@
-Available crews: cny21,cnn03,cyy11,cyy01,cnn13,cnn02,cnn01,cny01,cnn12,cny11,cny02
+Available crews: cnn04,cny23,cny05,cny04,cny12,cny13,cny03,cyy11,cny21,cnn03,cnn13,cyy01,cny02,cnn02,cyn01,cnn12
 Initial Assignment:
 
+Boat: b_2y2 Yes
+  Crew: cnn04 0
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny05 0
+  Crew: cny04 0
+
 Boat: b_3n2 No
-  Crew: cny21 2
-  Crew: cnn03 0
+  Crew: cny12 1
+  Crew: cny13 1
+  Crew: cny03 0
 
 Boat: b_4y1 Yes
   Crew: cyy11 1
-  Crew: cyy01 0
+  Crew: cny21 2
+  Crew: cnn03 0
   Crew: cnn13 1
-  Crew: cnn02 0
 
 Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cny01 0
-  Crew: cnn12 1
+  Crew: cyy01 0
+  Crew: cny02 0
+  Crew: cnn02 0
 
 Boat: b_2n1 No
-  Crew: cny11 1
-  Crew: cny02 0
+  Crew: cyn01 0
+  Crew: cnn12 1
 
-Available crews: cny21,cnn03,cyy11,cyy01,cnn13,cnn02,cnn01,cny01,cnn12,cny11,cny02
+Available crews: cnn04,cny05,cny04,cny12,cny13,cny03,cyy11,cnn03,cnn13,cyy01,cny02,cnn02,cyn01,cnn12
 After initialization:
 
+Boat: b_2y2 Yes
+  Crew: cnn04 0
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny05 0
+  Crew: cny04 0
+
 Boat: b_3n2 No
-  Crew: cny21 2
-  Crew: cnn03 0
+  Crew: cny12 1
+  Crew: cny13 1
+  Crew: cny03 0
 
 Boat: b_4y1 Yes
   Crew: cyy11 1
-  Crew: cyy01 0
+  Crew: cny21 2
+  Crew: cnn03 0
   Crew: cnn13 1
-  Crew: cnn02 0
 
 Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cny01 0
-  Crew: cnn12 1
+  Crew: cyy01 0
+  Crew: cny02 0
+  Crew: cnn02 0
 
 Boat: b_2n1 No
-  Crew: cny11 1
-  Crew: cny02 0
+  Crew: cyn01 0
+  Crew: cnn12 1
 
 Rule: ASSIST
 
-Availabke crews: cny21,cnn03,cyy11,cyy01,cnn13,cnn02,cnn01,cny01,cnn12,cny11,cny02
-Swap: b_4y1 cyy01 b_3n2 cny21
+Availabke crews: cnn04,cny05,cny04,cny12,cny13,cny03,cyy11,cnn03,cnn13,cyy01,cny02,cnn02,cyn01,cnn12
+Swap: b_2y1 cny05 b_3n2 cny12
+
+Boat: b_2y2 Yes
+  Crew: cnn04 0
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny12 1
+  Crew: cny04 0
 
 Boat: b_3n2 No
-  Crew: cyy01 0
-  Crew: cnn03 0
+  Crew: cny05 0
+  Crew: cny13 1
+  Crew: cny03 0
 
 Boat: b_4y1 Yes
   Crew: cyy11 1
   Crew: cny21 2
+  Crew: cnn03 0
   Crew: cnn13 1
-  Crew: cnn02 0
 
 Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cny01 0
-  Crew: cnn12 1
+  Crew: cyy01 0
+  Crew: cny02 0
+  Crew: cnn02 0
 
 Boat: b_2n1 No
-  Crew: cny11 1
+  Crew: cyn01 0
+  Crew: cnn12 1
+
+Rule: ASSIST
+
+Availabke crews: cnn04,cny05,cny04,cny13,cny03,cyy11,cnn03,cnn13,cyy01,cny02,cnn02,cyn01,cnn12
+Swap: b_2y1 cny04 b_3n2 cny13
+
+Boat: b_2y2 Yes
+  Crew: cnn04 0
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny12 1
+  Crew: cny13 1
+
+Boat: b_3n2 No
+  Crew: cny05 0
+  Crew: cny04 0
+  Crew: cny03 0
+
+Boat: b_4y1 Yes
+  Crew: cyy11 1
+  Crew: cny21 2
+  Crew: cnn03 0
+  Crew: cnn13 1
+
+Boat: b_3n1 No
+  Crew: cyy01 0
   Crew: cny02 0
+  Crew: cnn02 0
+
+Boat: b_2n1 No
+  Crew: cyn01 0
+  Crew: cnn12 1
 
 Rule: ASSIST
 
@@ -74,79 +134,73 @@ Rule: HIGH_SKILL
 
 Rule: LOW_SKILL
 
-Availabke crews: cnn03,cyy11,cyy01,cnn13,cnn02,cnn01,cny01,cnn12,cny11,cny02
-Swap: b_4y1 cnn02 b_3n1 cnn12
+Availabke crews: cnn04,cny05,cny04,cny03,cyy11,cnn03,cnn13,cyy01,cny02,cnn02,cyn01,cnn12
+Swap: b_2y2 cnn04 b_2n1 cnn12
+
+Boat: b_2y2 Yes
+  Crew: cnn12 1
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny12 1
+  Crew: cny13 1
 
 Boat: b_3n2 No
-  Crew: cyy01 0
-  Crew: cnn03 0
+  Crew: cny05 0
+  Crew: cny04 0
+  Crew: cny03 0
 
 Boat: b_4y1 Yes
   Crew: cyy11 1
   Crew: cny21 2
+  Crew: cnn03 0
   Crew: cnn13 1
-  Crew: cnn12 1
 
 Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cny01 0
+  Crew: cyy01 0
+  Crew: cny02 0
   Crew: cnn02 0
 
 Boat: b_2n1 No
-  Crew: cny11 1
+  Crew: cyn01 0
+  Crew: cnn04 0
+
+Rule: LOW_SKILL
+
+Availabke crews: cnn04,cny05,cny04,cny03,cyy11,cnn03,cnn13,cyy01,cny02,cnn02,cyn01
+Swap: b_4y1 cnn03 b_3n2 cny05
+
+Boat: b_2y2 Yes
+  Crew: cnn12 1
+  Crew: cny23 2
+
+Boat: b_2y1 Yes
+  Crew: cny12 1
+  Crew: cny13 1
+
+Boat: b_3n2 No
+  Crew: cnn03 0
+  Crew: cny04 0
+  Crew: cny03 0
+
+Boat: b_4y1 Yes
+  Crew: cyy11 1
+  Crew: cny21 2
+  Crew: cny05 0
+  Crew: cnn13 1
+
+Boat: b_3n1 No
+  Crew: cyy01 0
   Crew: cny02 0
+  Crew: cnn02 0
+
+Boat: b_2n1 No
+  Crew: cyn01 0
+  Crew: cnn04 0
 
 Rule: LOW_SKILL
 
 Rule: PARTNER
-
-Rule: REPEAT
-
-Availabke crews: cnn03,cyy11,cyy01,cnn13,cnn02,cnn01,cny01,cny11,cny02
-Swap: b_3n1 cny01 b_3n2 cyy01
-
-Boat: b_3n2 No
-  Crew: cny01 0
-  Crew: cnn03 0
-
-Boat: b_4y1 Yes
-  Crew: cyy11 1
-  Crew: cny21 2
-  Crew: cnn13 1
-  Crew: cnn12 1
-
-Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cyy01 0
-  Crew: cnn02 0
-
-Boat: b_2n1 No
-  Crew: cny11 1
-  Crew: cny02 0
-
-Rule: REPEAT
-
-Availabke crews: cnn03,cyy11,cnn13,cnn02,cnn01,cny01,cny11,cny02
-Swap: b_3n2 cnn03 b_3n1 cnn02
-
-Boat: b_3n2 No
-  Crew: cny01 0
-  Crew: cnn02 0
-
-Boat: b_4y1 Yes
-  Crew: cyy11 1
-  Crew: cny21 2
-  Crew: cnn13 1
-  Crew: cnn12 1
-
-Boat: b_3n1 No
-  Crew: cnn01 0
-  Crew: cyy01 0
-  Crew: cnn03 0
-
-Boat: b_2n1 No
-  Crew: cny11 1
-  Crew: cny02 0
 
 Rule: REPEAT
 
