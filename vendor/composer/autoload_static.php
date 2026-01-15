@@ -6,10 +6,18 @@ namespace Composer\Autoload;
 
 class ComposerStaticInit2185d2f99bcd56787481d9357a5972d3
 {
+    public static $files = array (
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
         'P' => 
         array (
             'PHPMailer\\PHPMailer\\' => 20,
+        ),
+        'E' => 
+        array (
+            'Eluceo\\iCal\\' => 12,
         ),
     );
 
@@ -17,6 +25,10 @@ class ComposerStaticInit2185d2f99bcd56787481d9357a5972d3
         'PHPMailer\\PHPMailer\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
+        ),
+        'Eluceo\\iCal\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/eluceo/ical/src',
         ),
     );
 

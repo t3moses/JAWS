@@ -41,4 +41,5 @@ should use the occupied berths, not max berths. RESOLVED
     See selection.php 228.  Use event id, not next event.  DONE
 040: With a simulated date of 2026-06-01, the program still calculates for the first event. DONE
 041: Later swaps result in violation of earlier rules (Assignment 256). DONE
-042: All classes, with the exception of Boat and Crew, should be abstract, with static methods and properties.
+042: All classes, with the exception of Boat and Crew, should be either namespaces or abstract, with static methods and properties. DONE.
+043: Subscribers should be sent a confirmation email when they update their availability.

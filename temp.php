@@ -9,11 +9,12 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
-
+require_once __DIR__ . '/Libraries/Calendar/src/Calendar.php';
 
 season\Season::load_season_data();
-
 $_event_ids = season\Season::get_future_events();
+program_calendar();
+
 
 ?>
 
@@ -47,5 +48,26 @@ Loop through the list of events, displaying the event id.
             <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $i ]; ?></p></div>
         </div>
     <?php } ?>
+
+    <button class = "button_class" id="downloadBtn">Download Calendar</button>
+
+    <script>
+
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        downloadBtn.addEventListener('click', async () => {
+            const response = await fetch('/Libraries/Calendar/data/program.ics');
+            const blob = await response.blob();
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'event.ics'; // specify the download filename
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+    </script>
+
     </body>
 </html>

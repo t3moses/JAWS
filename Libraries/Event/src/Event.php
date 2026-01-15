@@ -8,7 +8,7 @@ namespace nsc\sdc\event;
         private $event_id;
         private $selected_boats = [];
         private $selected_crews = [];
-        private $waitlist_boats = [];
+        private $waitlist_boats = []; // There is no waitlist for boats.
         private $waitlist_crews = [];
 
         public function set_event_id( string $_event_id ) {

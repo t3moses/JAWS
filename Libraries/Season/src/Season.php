@@ -40,6 +40,24 @@ namespace nsc\sdc\season;
             return $_utime;
         }
 
+        public static function get_event_ical( string $_event_id ) {
+
+            $_date = date_create_from_format( 'Y D M j H i s', self::$_year . ' ' . $_event_id . ' ' . self::$_start_time );
+            return $_date->format('Y-m-d');
+
+        }
+
+        public static function get_future_ical() {
+
+            $_events_ical = [];
+            $_event_ids = self::get_future_events();
+
+            foreach( $_event_ids as $_event_id ) {
+                $_events_ical[] = self::get_event_ical( $_event_id );
+            }
+            return $_events_ical;
+        }
+
         public static function get_blackout_from( ) {
 
             return strtotime('today ' . self::$_blackout_from );
