@@ -3,6 +3,8 @@
 use nsc\sdc\squad as squad;
 use nsc\sdc\season as season;
 
+use nsc\sdc\calendar as calendar;
+
 // Prevent caching of this page
 
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -11,6 +13,7 @@ header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
+require_once __DIR__ . '/Libraries/Calendar/src/Calendar.php';
 
 /*
 
@@ -65,6 +68,7 @@ for( $i = 0; $i < count( $_user_arr ); $i++ ) {
 $_squad->set_crew( $_crew );
 $_squad->save();
 
+calendar\crew( $_crew );
 
 ?>
 
@@ -100,7 +104,62 @@ Loop through the list of events, displaying the event value.
             </div>
         <?php } ?>
         <div>
+            <button class = "button_class" id="registrationDownloadBtn">Download Registrations</button>
+            <button class = "button_class" id="cancellationDownloadBtn">Download Cancellations</button>
+        </div>
+        <div>
+            <button class = "button_class" id="downloadBtn">Download Calendar</button>
+        </div>
+        <div>
             <button type = "button" class = "button_class" onclick = "window.location.href='/season_update.php'">Next</button>
         </div>
+
+        <script>
+
+            const registrationDownloadBtn = document.getElementById('registrationDownloadBtn');
+
+            registrationDownloadBtn.addEventListener('click', async () => {
+
+                const register_response = await fetch('/Libraries/Calendar/data/register.ics');
+                const register_blob = await register_response.blob();
+
+                const register_url = URL.createObjectURL(register_blob);
+                const register_a = document.createElement('a');
+                register_a.href = register_url;
+                register_a.download = 'nsc-sdc-register.ics';
+                register_a.click();
+                URL.revokeObjectURL(register_url);
+
+            });
+
+            const cancellationDownloadBtn = document.getElementById('cancellationDownloadBtn');
+
+            cancellationDownloadBtn.addEventListener('click', async () => {
+
+                const cancel_response = await fetch('/Libraries/Calendar/data/cancel.ics');
+                const cancel_blob = await cancel_response.blob();
+
+                const cancel_url = URL.createObjectURL(cancel_blob);
+                const cancel_a = document.createElement('a');
+                cancel_a.href = cancel_url;
+                cancel_a.download = 'nsc-sdc-cancel.ics';
+                cancel_a.click();
+                URL.revokeObjectURL(cancel_url);
+
+            });
+/*
+                const update_response = await fetch('/Libraries/Calendar/data/update.ics');
+                const update_blob = await update_response.blob();
+
+                const update_url = URL.createObjectURL(update_blob);
+                const update_a = document.createElement('a');
+                update_a.href = update_url;
+                update_a.download = 'nsc-sdc-update.ics';
+                update_a.click();
+                URL.revokeObjectURL(update_url);
+*/
+
+        </script>
+
     </body>
 </html>

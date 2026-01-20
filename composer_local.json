@@ -2,5 +2,10 @@
     "require": {
         "phpmailer/phpmailer": "^7.0",
         "eluceo/ical": "^2.13"
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.23"
+        }
     }
 }

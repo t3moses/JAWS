@@ -4,10 +4,11 @@ namespace nsc\sdc\season;
 
     class Season {
 
+        public static $_year;
+        public static $_start_time;
+        public static $_finish_time;
         private static $_source;
         private static $_time;
-        private static $_year;
-        private static $_start_time;
         private static $_blackout_from;
         private static $_blackout_to;
         private static array $_event_ids = [];
@@ -27,6 +28,7 @@ namespace nsc\sdc\season;
                 self::$_time = time( );
             }
             self::$_start_time = $config_data[ 'config' ][ 'start_time' ];
+            self::$_finish_time = $config_data[ 'config' ][ 'finish_time' ];
             self::$_blackout_from = $config_data[ 'config' ][ 'blackout_from' ];
             self::$_blackout_to = $config_data[ 'config' ][ 'blackout_to' ];
             self::$_event_ids = $config_data[ 'config' ][ 'event_ids' ];
@@ -39,7 +41,7 @@ namespace nsc\sdc\season;
             $_utime = $_date->format('U');
             return $_utime;
         }
-
+/*
         public static function get_event_ical( string $_event_id ) {
 
             $_date = date_create_from_format( 'Y D M j H i s', self::$_year . ' ' . $_event_id . ' ' . self::$_start_time );
@@ -57,7 +59,7 @@ namespace nsc\sdc\season;
             }
             return $_events_ical;
         }
-
+*/
         public static function get_blackout_from( ) {
 
             return strtotime('today ' . self::$_blackout_from );
