@@ -483,14 +483,29 @@ composer test
 
 ```bash
 # Run only unit tests
-./vendor/bin/phpunit tests/Unit
+./vendor/bin/phpunit Tests/Unit
 
 # Run only integration tests
-./vendor/bin/phpunit tests/Integration
+./vendor/bin/phpunit Tests/Integration
+
+# Run Domain layer tests only
+./vendor/bin/phpunit Tests/Unit/Domain
 
 # Run a specific test file
-./vendor/bin/phpunit tests/Unit/Domain/SelectionServiceTest.php
+./vendor/bin/phpunit Tests/Unit/Domain/SelectionServiceTest.php
 ```
+
+#### Domain Layer Test Coverage
+
+The Domain layer has comprehensive unit test coverage:
+
+- **Value Objects**: [BoatKey](tests/Unit/Domain/ValueObject/BoatKeyTest.php), [CrewKey](tests/Unit/Domain/ValueObject/CrewKeyTest.php), [EventId](tests/Unit/Domain/ValueObject/EventIdTest.php), [Rank](tests/Unit/Domain/ValueObject/RankTest.php)
+- **Enums**: [AvailabilityStatus](tests/Unit/Domain/Enum/AvailabilityStatusTest.php), [SkillLevel](tests/Unit/Domain/Enum/SkillLevelTest.php), [BoatRankDimension](tests/Unit/Domain/Enum/BoatRankDimensionTest.php), [CrewRankDimension](tests/Unit/Domain/Enum/CrewRankDimensionTest.php)
+- **Entities**: [Boat](tests/Unit/Domain/Entity/BoatTest.php), [Crew](tests/Unit/Domain/Entity/CrewTest.php)
+- **Collections**: [Fleet](tests/Unit/Domain/Collection/FleetTest.php), [Squad](tests/Unit/Domain/Collection/SquadTest.php)
+- **Services**: [RankingService](tests/Unit/Domain/Service/RankingServiceTest.php), [FlexService](tests/Unit/Domain/Service/FlexServiceTest.php)
+
+These tests are pure unit tests with **no external dependencies** (no database, no API calls), making them fast and reliable.
 
 #### Run Tests with Coverage
 
