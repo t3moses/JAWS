@@ -130,7 +130,8 @@ $container->set(AssignmentService::class, function () {
 // Boat Use Cases
 $container->set(\App\Application\UseCase\Boat\RegisterBoatUseCase::class, function ($c) {
     return new \App\Application\UseCase\Boat\RegisterBoatUseCase(
-        $c->get(BoatRepositoryInterface::class)
+        $c->get(BoatRepositoryInterface::class),
+        $c->get(TimeServiceInterface::class)
     );
 });
 
