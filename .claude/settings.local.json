@@ -5,7 +5,9 @@
       "WebFetch(domain:github.com)",
       "Bash(ls:*)",
       "Bash(tree:*)",
-      "Bash(composer install:*)"
+      "Bash(composer install:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)"
     ]
   }
 }
