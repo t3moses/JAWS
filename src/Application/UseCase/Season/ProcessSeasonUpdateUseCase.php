@@ -56,8 +56,8 @@ class ProcessSeasonUpdateUseCase
         // Load all entities
         $fleet = $this->loadFleet();
         $squad = $this->loadSquad();
-        $futureEvents = $this->eventRepository->getFutureEvents();
-        $nextEventId = $this->eventRepository->getNextEvent();
+        $futureEvents = $this->eventRepository->findFutureEvents();
+        $nextEventId = $this->eventRepository->findNextEvent();
 
         $eventsProcessed = 0;
         $flotillasGenerated = 0;
@@ -119,7 +119,7 @@ class ProcessSeasonUpdateUseCase
         $fleet = new Fleet();
 
         foreach ($boats as $boat) {
-            $fleet->addBoat($boat);
+            $fleet->add($boat);
         }
 
         return $fleet;
@@ -134,7 +134,7 @@ class ProcessSeasonUpdateUseCase
         $squad = new Squad();
 
         foreach ($crews as $crew) {
-            $squad->addCrew($crew);
+            $squad->add($crew);
         }
 
         return $squad;
@@ -151,8 +151,8 @@ class ProcessSeasonUpdateUseCase
     private function runSelection(Fleet $fleet, Squad $squad, EventId $eventId): array
     {
         // Get available boats and crews for this event
-        $availableBoats = $fleet->getAvailableBoats($eventId);
-        $availableCrews = $squad->getAvailableCrews($eventId);
+        $availableBoats = $fleet->getAvailableFor($eventId);
+        $availableCrews = $squad->getAvailableFor($eventId);
 
         // Run selection algorithm (deterministic shuffle, bubble sort, capacity matching)
         return $this->selectionService->select(
@@ -263,12 +263,12 @@ class ProcessSeasonUpdateUseCase
     private function persistChanges(Fleet $fleet, Squad $squad): void
     {
         // Save all boats
-        foreach ($fleet->getAllBoats() as $boat) {
+        foreach ($fleet->all() as $boat) {
             $this->boatRepository->save($boat);
         }
 
         // Save all crews
-        foreach ($squad->getAllCrews() as $crew) {
+        foreach ($squad->all() as $crew) {
             $this->crewRepository->save($crew);
         }
     }
