@@ -164,7 +164,109 @@ test('GET /api/assignments', function () use ($baseUrl, $testFirstName, $testLas
     }
 });
 
-// Test 6: Authentication failure
+// Test 6: POST /api/boats/register (authenticated)
+test('POST /api/boats/register', function () use ($baseUrl, $testFirstName, $testLastName) {
+    $response = makeRequest('POST', "{$baseUrl}/boats/register", [
+        'display_name' => 'Test Boat',
+        'owner_first_name' => $testFirstName,
+        'owner_last_name' => $testLastName,
+        'owner_email' => 'john.doe@example.com',
+        'owner_mobile' => '555-1234',
+        'min_berths' => 2,
+        'max_berths' => 4,
+        'assistance_required' => false,
+        'social_preference' => true,
+    ], [
+        "X-User-FirstName: {$testFirstName}",
+        "X-User-LastName: {$testLastName}",
+    ]);
+
+    if ($response['status'] !== 201 && $response['status'] !== 200) {
+        throw new \Exception("Expected 201 or 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+});
+
+// Test 7: PATCH /api/boats/availability (authenticated)
+test('PATCH /api/boats/availability', function () use ($baseUrl, $testFirstName, $testLastName) {
+    $response = makeRequest('PATCH', "{$baseUrl}/boats/availability", [
+        'availabilities' => [
+            'Fri May 29' => 3,
+        ],
+    ], [
+        "X-User-FirstName: {$testFirstName}",
+        "X-User-LastName: {$testLastName}",
+    ]);
+
+    if ($response['status'] !== 200 && $response['status'] !== 404) {
+        throw new \Exception("Expected 200 or 404, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+});
+
+// Test 8: GET /api/admin/matching/{eventId} (authenticated)
+test('GET /api/admin/matching/{eventId}', function () use ($baseUrl, $testFirstName, $testLastName) {
+    $eventId = urlencode('Fri May 29');
+    $response = makeRequest('GET', "{$baseUrl}/admin/matching/{$eventId}", null, [
+        "X-User-FirstName: {$testFirstName}",
+        "X-User-LastName: {$testLastName}",
+    ]);
+
+    // May return 404 if event doesn't exist, which is valid
+    if ($response['status'] !== 200 && $response['status'] !== 404) {
+        throw new \Exception("Expected 200 or 404, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+});
+
+// Test 9: POST /api/admin/notifications/{eventId} (authenticated)
+test('POST /api/admin/notifications/{eventId}', function () use ($baseUrl, $testFirstName, $testLastName) {
+    $eventId = urlencode('Fri May 29');
+    $response = makeRequest('POST', "{$baseUrl}/admin/notifications/{$eventId}", null, [
+        "X-User-FirstName: {$testFirstName}",
+        "X-User-LastName: {$testLastName}",
+    ]);
+
+    // May return 404 if event doesn't exist, or 500 if email service is not configured
+    // Accept these as valid test outcomes
+    if ($response['status'] !== 200 && $response['status'] !== 404 && $response['status'] !== 500) {
+        throw new \Exception("Expected 200, 404, or 500, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success']) && !isset($response['body']['error'])) {
+        throw new \Exception("Response missing 'success' or 'error' field");
+    }
+});
+
+// Test 10: PATCH /api/admin/config (authenticated)
+test('PATCH /api/admin/config', function () use ($baseUrl, $testFirstName, $testLastName) {
+    $response = makeRequest('PATCH', "{$baseUrl}/admin/config", [
+        'start_time' => '10:00:00',
+        'finish_time' => '18:00:00',
+    ], [
+        "X-User-FirstName: {$testFirstName}",
+        "X-User-LastName: {$testLastName}",
+    ]);
+
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+});
+
+// Test 11: Authentication failure
 test('Authentication failure', function () use ($baseUrl) {
     $response = makeRequest('GET', "{$baseUrl}/assignments");
 
@@ -177,7 +279,7 @@ test('Authentication failure', function () use ($baseUrl) {
     }
 });
 
-// Test 7: 404 for non-existent route
+// Test 12: 404 for non-existent route
 test('404 for non-existent route', function () use ($baseUrl) {
     $response = makeRequest('GET', "{$baseUrl}/nonexistent");
 
