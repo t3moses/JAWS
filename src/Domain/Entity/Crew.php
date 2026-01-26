@@ -38,17 +38,17 @@ class Crew
         private string $lastName,
         private ?CrewKey $partnerKey,
         private string $email,
-        private string $mobile,
+        private ?string $mobile,
         private bool $socialPreference,
-        private string $membershipNumber,
+        private ?string $membershipNumber,
         private SkillLevel $skill,
-        private string $experience,
+        private ?string $experience,
     ) {
         // Initialize default rank
         $this->rank = Rank::forCrew(
             commitment: 0,   // Default: unavailable
             flexibility: 1,  // Default: inflexible (not boat owner)
-            membership: empty($membershipNumber) ? 0 : 1,
+            membership: (empty($membershipNumber) || $membershipNumber === null) ? 1 : 0,
             absence: 0       // Default: no absences
         );
     }
@@ -131,12 +131,12 @@ class Crew
         $this->email = $email;
     }
 
-    public function getMobile(): string
+    public function getMobile(): ?string
     {
         return $this->mobile;
     }
 
-    public function setMobile(string $mobile): void
+    public function setMobile(?string $mobile): void
     {
         $this->mobile = $mobile;
     }
@@ -155,24 +155,24 @@ class Crew
 
     // === Membership ===
 
-    public function getMembershipNumber(): string
+    public function getMembershipNumber(): ?string
     {
         return $this->membershipNumber;
     }
 
-    public function setMembershipNumber(string $membershipNumber): void
+    public function setMembershipNumber(?string $membershipNumber): void
     {
         $this->membershipNumber = $membershipNumber;
         // Update rank when membership changes
         $this->setRankDimension(
             CrewRankDimension::MEMBERSHIP,
-            empty($membershipNumber) ? 0 : 1
+            (empty($membershipNumber) || $membershipNumber === null) ? 1 : 0
         );
     }
 
     public function isMember(): bool
     {
-        return !empty($this->membershipNumber);
+        return !empty($this->membershipNumber) && $this->membershipNumber !== null;
     }
 
     // === Skills ===
@@ -187,12 +187,12 @@ class Crew
         $this->skill = $skill;
     }
 
-    public function getExperience(): string
+    public function getExperience(): ?string
     {
         return $this->experience;
     }
 
-    public function setExperience(string $experience): void
+    public function setExperience(?string $experience): void
     {
         $this->experience = $experience;
     }

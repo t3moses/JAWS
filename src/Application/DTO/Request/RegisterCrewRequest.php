@@ -18,11 +18,11 @@ final readonly class RegisterCrewRequest
         public ?string $partnerFirstName,
         public ?string $partnerLastName,
         public string $email,
-        public string $mobile,
+        public ?string $mobile,
         public bool $socialPreference,
-        public string $membershipNumber,
+        public ?string $membershipNumber,
         public int $skill,
-        public string $experience,
+        public ?string $experience,
     ) {
     }
 
@@ -41,11 +41,11 @@ final readonly class RegisterCrewRequest
             partnerFirstName: $data['partner_first_name'] ?? null,
             partnerLastName: $data['partner_last_name'] ?? null,
             email: $data['email'] ?? '',
-            mobile: $data['mobile'] ?? '',
+            mobile: $data['mobile'] ?? null,
             socialPreference: (bool)($data['social_preference'] ?? false),
-            membershipNumber: $data['membership_number'] ?? '',
+            membershipNumber: $data['membership_number'] ?? null,
             skill: (int)($data['skill'] ?? 0),
-            experience: $data['experience'] ?? '',
+            experience: $data['experience'] ?? null,
         );
     }
 

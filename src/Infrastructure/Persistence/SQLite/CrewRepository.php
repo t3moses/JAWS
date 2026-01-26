@@ -328,11 +328,11 @@ class CrewRepository implements CrewRepositoryInterface
             lastName: $row['last_name'],
             partnerKey: $row['partner_key'] ? CrewKey::fromString($row['partner_key']) : null,
             email: $row['email'],
-            mobile: $row['mobile'] ?? '',
+            mobile: !empty($row['mobile']) ? $row['mobile'] : null,
             socialPreference: $row['social_preference'] === 'Yes',
-            membershipNumber: $row['membership_number'] ?? '',
+            membershipNumber: !empty($row['membership_number']) ? $row['membership_number'] : null,
             skill: SkillLevel::fromInt((int)$row['skill']),
-            experience: $row['experience'] ?? '',
+            experience: !empty($row['experience']) ? $row['experience'] : null,
         );
 
         $crew->setId((int)$row['id']);
