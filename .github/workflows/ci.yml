@@ -77,7 +77,7 @@ jobs:
       # This creates the SQLite database and applies the schema
       # Required for integration tests that interact with the database
       - name: Initialize database
-        run: php database/init_database.php
+        run: php database/init_database.php --yes
 
       # Step 8: Seed test data
       # Populates the database with test events and sample data

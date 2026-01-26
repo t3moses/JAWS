@@ -122,6 +122,30 @@ try {
     $crewCount = count($crews);
     echo "  Total: {$crewCount} crews seeded\n\n";
 
+    // Seed boat availability (boats offering berths for events)
+    echo "Seeding boat availability...\n";
+    $stmt = $pdo->prepare('
+        INSERT INTO boat_availability (boat_id, event_id, berths)
+        SELECT b.id, e.event_id, b.max_berths
+        FROM boats b
+        CROSS JOIN events e
+    ');
+    $stmt->execute();
+    $boatAvailCount = $stmt->rowCount();
+    echo "  ✓ {$boatAvailCount} boat availability records created\n\n";
+
+    // Seed crew availability (crews marked as available for events)
+    echo "Seeding crew availability...\n";
+    $stmt = $pdo->prepare('
+        INSERT INTO crew_availability (crew_id, event_id, status)
+        SELECT c.id, e.event_id, 1
+        FROM crews c
+        CROSS JOIN events e
+    ');
+    $stmt->execute();
+    $crewAvailCount = $stmt->rowCount();
+    echo "  ✓ {$crewAvailCount} crew availability records created (status: AVAILABLE)\n\n";
+
     // Verify seeded data
     echo "Verifying seeded data...\n";
     $stmt = $pdo->query('SELECT COUNT(*) FROM events');
@@ -135,6 +159,14 @@ try {
     $stmt = $pdo->query('SELECT COUNT(*) FROM crews');
     $crewCount = $stmt->fetchColumn();
     echo "  ✓ Crews: {$crewCount}\n";
+
+    $stmt = $pdo->query('SELECT COUNT(*) FROM boat_availability');
+    $boatAvailCount = $stmt->fetchColumn();
+    echo "  ✓ Boat availability records: {$boatAvailCount}\n";
+
+    $stmt = $pdo->query('SELECT COUNT(*) FROM crew_availability');
+    $crewAvailCount = $stmt->fetchColumn();
+    echo "  ✓ Crew availability records: {$crewAvailCount}\n";
 
     echo "\n======================\n";
     echo "Test data seeding complete!\n";
