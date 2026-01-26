@@ -158,7 +158,7 @@ class ProcessSeasonUpdateUseCase
         return $this->selectionService->select(
             $availableBoats,
             $availableCrews,
-            $eventId->toString()
+            $eventId
         );
     }
 
