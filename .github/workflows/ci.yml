@@ -38,8 +38,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'  # Match the PHP version required by the project
-          extensions: pdo, pdo_sqlite, mbstring  # Install required PHP extensions
+          php-version: '8.5'  # Match the PHP version required by the project
+          extensions: pdo, pdo_sqlite, sqlite3, curl, mbstring, openssl  # Install required PHP extensions
           coverage: none  # We're not generating coverage reports (yet)
 
       # Step 3: Validate composer.json
