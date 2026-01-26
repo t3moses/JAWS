@@ -155,11 +155,19 @@ class ProcessSeasonUpdateUseCase
         $availableCrews = $squad->getAvailableFor($eventId);
 
         // Run selection algorithm (deterministic shuffle, bubble sort, capacity matching)
-        return $this->selectionService->select(
+        $this->selectionService->select(
             $availableBoats,
             $availableCrews,
             $eventId
         );
+
+        // Retrieve results from selection service
+        return [
+            'selected_boats' => $this->selectionService->getSelectedBoats(),
+            'selected_crews' => $this->selectionService->getSelectedCrews(),
+            'waitlisted_boats' => $this->selectionService->getWaitlistBoats(),
+            'waitlisted_crews' => $this->selectionService->getWaitlistCrews(),
+        ];
     }
 
     /**
