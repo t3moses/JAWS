@@ -6,11 +6,15 @@
  * Run this script once to set up the database before using the application.
  *
  * Usage:
- *   php database/init_database.php
+ *   php database/init_database.php           # Interactive mode (prompts for confirmation)
+ *   php database/init_database.php --yes     # Non-interactive mode (auto-confirms)
  */
 
 $dbPath = __DIR__ . '/jaws.db';
 $migrationFile = __DIR__ . '/migrations/001_initial_schema.sql';
+
+// Check for --yes flag (non-interactive mode)
+$forceYes = in_array('--yes', $argv ?? []) || in_array('-y', $argv ?? []);
 
 echo "JAWS Database Initialization\n";
 echo "============================\n\n";
@@ -18,10 +22,15 @@ echo "============================\n\n";
 // Check if database already exists
 if (file_exists($dbPath)) {
     echo "WARNING: Database already exists at: $dbPath\n";
-    echo "Do you want to recreate it? This will delete all existing data! (yes/no): ";
-    $handle = fopen("php://stdin", "r");
-    $line = trim(fgets($handle));
-    fclose($handle);
+
+    if ($forceYes) {
+        $line = 'yes';
+    } else {
+        echo "Do you want to recreate it? This will delete all existing data! (yes/no): ";
+        $handle = fopen("php://stdin", "r");
+        $line = trim(fgets($handle));
+        fclose($handle);
+    }
 
     if ($line !== 'yes') {
         echo "Aborted.\n";

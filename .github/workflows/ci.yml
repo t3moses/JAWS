@@ -79,19 +79,25 @@ jobs:
       - name: Initialize database
         run: php database/init_database.php
 
-      # Step 8: Run unit tests
+      # Step 8: Seed test data
+      # Populates the database with test events and sample data
+      # Required for API tests that query for specific events
+      - name: Seed test data
+        run: php database/seed_test_data.php
+
+      # Step 9: Run unit tests
       # Unit tests test individual components in isolation (no database needed)
       - name: Run unit tests
         run: ./vendor/bin/phpunit Tests/Unit
         # This runs all tests in the tests/Unit directory
         # If any test fails, the workflow will fail and notify you
 
-      # Step 9: Run integration tests
+      # Step 10: Run integration tests
       # Integration tests test how components work together (uses database)
       - name: Run integration tests
         run: ./vendor/bin/phpunit Tests/Integration
 
-      # Step 10: Run API tests
+      # Step 11: Run API tests
       # API tests test the REST API endpoints with a running server
       - name: Run API tests
         run: |
@@ -108,7 +114,7 @@ jobs:
           # Stop the server
           kill $SERVER_PID
 
-      # Step 11: Run full test suite with code coverage (optional)
+      # Step 12: Run full test suite with code coverage (optional)
       # This runs all tests and can generate coverage reports
       # Commented out for now, but useful for seeing which code is tested
       # - name: Run all tests with coverage
