@@ -224,19 +224,9 @@ class ProcessSeasonUpdateUseCase
      */
     private function runAssignment(array $flotilla): array
     {
-        // Extract crewed boats array
-        $crewedBoats = $flotilla['crewed_boats'];
-
         // Run assignment optimization (6 rules: ASSIST, WHITELIST, HIGH_SKILL, LOW_SKILL, PARTNER, REPEAT)
-        $optimizedCrewedBoats = $this->assignmentService->assign($crewedBoats);
-
-        // Return updated flotilla
-        return [
-            'event_id' => $flotilla['event_id'],
-            'crewed_boats' => $optimizedCrewedBoats,
-            'waitlist_boats' => $flotilla['waitlist_boats'],
-            'waitlist_crews' => $flotilla['waitlist_crews'],
-        ];
+        // The assign() method expects the full flotilla structure and returns it optimized
+        return $this->assignmentService->assign($flotilla);
     }
 
     /**
