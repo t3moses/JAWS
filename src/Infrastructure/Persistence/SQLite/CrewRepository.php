@@ -70,7 +70,29 @@ class CrewRepository implements CrewRepositoryInterface
         $stmt = $this->pdo->query('SELECT * FROM crews ORDER BY display_name');
         $rows = $stmt->fetchAll();
 
-        return array_map(fn($row) => $this->hydrate($row), $rows);
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Batch load all related data to avoid N+1 queries
+        $crewIds = array_column($rows, 'id');
+        $allAvailability = $this->batchLoadAvailability($crewIds);
+        $allHistory = $this->batchLoadHistory($crewIds);
+        $allWhitelist = $this->batchLoadWhitelist($crewIds);
+
+        // Hydrate crews with pre-loaded data
+        $crews = [];
+        foreach ($rows as $row) {
+            $crew = $this->hydrateWithData(
+                $row,
+                $allAvailability[$row['id']] ?? [],
+                $allHistory[$row['id']] ?? [],
+                $allWhitelist[$row['id']] ?? []
+            );
+            $crews[] = $crew;
+        }
+
+        return $crews;
     }
 
     public function findAvailableForEvent(EventId $eventId): array
@@ -294,25 +316,65 @@ class CrewRepository implements CrewRepositoryInterface
 
     /**
      * Save crew availability, history, and whitelist
+     *
+     * Optimized to avoid redundant findByKey() lookups and minimize database roundtrips
      */
     private function saveAvailabilityHistoryAndWhitelist(Crew $crew): void
     {
-        // Save availability
-        foreach ($crew->getAllAvailability() as $eventIdString => $status) {
-            $this->updateAvailability($crew->getKey(), EventId::fromString($eventIdString), $status);
+        $crewId = $crew->getId();
+
+        //  Only save if there's data to save (skip empty arrays)
+        $availability = $crew->getAllAvailability();
+        if (!empty($availability)) {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO crew_availability (crew_id, event_id, status)
+                VALUES (:crew_id, :event_id, :status)
+                ON CONFLICT(crew_id, event_id) DO UPDATE SET status = :status
+            ');
+            foreach ($availability as $eventIdString => $status) {
+                $stmt->execute([
+                    'crew_id' => $crewId,
+                    'event_id' => $eventIdString,
+                    'status' => $status->value,
+                ]);
+            }
         }
 
-        // Save history
-        foreach ($crew->getAllHistory() as $eventIdString => $boatKey) {
-            $this->updateHistory($crew->getKey(), EventId::fromString($eventIdString), $boatKey);
+        // Save history (direct insert without lookup)
+        $history = $crew->getAllHistory();
+        if (!empty($history)) {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO crew_history (crew_id, event_id, boat_key)
+                VALUES (:crew_id, :event_id, :boat_key)
+                ON CONFLICT(crew_id, event_id) DO UPDATE SET boat_key = :boat_key
+            ');
+            foreach ($history as $eventIdString => $boatKey) {
+                $stmt->execute([
+                    'crew_id' => $crewId,
+                    'event_id' => $eventIdString,
+                    'boat_key' => $boatKey,
+                ]);
+            }
         }
 
-        // Save whitelist (delete all and re-insert)
-        $stmt = $this->pdo->prepare('DELETE FROM crew_whitelist WHERE crew_id = :crew_id');
-        $stmt->execute(['crew_id' => $crew->getId()]);
+        // Save whitelist (delete all and re-insert without lookup)
+        $whitelist = $crew->getWhitelist();
+        if (!empty($whitelist)) {
+            // Delete existing whitelist entries
+            $stmt = $this->pdo->prepare('DELETE FROM crew_whitelist WHERE crew_id = :crew_id');
+            $stmt->execute(['crew_id' => $crewId]);
 
-        foreach ($crew->getWhitelist() as $boatKeyString) {
-            $this->addToWhitelist($crew->getKey(), BoatKey::fromString($boatKeyString));
+            // Insert new whitelist entries
+            $stmt = $this->pdo->prepare('
+                INSERT OR IGNORE INTO crew_whitelist (crew_id, boat_key)
+                VALUES (:crew_id, :boat_key)
+            ');
+            foreach ($whitelist as $boatKeyString) {
+                $stmt->execute([
+                    'crew_id' => $crewId,
+                    'boat_key' => $boatKeyString,
+                ]);
+            }
         }
     }
 
@@ -410,5 +472,152 @@ class CrewRepository implements CrewRepositoryInterface
         }
 
         $crew->setWhitelist($whitelist);
+    }
+
+    /**
+     * Batch load availability for multiple crews (avoids N+1 queries)
+     *
+     * @param array<int> $crewIds
+     * @return array<int, array<string, AvailabilityStatus>> Crew ID => [event_id => status]
+     */
+    private function batchLoadAvailability(array $crewIds): array
+    {
+        if (empty($crewIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($crewIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT crew_id, event_id, status
+            FROM crew_availability
+            WHERE crew_id IN ($placeholders)
+        ");
+        $stmt->execute($crewIds);
+
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $crewId = (int)$row['crew_id'];
+            if (!isset($result[$crewId])) {
+                $result[$crewId] = [];
+            }
+            $result[$crewId][$row['event_id']] = AvailabilityStatus::from((int)$row['status']);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Batch load history for multiple crews (avoids N+1 queries)
+     *
+     * @param array<int> $crewIds
+     * @return array<int, array<string, string>> Crew ID => [event_id => boat_key]
+     */
+    private function batchLoadHistory(array $crewIds): array
+    {
+        if (empty($crewIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($crewIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT crew_id, event_id, boat_key
+            FROM crew_history
+            WHERE crew_id IN ($placeholders)
+        ");
+        $stmt->execute($crewIds);
+
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $crewId = (int)$row['crew_id'];
+            if (!isset($result[$crewId])) {
+                $result[$crewId] = [];
+            }
+            $result[$crewId][$row['event_id']] = $row['boat_key'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Batch load whitelist for multiple crews (avoids N+1 queries)
+     *
+     * @param array<int> $crewIds
+     * @return array<int, array<string>> Crew ID => [boat_key1, boat_key2, ...]
+     */
+    private function batchLoadWhitelist(array $crewIds): array
+    {
+        if (empty($crewIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($crewIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT crew_id, boat_key
+            FROM crew_whitelist
+            WHERE crew_id IN ($placeholders)
+        ");
+        $stmt->execute($crewIds);
+
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $crewId = (int)$row['crew_id'];
+            if (!isset($result[$crewId])) {
+                $result[$crewId] = [];
+            }
+            $result[$crewId][] = $row['boat_key'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Hydrate crew entity with pre-loaded data (optimized for batch loading)
+     *
+     * @param array<string, mixed> $row Database row
+     * @param array<string, AvailabilityStatus> $availability Event ID => status
+     * @param array<string, string> $history Event ID => boat_key
+     * @param array<string> $whitelist Boat keys
+     */
+    private function hydrateWithData(array $row, array $availability, array $history, array $whitelist): Crew
+    {
+        $crew = new Crew(
+            key: CrewKey::fromString($row['key']),
+            displayName: $row['display_name'],
+            firstName: $row['first_name'],
+            lastName: $row['last_name'],
+            partnerKey: $row['partner_key'] ? CrewKey::fromString($row['partner_key']) : null,
+            email: $row['email'],
+            mobile: !empty($row['mobile']) ? $row['mobile'] : null,
+            socialPreference: $row['social_preference'] === 'Yes',
+            membershipNumber: !empty($row['membership_number']) ? $row['membership_number'] : null,
+            skill: SkillLevel::fromInt((int)$row['skill']),
+            experience: !empty($row['experience']) ? $row['experience'] : null,
+        );
+
+        $crew->setId((int)$row['id']);
+
+        // Set rank
+        $rank = Rank::forCrew(
+            commitment: (int)$row['rank_commitment'],
+            flexibility: (int)$row['rank_flexibility'],
+            membership: (int)$row['rank_membership'],
+            absence: (int)$row['rank_absence']
+        );
+        $crew->setRank($rank);
+
+        // Set pre-loaded availability
+        foreach ($availability as $eventIdString => $status) {
+            $crew->setAvailability(EventId::fromString($eventIdString), $status);
+        }
+
+        // Set pre-loaded history
+        foreach ($history as $eventIdString => $boatKey) {
+            $crew->setHistory(EventId::fromString($eventIdString), $boatKey);
+        }
+
+        // Set pre-loaded whitelist
+        $crew->setWhitelist($whitelist);
+
+        return $crew;
     }
 }

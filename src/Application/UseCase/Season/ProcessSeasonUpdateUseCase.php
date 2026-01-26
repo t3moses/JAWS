@@ -61,6 +61,7 @@ class ProcessSeasonUpdateUseCase
 
         $eventsProcessed = 0;
         $flotillasGenerated = 0;
+        $modifiedCrews = [];
 
         // Process each future event
         foreach ($futureEvents as $eventIdString) {
@@ -84,11 +85,13 @@ class ProcessSeasonUpdateUseCase
             }
 
             // Phase 4: Update availability statuses
-            $this->updateAvailabilityStatuses(
+            $modified = $this->updateAvailabilityStatuses(
                 $selectionResult['selected_boats'],
                 $selectionResult['selected_crews'],
                 $eventId
             );
+            // Track modified crews (keyed by crew key to avoid duplicates)
+            $modifiedCrews = array_merge($modifiedCrews, $modified);
 
             // Phase 5: Update history (for past events - not applicable here for future events)
             // History is updated after events occur via separate process
@@ -100,8 +103,8 @@ class ProcessSeasonUpdateUseCase
             $eventsProcessed++;
         }
 
-        // Persist all changes
-        $this->persistChanges($fleet, $squad);
+        // Persist only modified crews
+        $this->persistChanges($modifiedCrews);
 
         return [
             'success' => true,
@@ -237,37 +240,48 @@ class ProcessSeasonUpdateUseCase
      * @param array<Boat> $selectedBoats
      * @param array<Crew> $selectedCrews
      * @param EventId $eventId
+     * @return array<string, Crew> Modified crews keyed by crew key
      */
     private function updateAvailabilityStatuses(
         array $selectedBoats,
         array $selectedCrews,
         EventId $eventId
-    ): void {
+    ): array {
         // Update boat statuses (boats don't have availability status in same way, but we track selection via berths)
         // No-op for boats as berths already indicate selection
 
-        // Update crew statuses to GUARANTEED
+        // Update crew statuses to GUARANTEED and track modified crews
+        $modifiedCrews = [];
         foreach ($selectedCrews as $crew) {
             $crew->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
+            $modifiedCrews[$crew->getKey()->toString()] = $crew;
         }
+
+        return $modifiedCrews;
     }
 
     /**
-     * Persist all changes to database
+     * Persist only modified crew availability statuses to database
      *
-     * @param Fleet $fleet
-     * @param Squad $squad
+     * Instead of saving entire crew entities (which would re-save all availability,
+     * history, and whitelist data), we directly update only the specific availability
+     * statuses that changed. This dramatically reduces database operations.
+     *
+     * @param array<string, Crew> $modifiedCrews Modified crews keyed by crew key
      */
-    private function persistChanges(Fleet $fleet, Squad $squad): void
+    private function persistChanges(array $modifiedCrews): void
     {
-        // Save all boats
-        foreach ($fleet->all() as $boat) {
-            $this->boatRepository->save($boat);
-        }
-
-        // Save all crews
-        foreach ($squad->all() as $crew) {
-            $this->crewRepository->save($crew);
+        // For each modified crew, update only their GUARANTEED availability statuses
+        foreach ($modifiedCrews as $crew) {
+            foreach ($crew->getAllAvailability() as $eventIdString => $status) {
+                if ($status === AvailabilityStatus::GUARANTEED) {
+                    $this->crewRepository->updateAvailability(
+                        $crew->getKey(),
+                        EventId::fromString($eventIdString),
+                        $status
+                    );
+                }
+            }
         }
     }
 }

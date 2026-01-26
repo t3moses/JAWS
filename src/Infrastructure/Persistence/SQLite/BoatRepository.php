@@ -67,7 +67,27 @@ class BoatRepository implements BoatRepositoryInterface
         $stmt = $this->pdo->query('SELECT * FROM boats ORDER BY display_name');
         $rows = $stmt->fetchAll();
 
-        return array_map(fn($row) => $this->hydrate($row), $rows);
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Batch load all related data to avoid N+1 queries
+        $boatIds = array_column($rows, 'id');
+        $allAvailability = $this->batchLoadAvailability($boatIds);
+        $allHistory = $this->batchLoadHistory($boatIds);
+
+        // Hydrate boats with pre-loaded data
+        $boats = [];
+        foreach ($rows as $row) {
+            $boat = $this->hydrateWithData(
+                $row,
+                $allAvailability[$row['id']] ?? [],
+                $allHistory[$row['id']] ?? []
+            );
+            $boats[] = $boat;
+        }
+
+        return $boats;
     }
 
     public function findAvailableForEvent(EventId $eventId): array
@@ -234,17 +254,45 @@ class BoatRepository implements BoatRepositoryInterface
 
     /**
      * Save boat availability and history
+     *
+     * Optimized to avoid redundant findByKey() lookups since we already have the boat ID
      */
     private function saveAvailabilityAndHistory(Boat $boat): void
     {
-        // Save availability (berths)
-        foreach ($boat->getAllBerths() as $eventIdString => $berths) {
-            $this->updateAvailability($boat->getKey(), EventId::fromString($eventIdString), $berths);
+        $boatId = $boat->getId();
+
+        // Save availability (berths) - direct insert without lookup
+        $berths = $boat->getAllBerths();
+        if (!empty($berths)) {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO boat_availability (boat_id, event_id, berths)
+                VALUES (:boat_id, :event_id, :berths)
+                ON CONFLICT(boat_id, event_id) DO UPDATE SET berths = :berths
+            ');
+            foreach ($berths as $eventIdString => $berthCount) {
+                $stmt->execute([
+                    'boat_id' => $boatId,
+                    'event_id' => $eventIdString,
+                    'berths' => $berthCount,
+                ]);
+            }
         }
 
-        // Save history
-        foreach ($boat->getAllHistory() as $eventIdString => $participated) {
-            $this->updateHistory($boat->getKey(), EventId::fromString($eventIdString), $participated);
+        // Save history - direct insert without lookup
+        $history = $boat->getAllHistory();
+        if (!empty($history)) {
+            $stmt = $this->pdo->prepare('
+                INSERT INTO boat_history (boat_id, event_id, participated)
+                VALUES (:boat_id, :event_id, :participated)
+                ON CONFLICT(boat_id, event_id) DO UPDATE SET participated = :participated
+            ');
+            foreach ($history as $eventIdString => $participated) {
+                $stmt->execute([
+                    'boat_id' => $boatId,
+                    'event_id' => $eventIdString,
+                    'participated' => $participated,
+                ]);
+            }
         }
     }
 
@@ -318,5 +366,113 @@ class BoatRepository implements BoatRepositoryInterface
                 $row['participated']
             );
         }
+    }
+
+    /**
+     * Batch load availability for multiple boats (avoids N+1 queries)
+     *
+     * @param array<int> $boatIds
+     * @return array<int, array<string, int>> Boat ID => [event_id => berths]
+     */
+    private function batchLoadAvailability(array $boatIds): array
+    {
+        if (empty($boatIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($boatIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT boat_id, event_id, berths
+            FROM boat_availability
+            WHERE boat_id IN ($placeholders)
+        ");
+        $stmt->execute($boatIds);
+
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $boatId = (int)$row['boat_id'];
+            if (!isset($result[$boatId])) {
+                $result[$boatId] = [];
+            }
+            $result[$boatId][$row['event_id']] = (int)$row['berths'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Batch load history for multiple boats (avoids N+1 queries)
+     *
+     * @param array<int> $boatIds
+     * @return array<int, array<string, string>> Boat ID => [event_id => participated]
+     */
+    private function batchLoadHistory(array $boatIds): array
+    {
+        if (empty($boatIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($boatIds), '?'));
+        $stmt = $this->pdo->prepare("
+            SELECT boat_id, event_id, participated
+            FROM boat_history
+            WHERE boat_id IN ($placeholders)
+        ");
+        $stmt->execute($boatIds);
+
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $boatId = (int)$row['boat_id'];
+            if (!isset($result[$boatId])) {
+                $result[$boatId] = [];
+            }
+            $result[$boatId][$row['event_id']] = $row['participated'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Hydrate boat entity with pre-loaded data (optimized for batch loading)
+     *
+     * @param array<string, mixed> $row Database row
+     * @param array<string, int> $availability Event ID => berths
+     * @param array<string, string> $history Event ID => participated
+     */
+    private function hydrateWithData(array $row, array $availability, array $history): Boat
+    {
+        $boat = new Boat(
+            key: BoatKey::fromString($row['key']),
+            displayName: $row['display_name'],
+            ownerFirstName: $row['owner_first_name'],
+            ownerLastName: $row['owner_last_name'],
+            ownerEmail: $row['owner_email'],
+            ownerMobile: $row['owner_mobile'] ?? '',
+            minBerths: (int)$row['min_berths'],
+            maxBerths: (int)$row['max_berths'],
+            assistanceRequired: $row['assistance_required'] === 'Yes',
+            socialPreference: $row['social_preference'] === 'Yes',
+        );
+
+        $boat->setId((int)$row['id']);
+
+        // Set rank
+        $rank = Rank::forBoat(
+            flexibility: (int)$row['rank_flexibility'],
+            absence: (int)$row['rank_absence']
+        );
+        $boat->setRank($rank);
+
+        // Set pre-loaded availability
+        foreach ($availability as $eventIdString => $berths) {
+            $boat->setBerths(EventId::fromString($eventIdString), $berths);
+        }
+
+        // Set pre-loaded history
+        foreach ($history as $eventIdString => $participated) {
+            $boat->setHistory(EventId::fromString($eventIdString), $participated);
+        }
+
+        return $boat;
     }
 }
