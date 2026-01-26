@@ -91,7 +91,24 @@ jobs:
       - name: Run integration tests
         run: ./vendor/bin/phpunit Tests/Integration
 
-      # Step 10: Run full test suite with code coverage (optional)
+      # Step 10: Run API tests
+      # API tests test the REST API endpoints with a running server
+      - name: Run API tests
+        run: |
+          # Start PHP built-in development server in the background
+          php -S localhost:8000 -t public > /dev/null 2>&1 &
+          SERVER_PID=$!
+
+          # Wait for server to be ready
+          sleep 2
+
+          # Run API tests
+          php Tests/api_test.php
+
+          # Stop the server
+          kill $SERVER_PID
+
+      # Step 11: Run full test suite with code coverage (optional)
       # This runs all tests and can generate coverage reports
       # Commented out for now, but useful for seeing which code is tested
       # - name: Run all tests with coverage
