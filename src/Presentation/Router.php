@@ -38,7 +38,7 @@ class Router
                 $params = [];
                 if (preg_match_all('/\{(\w+)\}/', $route['path'], $paramNames)) {
                     foreach ($paramNames[1] as $index => $name) {
-                        $params[$name] = $matches[$index + 1] ?? null;
+                        $params[$name] = urldecode($matches[$index + 1] ?? '');
                     }
                 }
 
