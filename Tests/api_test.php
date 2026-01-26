@@ -10,7 +10,7 @@ declare(strict_types=1);
  */
 
 // Configuration
-$baseUrl = 'http://localhost/api';
+$baseUrl = 'http://localhost:8000/api';
 $testFirstName = 'John';
 $testLastName = 'Doe';
 
@@ -35,6 +35,13 @@ function makeRequest(string $method, string $url, ?array $body = null, ?array $h
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if ($response === false) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        throw new \RuntimeException("Curl request failed: {$error}");
+    }
+
     curl_close($ch);
 
     return [
@@ -86,7 +93,8 @@ test('GET /api/events', function () use ($baseUrl) {
 
 // Test 2: GET /api/events/{id} (public)
 test('GET /api/events/{id}', function () use ($baseUrl) {
-    $response = makeRequest('GET', "{$baseUrl}/events/Fri May 29");
+    $eventId = urlencode('Fri May 29');
+    $response = makeRequest('GET', "{$baseUrl}/events/{$eventId}");
 
     // May return 404 if event doesn't exist, which is valid
     if ($response['status'] !== 200 && $response['status'] !== 404) {
