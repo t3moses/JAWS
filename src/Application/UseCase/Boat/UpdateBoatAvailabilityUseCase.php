@@ -9,7 +9,6 @@ use App\Application\DTO\Response\BoatResponse;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\BoatNotFoundException;
 use App\Application\Port\Repository\BoatRepositoryInterface;
-use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\EventId;
 
 /**
@@ -27,13 +26,14 @@ class UpdateBoatAvailabilityUseCase
     /**
      * Execute the use case
      *
-     * @param BoatKey $boatKey
+     * @param string $ownerFirstName
+     * @param string $ownerLastName
      * @param UpdateAvailabilityRequest $request
      * @return BoatResponse
      * @throws ValidationException
      * @throws BoatNotFoundException
      */
-    public function execute(BoatKey $boatKey, UpdateAvailabilityRequest $request): BoatResponse
+    public function execute(string $ownerFirstName, string $ownerLastName, UpdateAvailabilityRequest $request): BoatResponse
     {
         // Validate request
         $errors = $request->validate();
@@ -41,10 +41,10 @@ class UpdateBoatAvailabilityUseCase
             throw new ValidationException($errors);
         }
 
-        // Find boat
-        $boat = $this->boatRepository->findByKey($boatKey);
+        // Find boat by owner name
+        $boat = $this->boatRepository->findByOwnerName($ownerFirstName, $ownerLastName);
         if ($boat === null) {
-            throw new BoatNotFoundException($boatKey);
+            throw new BoatNotFoundException("Boat not found for owner: {$ownerFirstName} {$ownerLastName}");
         }
 
         // Update availability for each event

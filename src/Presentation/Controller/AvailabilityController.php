@@ -15,7 +15,6 @@ use App\Application\DTO\Request\UpdateAvailabilityRequest;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\BoatNotFoundException;
 use App\Application\Exception\CrewNotFoundException;
-use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\CrewKey;
 use App\Presentation\Response\JsonResponse;
 
@@ -84,14 +83,15 @@ class AvailabilityController
     public function updateBoatAvailability(array $body, array $auth): JsonResponse
     {
         try {
-            // Extract boat key from auth (boat owner name)
-            $boatKey = BoatKey::fromBoatName($body['boat_name'] ?? '');
-
             $request = new UpdateAvailabilityRequest(
                 availabilities: $body['availabilities'] ?? []
             );
 
-            $response = $this->updateBoatAvailabilityUseCase->execute($boatKey, $request);
+            $response = $this->updateBoatAvailabilityUseCase->execute(
+                $auth['first_name'],
+                $auth['last_name'],
+                $request
+            );
 
             // Trigger season update
             $this->processSeasonUpdateUseCase->execute();

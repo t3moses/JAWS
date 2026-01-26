@@ -13,8 +13,14 @@ use App\Domain\ValueObject\BoatKey;
  */
 class BoatNotFoundException extends \RuntimeException
 {
-    public function __construct(BoatKey $key)
+    public function __construct(BoatKey|string $keyOrMessage)
     {
-        parent::__construct("Boat not found: {$key->toString()}");
+        if ($keyOrMessage instanceof BoatKey) {
+            $message = "Boat not found: {$keyOrMessage->toString()}";
+        } else {
+            $message = $keyOrMessage;
+        }
+
+        parent::__construct($message);
     }
 }
