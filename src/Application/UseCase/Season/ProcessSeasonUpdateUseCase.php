@@ -96,8 +96,9 @@ class ProcessSeasonUpdateUseCase
             // Phase 5: Update history (for past events - not applicable here for future events)
             // History is updated after events occur via separate process
 
-            // Phase 6: Save flotilla
-            $this->seasonRepository->saveFlotilla($eventId, $flotilla);
+            // Phase 6: Save flotilla (serialize domain objects to arrays first)
+            $serializedFlotilla = $this->serializeFlotilla($flotilla);
+            $this->seasonRepository->saveFlotilla($eventId, $serializedFlotilla);
             $flotillasGenerated++;
 
             $eventsProcessed++;
@@ -258,6 +259,47 @@ class ProcessSeasonUpdateUseCase
         }
 
         return $modifiedCrews;
+    }
+
+    /**
+     * Serialize flotilla domain objects to arrays for JSON storage
+     *
+     * Converts Boat and Crew domain objects to arrays so they can be properly
+     * stored in the database and retrieved later.
+     *
+     * @param array{event_id: string, crewed_boats: array, waitlist_boats: array, waitlist_crews: array} $flotilla
+     * @return array{event_id: string, crewed_boats: array, waitlist_boats: array, waitlist_crews: array}
+     */
+    private function serializeFlotilla(array $flotilla): array
+    {
+        $serializedCrewedBoats = [];
+        foreach ($flotilla['crewed_boats'] as $crewedBoat) {
+            $serializedCrews = [];
+            foreach ($crewedBoat['crews'] as $crew) {
+                $serializedCrews[] = $crew->toArray();
+            }
+            $serializedCrewedBoats[] = [
+                'boat' => $crewedBoat['boat']->toArray(),
+                'crews' => $serializedCrews,
+            ];
+        }
+
+        $serializedWaitlistBoats = [];
+        foreach ($flotilla['waitlist_boats'] as $boat) {
+            $serializedWaitlistBoats[] = $boat->toArray();
+        }
+
+        $serializedWaitlistCrews = [];
+        foreach ($flotilla['waitlist_crews'] as $crew) {
+            $serializedWaitlistCrews[] = $crew->toArray();
+        }
+
+        return [
+            'event_id' => $flotilla['event_id'],
+            'crewed_boats' => $serializedCrewedBoats,
+            'waitlist_boats' => $serializedWaitlistBoats,
+            'waitlist_crews' => $serializedWaitlistCrews,
+        ];
     }
 
     /**

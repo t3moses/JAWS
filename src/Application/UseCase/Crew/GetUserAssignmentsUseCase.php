@@ -80,15 +80,16 @@ class GetUserAssignmentsUseCase
                 $crews = $crewedBoat['crews'];
 
                 foreach ($crews as $assignedCrew) {
-                    if ($assignedCrew->getKey()->equals($crewKey)) {
-                        // Found assignment
+                    // Compare crew keys (now arrays with 'key' field)
+                    if ($assignedCrew['key'] === $crewKey->toString()) {
+                        // Found assignment - extract crewmate data
                         $crewmates = array_map(
                             fn($c) => [
-                                'key' => $c->getKey()->toString(),
-                                'display_name' => $c->getDisplayName(),
-                                'skill' => $c->getSkill()->value,
+                                'key' => $c['key'],
+                                'display_name' => $c['display_name'],
+                                'skill' => $c['skill'],
                             ],
-                            array_filter($crews, fn($c) => !$c->getKey()->equals($crewKey))
+                            array_filter($crews, fn($c) => $c['key'] !== $crewKey->toString())
                         );
 
                         $assignments[] = new AssignmentResponse(
@@ -97,8 +98,8 @@ class GetUserAssignmentsUseCase
                             startTime: $eventData['start_time'],
                             finishTime: $eventData['finish_time'],
                             availabilityStatus: $crew->getAvailability($eventId)->value,
-                            boatName: $boat->getDisplayName(),
-                            boatKey: $boat->getKey()->toString(),
+                            boatName: $boat['display_name'],
+                            boatKey: $boat['key'],
                             crewmates: array_values($crewmates),
                         );
                         $found = true;
