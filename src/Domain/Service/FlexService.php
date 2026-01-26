@@ -8,7 +8,8 @@ use App\Domain\Entity\Boat;
 use App\Domain\Entity\Crew;
 use App\Domain\Collection\Fleet;
 use App\Domain\Collection\Squad;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\BoatRankDimension;
+use App\Domain\Enum\CrewRankDimension;
 
 /**
  * Flex Service
@@ -73,7 +74,7 @@ class FlexService
     {
         $isFlex = $this->isBoatOwnerFlex($boat, $squad);
         $flexRank = $isFlex ? 0 : 1; // 0 = flexible (higher priority), 1 = inflexible
-        $boat->setRankDimension(RankDimension::BOAT_FLEXIBILITY, $flexRank);
+        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, $flexRank);
     }
 
     /**
@@ -86,7 +87,7 @@ class FlexService
     {
         $isFlex = $this->isCrewFlex($crew, $fleet);
         $flexRank = $isFlex ? 0 : 1; // 0 = flexible (higher priority), 1 = inflexible
-        $crew->setRankDimension(RankDimension::CREW_FLEXIBILITY, $flexRank);
+        $crew->setRankDimension(CrewRankDimension::FLEXIBILITY, $flexRank);
     }
 
     /**

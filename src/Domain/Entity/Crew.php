@@ -8,7 +8,7 @@ use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\CrewKey;
 use App\Domain\ValueObject\EventId;
 use App\Domain\ValueObject\Rank;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\CrewRankDimension;
 use App\Domain\Enum\AvailabilityStatus;
 use App\Domain\Enum\SkillLevel;
 
@@ -165,7 +165,7 @@ class Crew
         $this->membershipNumber = $membershipNumber;
         // Update rank when membership changes
         $this->setRankDimension(
-            RankDimension::CREW_MEMBERSHIP,
+            CrewRankDimension::MEMBERSHIP,
             empty($membershipNumber) ? 0 : 1
         );
     }
@@ -209,7 +209,7 @@ class Crew
         $this->rank = $rank;
     }
 
-    public function setRankDimension(RankDimension $dimension, int $value): void
+    public function setRankDimension(CrewRankDimension $dimension, int $value): void
     {
         $this->rank = $this->rank->withDimension($dimension, $value);
     }
@@ -222,7 +222,7 @@ class Crew
                 $absences++;
             }
         }
-        $this->setRankDimension(RankDimension::CREW_ABSENCE, $absences);
+        $this->setRankDimension(CrewRankDimension::ABSENCE, $absences);
     }
 
     // === Availability ===

@@ -8,7 +8,7 @@ use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\CrewKey;
 use App\Domain\ValueObject\EventId;
 use App\Domain\ValueObject\Rank;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\BoatRankDimension;
 
 /**
  * Boat Entity
@@ -183,7 +183,7 @@ class Boat
         $this->rank = $rank;
     }
 
-    public function setRankDimension(RankDimension $dimension, int $value): void
+    public function setRankDimension(BoatRankDimension $dimension, int $value): void
     {
         $this->rank = $this->rank->withDimension($dimension, $value);
     }
@@ -196,7 +196,7 @@ class Boat
                 $absences++;
             }
         }
-        $this->setRankDimension(RankDimension::BOAT_ABSENCE, $absences);
+        $this->setRankDimension(BoatRankDimension::ABSENCE, $absences);
     }
 
     // === Availability (Berths) ===

@@ -7,7 +7,8 @@ namespace App\Domain\Service;
 use App\Domain\Entity\Boat;
 use App\Domain\Entity\Crew;
 use App\Domain\ValueObject\EventId;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\BoatRankDimension;
+use App\Domain\Enum\CrewRankDimension;
 use App\Domain\Enum\AvailabilityStatus;
 
 /**
@@ -34,7 +35,7 @@ class RankingService
                     $absences++;
                 }
             }
-            $boat->setRankDimension(RankDimension::BOAT_ABSENCE, $absences);
+            $boat->setRankDimension(BoatRankDimension::ABSENCE, $absences);
         }
     }
 
@@ -54,7 +55,7 @@ class RankingService
                     $absences++;
                 }
             }
-            $crew->setRankDimension(RankDimension::CREW_ABSENCE, $absences);
+            $crew->setRankDimension(CrewRankDimension::ABSENCE, $absences);
         }
     }
 
@@ -78,7 +79,7 @@ class RankingService
                 AvailabilityStatus::UNAVAILABLE => 3,   // Lowest priority
             };
 
-            $crew->setRankDimension(RankDimension::CREW_COMMITMENT, $commitmentRank);
+            $crew->setRankDimension(CrewRankDimension::COMMITMENT, $commitmentRank);
         }
     }
 
@@ -90,7 +91,7 @@ class RankingService
     public function updateCrewMembershipRank(Crew $crew): void
     {
         $membershipRank = empty($crew->getMembershipNumber()) ? 0 : 1;
-        $crew->setRankDimension(RankDimension::CREW_MEMBERSHIP, $membershipRank);
+        $crew->setRankDimension(CrewRankDimension::MEMBERSHIP, $membershipRank);
     }
 
     /**

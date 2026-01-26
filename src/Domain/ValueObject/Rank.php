@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\ValueObject;
 
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\BoatRankDimension;
+use App\Domain\Enum\CrewRankDimension;
 
 /**
  * Rank Value Object
@@ -35,8 +36,8 @@ final readonly class Rank
     public static function forBoat(int $flexibility, int $absence): self
     {
         return new self([
-            RankDimension::BOAT_FLEXIBILITY->value => $flexibility,
-            RankDimension::BOAT_ABSENCE->value => $absence,
+            BoatRankDimension::FLEXIBILITY->value => $flexibility,
+            BoatRankDimension::ABSENCE->value => $absence,
         ]);
     }
 
@@ -55,10 +56,10 @@ final readonly class Rank
         int $absence
     ): self {
         return new self([
-            RankDimension::CREW_COMMITMENT->value => $commitment,
-            RankDimension::CREW_FLEXIBILITY->value => $flexibility,
-            RankDimension::CREW_MEMBERSHIP->value => $membership,
-            RankDimension::CREW_ABSENCE->value => $absence,
+            CrewRankDimension::COMMITMENT->value => $commitment,
+            CrewRankDimension::FLEXIBILITY->value => $flexibility,
+            CrewRankDimension::MEMBERSHIP->value => $membership,
+            CrewRankDimension::ABSENCE->value => $absence,
         ]);
     }
 
@@ -75,7 +76,7 @@ final readonly class Rank
     /**
      * Get value for specific dimension
      */
-    public function getDimension(RankDimension $dimension): int
+    public function getDimension(BoatRankDimension|CrewRankDimension $dimension): int
     {
         return $this->values[$dimension->value] ?? 0;
     }
@@ -93,7 +94,7 @@ final readonly class Rank
     /**
      * Set value for a dimension (returns new instance)
      */
-    public function withDimension(RankDimension $dimension, int $value): self
+    public function withDimension(BoatRankDimension|CrewRankDimension $dimension, int $value): self
     {
         $newValues = $this->values;
         $newValues[$dimension->value] = $value;

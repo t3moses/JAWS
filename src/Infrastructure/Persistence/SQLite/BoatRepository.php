@@ -9,7 +9,7 @@ use App\Domain\Entity\Boat;
 use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\EventId;
 use App\Domain\ValueObject\Rank;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\BoatRankDimension;
 use PDO;
 
 /**
@@ -181,8 +181,8 @@ class BoatRepository implements BoatRepositoryInterface
             'max_berths' => $boat->getMaxBerths(),
             'assistance_required' => $boat->requiresAssistance() ? 'Yes' : 'No',
             'social_preference' => $boat->hasSocialPreference() ? 'Yes' : 'No',
-            'rank_flexibility' => $rank->getDimension(RankDimension::BOAT_FLEXIBILITY),
-            'rank_absence' => $rank->getDimension(RankDimension::BOAT_ABSENCE),
+            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+            'rank_absence' => $rank->getDimension(BoatRankDimension::ABSENCE),
         ]);
 
         $boat->setId((int)$this->pdo->lastInsertId());
@@ -224,8 +224,8 @@ class BoatRepository implements BoatRepositoryInterface
             'max_berths' => $boat->getMaxBerths(),
             'assistance_required' => $boat->requiresAssistance() ? 'Yes' : 'No',
             'social_preference' => $boat->hasSocialPreference() ? 'Yes' : 'No',
-            'rank_flexibility' => $rank->getDimension(RankDimension::BOAT_FLEXIBILITY),
-            'rank_absence' => $rank->getDimension(RankDimension::BOAT_ABSENCE),
+            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+            'rank_absence' => $rank->getDimension(BoatRankDimension::ABSENCE),
         ]);
 
         // Update availability and history

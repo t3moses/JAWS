@@ -10,7 +10,7 @@ use App\Domain\ValueObject\CrewKey;
 use App\Domain\ValueObject\BoatKey;
 use App\Domain\ValueObject\EventId;
 use App\Domain\ValueObject\Rank;
-use App\Domain\Enum\RankDimension;
+use App\Domain\Enum\CrewRankDimension;
 use App\Domain\Enum\AvailabilityStatus;
 use App\Domain\Enum\SkillLevel;
 use PDO;
@@ -233,10 +233,10 @@ class CrewRepository implements CrewRepositoryInterface
             'membership_number' => $crew->getMembershipNumber(),
             'skill' => $crew->getSkill()->value,
             'experience' => $crew->getExperience(),
-            'rank_commitment' => $rank->getDimension(RankDimension::CREW_COMMITMENT),
-            'rank_flexibility' => $rank->getDimension(RankDimension::CREW_FLEXIBILITY),
-            'rank_membership' => $rank->getDimension(RankDimension::CREW_MEMBERSHIP),
-            'rank_absence' => $rank->getDimension(RankDimension::CREW_ABSENCE),
+            'rank_commitment' => $rank->getDimension(CrewRankDimension::COMMITMENT),
+            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
+            'rank_membership' => $rank->getDimension(CrewRankDimension::MEMBERSHIP),
+            'rank_absence' => $rank->getDimension(CrewRankDimension::ABSENCE),
         ]);
 
         $crew->setId((int)$this->pdo->lastInsertId());
@@ -282,10 +282,10 @@ class CrewRepository implements CrewRepositoryInterface
             'membership_number' => $crew->getMembershipNumber(),
             'skill' => $crew->getSkill()->value,
             'experience' => $crew->getExperience(),
-            'rank_commitment' => $rank->getDimension(RankDimension::CREW_COMMITMENT),
-            'rank_flexibility' => $rank->getDimension(RankDimension::CREW_FLEXIBILITY),
-            'rank_membership' => $rank->getDimension(RankDimension::CREW_MEMBERSHIP),
-            'rank_absence' => $rank->getDimension(RankDimension::CREW_ABSENCE),
+            'rank_commitment' => $rank->getDimension(CrewRankDimension::COMMITMENT),
+            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
+            'rank_membership' => $rank->getDimension(CrewRankDimension::MEMBERSHIP),
+            'rank_absence' => $rank->getDimension(CrewRankDimension::ABSENCE),
         ]);
 
         // Update availability, history, and whitelist
