@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "JAWS API",
+    "description": "REST API for JAWS - Nepean Sailing Club Social Day Cruising Program",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost/api",
+      "type": "string"
+    },
+    {
+      "key": "firstName",
+      "value": "John",
+      "type": "string"
+    },
+    {
+      "key": "lastName",
+      "value": "Doe",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/Fri May 29",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "Fri May 29"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Registration",
+      "item": [
+        {
+          "name": "Register Boat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "{{firstName}}"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "{{lastName}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Sea Breeze\",\n  \"owner_first_name\": \"{{firstName}}\",\n  \"owner_last_name\": \"{{lastName}}\",\n  \"owner_email\": \"john.doe@example.com\",\n  \"owner_mobile\": \"555-1234\",\n  \"min_berths\": 2,\n  \"max_berths\": 4,\n  \"assistance_required\": \"No\",\n  \"social_preference\": \"Yes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/boats/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["boats", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Crew",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "{{firstName}}"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "{{lastName}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"{{firstName}} {{lastName}}\",\n  \"first_name\": \"{{firstName}}\",\n  \"last_name\": \"{{lastName}}\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"555-1234\",\n  \"social_preference\": \"Yes\",\n  \"membership_number\": \"12345\",\n  \"skill\": 1,\n  \"experience\": \"5 years recreational sailing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/crews/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["crews", "register"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Availability",
+      "item": [
+        {
+          "name": "Update Boat Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "{{firstName}}"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "{{lastName}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boat_name\": \"Sea Breeze\",\n  \"availabilities\": {\n    \"Fri May 29\": 3,\n    \"Fri Jun 05\": 2,\n    \"Fri Jun 12\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/boats/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["boats", "availability"]
+            }
+          }
+        },
+        {
+          "name": "Update Crew Availability",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "{{firstName}}"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "{{lastName}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilities\": {\n    \"Fri May 29\": 1,\n    \"Fri Jun 05\": 1,\n    \"Fri Jun 12\": 0,\n    \"Fri Jun 19\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "availability"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Get User Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-FirstName",
+                "value": "{{firstName}}"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "{{lastName}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["assignments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Matching Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-FirstName",
+                "value": "Admin"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "User"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/matching/Fri May 29",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "matching", "Fri May 29"]
+            }
+          }
+        },
+        {
+          "name": "Send Notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "Admin"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "User"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"include_calendar\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/notifications/Fri May 29",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "notifications", "Fri May 29"]
+            }
+          }
+        },
+        {
+          "name": "Update Configuration",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-FirstName",
+                "value": "Admin"
+              },
+              {
+                "key": "X-User-LastName",
+                "value": "User"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"simulated\",\n  \"simulated_date\": \"2026-05-15\",\n  \"start_time\": \"12:45:00\",\n  \"finish_time\": \"17:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "config"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
