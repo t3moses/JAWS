@@ -127,7 +127,7 @@ class AvailabilityController
                 partnerLastName: $body['partner_last_name'] ?? null,
                 email: $body['email'] ?? '',
                 mobile: $body['mobile'] ?? null,
-                socialPreference: $body['social_preference'] ?? 'No',
+                socialPreference: (bool)($body['social_preference'] ?? false),
                 membershipNumber: $body['membership_number'] ?? null,
                 skill: isset($body['skill']) ? (int)$body['skill'] : 0,
                 experience: $body['experience'] ?? null,
