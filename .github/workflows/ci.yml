@@ -1,0 +1,156 @@
+# GitHub Actions CI/CD Pipeline for JAWS
+# This file defines automated tests that run whenever code is pushed to the repository
+# GitHub Actions is a CI/CD (Continuous Integration/Continuous Deployment) service
+# that automatically runs tasks like tests, builds, and deployments
+
+name: CI Pipeline
+
+# Define when this workflow should run
+on:
+  # Run on every push to any branch
+  push:
+    branches: ['**']
+
+  # Run on every pull request targeting main
+  pull_request:
+    branches: [main]
+
+  # Allow manually triggering this workflow from the Actions tab
+  workflow_dispatch:
+
+# Define the jobs to run (jobs run in parallel by default)
+jobs:
+  # Job 1: Build and Test
+  build-and-test:
+    # Specify the operating system to run on
+    # ubuntu-latest is a virtual machine provided by GitHub
+    runs-on: ubuntu-latest
+
+    # Define the steps to execute in this job (steps run sequentially)
+    steps:
+      # Step 1: Checkout the code
+      # This downloads your repository code to the runner (virtual machine)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Setup PHP environment
+      # This installs PHP and required extensions on the runner
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'  # Match the PHP version required by the project
+          extensions: pdo, pdo_sqlite, mbstring  # Install required PHP extensions
+          coverage: none  # We're not generating coverage reports (yet)
+
+      # Step 3: Validate composer.json
+      # This checks that your composer.json file is valid
+      - name: Validate Composer files
+        run: composer validate --strict
+
+      # Step 4: Cache Composer dependencies
+      # This speeds up builds by caching downloaded packages between runs
+      # Without caching, every run would download all packages from scratch
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor  # The directory to cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          # The cache key is based on OS and composer.lock hash
+          # If composer.lock changes, a new cache is created
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # Step 5: Install dependencies
+      # This runs 'composer install' to download all PHP packages
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+        # --prefer-dist: Download zip files instead of cloning repos (faster)
+        # --no-progress: Don't show progress bars (cleaner output in CI)
+        # --no-interaction: Don't ask questions (CI is automated)
+
+      # Step 6: Create database directory
+      # The database directory must exist before initializing the database
+      - name: Create database directory
+        run: mkdir -p database
+
+      # Step 7: Initialize database
+      # This creates the SQLite database and applies the schema
+      # Required for integration tests that interact with the database
+      - name: Initialize database
+        run: php database/init_database.php
+
+      # Step 8: Run unit tests
+      # Unit tests test individual components in isolation (no database needed)
+      - name: Run unit tests
+        run: ./vendor/bin/phpunit Tests/Unit
+        # This runs all tests in the tests/Unit directory
+        # If any test fails, the workflow will fail and notify you
+
+      # Step 9: Run integration tests
+      # Integration tests test how components work together (uses database)
+      - name: Run integration tests
+        run: ./vendor/bin/phpunit Tests/Integration
+
+      # Step 10: Run full test suite with code coverage (optional)
+      # This runs all tests and can generate coverage reports
+      # Commented out for now, but useful for seeing which code is tested
+      # - name: Run all tests with coverage
+      #   run: ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+
+      # -------------------------------------------------------------
+      # DEPLOYMENT SECTION
+      # -------------------------------------------------------------
+      # This is where deployment steps would go after tests pass
+      # Deployment means automatically pushing code to a server
+      #
+      # Common deployment approaches:
+      # 1. Deploy to staging environment (test server)
+      # 2. Wait for manual approval
+      # 3. Deploy to production environment (live server)
+      #
+      # Example deployment step (AWS Lightsail):
+      # - name: Deploy to production
+      #   if: github.ref == 'refs/heads/main' && success()
+      #   run: |
+      #     # Install SSH key
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/id_rsa
+      #     chmod 600 ~/.ssh/id_rsa
+      #
+      #     # Add server to known hosts
+      #     ssh-keyscan -H 16.52.222.15 >> ~/.ssh/known_hosts
+      #
+      #     # Deploy files via rsync
+      #     rsync -avz --exclude 'tests' --exclude '.git' \
+      #       ./ bitnami@16.52.222.15:/var/www/html/
+      #
+      #     # Set permissions and restart Apache
+      #     ssh bitnami@16.52.222.15 << 'EOF'
+      #       cd /var/www/html
+      #       sudo chgrp -R www-data src config database
+      #       sudo chmod -R 750 src config
+      #       sudo chmod 664 database/jaws.db
+      #       sudo chmod 775 database
+      #       sudo /opt/bitnami/ctlscript.sh restart apache
+      #     EOF
+      #
+      # Note: You would need to add your SSH key as a GitHub Secret:
+      # Settings → Secrets and variables → Actions → New repository secret
+      # Name: LIGHTSAIL_SSH_KEY
+      # Value: [contents of your .pem file]
+      # -------------------------------------------------------------
+
+# What happens when this workflow runs?
+# 1. GitHub detects a push or pull request
+# 2. GitHub spins up a fresh Ubuntu virtual machine
+# 3. Each step runs in order
+# 4. If any step fails, the workflow stops and marks as "failed"
+# 5. You get a notification (email, GitHub UI) about success/failure
+# 6. Pull requests show a green check or red X based on test results
+#
+# Benefits:
+# - Catches bugs before they reach production
+# - Ensures all tests pass before merging code
+# - Provides confidence that changes don't break existing features
+# - Automates repetitive testing tasks
+# - Creates a safety net for the entire team
