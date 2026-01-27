@@ -16,7 +16,12 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "Bash(./vendor/bin/phpunit:*)"
+      "Bash(./vendor/bin/phpunit:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(composer require:*)",
+      "Bash(aws --endpoint-url=http://localhost:4566 ses verify-email-identity:*)",
+      "Bash(composer remove:*)"
     ]
   }
 }

@@ -236,10 +236,10 @@ test('POST /api/admin/notifications/{eventId}', function () use ($baseUrl, $test
         "X-User-LastName: {$testLastName}",
     ]);
 
-    // May return 404 if event doesn't exist, or 500 if email service is not configured
+    // May return 404 if event doesn't exist (or 500 if email service is not configured)
     // Accept these as valid test outcomes
-    if ($response['status'] !== 200 && $response['status'] !== 404 && $response['status'] !== 500) {
-        throw new \Exception("Expected 200, 404, or 500, got {$response['status']}");
+    if ($response['status'] !== 200 && $response['status'] !== 404) {
+        throw new \Exception("Expected 200, or 404, got {$response['status']}");
     }
 
     if (!isset($response['body']['success']) && !isset($response['body']['error'])) {

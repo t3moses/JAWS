@@ -99,27 +99,45 @@ class SendNotificationsUseCase
             }
 
             // Send email to boat owner
-            $this->emailService->sendAssignmentNotification(
-                $boat['owner_email'],
+            $subject = "Boat Assignment for {$eventId->toString()}";
+            $body = $this->buildAssignmentEmailBody(
                 $boat['owner_first_name'],
                 $eventId->toString(),
                 $boat['display_name'],
-                $crews,
-                $calendarAttachment
+                $crews
             );
-            $emailsSent++;
+
+            // Note: Calendar attachments require direct PHPMailer access
+            // For now, we send without attachments when using the simple send() method
+            // TODO: Extend EmailServiceInterface to support attachments
+            if ($this->emailService->send(
+                $boat['owner_email'],
+                $subject,
+                $body
+            )) {
+                $emailsSent++;
+            } else {
+                error_log("Failed to send email to boat owner: {$boat['owner_email']}");
+            }
 
             // Send email to each crew member
             foreach ($crews as $crew) {
-                $this->emailService->sendAssignmentNotification(
-                    $crew['email'],
+                $body = $this->buildAssignmentEmailBody(
                     $crew['first_name'],
                     $eventId->toString(),
                     $boat['display_name'],
-                    $crews,
-                    $calendarAttachment
+                    $crews
                 );
-                $emailsSent++;
+
+                if ($this->emailService->send(
+                    $crew['email'],
+                    $subject,
+                    $body
+                )) {
+                    $emailsSent++;
+                } else {
+                    error_log("Failed to send email to crew member: {$crew['email']}");
+                }
             }
         }
 
@@ -128,60 +146,6 @@ class SendNotificationsUseCase
             'emails_sent' => $emailsSent,
             'message' => "Sent {$emailsSent} notification emails for event {$eventId->toString()}",
         ];
-    }
-
-    /**
-     * Send assignment notification email
-     *
-     * @param string $recipientEmail Recipient's email address
-     * @param string $recipientFirstName Recipient's first name
-     * @param string $eventId Event identifier (e.g., "Fri May 29")
-     * @param string $boatName Name of the boat
-     * @param array $crews Array of crew member objects assigned to the boat
-     * @param string|null $calendarAttachment Optional iCalendar attachment content
-     * @return bool True if sent successfully
-     */
-    public function sendAssignmentNotification(
-        string $recipientEmail,
-        string $recipientFirstName,
-        string $eventId,
-        string $boatName,
-        array $crews,
-        ?string $calendarAttachment = null
-    ): bool {
-        $mail = $this->createMailer();
-
-        try {
-            // Sender
-            $mail->setFrom($this->defaultFromEmail, $this->defaultFromName);
-
-            // Recipient
-            $mail->addAddress($recipientEmail);
-
-            // Subject
-            $mail->Subject = "Boat Assignment for {$eventId}";
-
-            // Build email body
-            $body = $this->buildAssignmentEmailBody($recipientFirstName, $eventId, $boatName, $crews);
-            $mail->Body = $body;
-            $mail->isHTML(true);
-
-            // Add calendar attachment if provided
-            if ($calendarAttachment !== null) {
-                $mail->addStringAttachment(
-                    $calendarAttachment,
-                    "event_{$eventId}.ics",
-                    PHPMailer::ENCODING_BASE64,
-                    'text/calendar'
-                );
-            }
-
-            return $mail->send();
-
-        } catch (PHPMailerException $e) {
-            error_log("Assignment notification email failed: " . $e->getMessage());
-            return false;
-        }
     }
 
     /**

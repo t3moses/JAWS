@@ -1,0 +1,30 @@
+Available crews: testuser,johndoe
+Initial Assignment:
+
+Boat: b_3n1 No
+  Crew: testuser 1
+
+Boat: b_2n1 No
+  Crew: johndoe 1
+
+Available crews: testuser,johndoe
+After initialization:
+
+Boat: b_3n1 No
+  Crew: testuser 1
+
+Boat: b_2n1 No
+  Crew: johndoe 1
+
+Rule: Assistance
+
+Rule: Whitelist
+
+Rule: High Skill
+
+Rule: Low Skill
+
+Rule: Partner
+
+Rule: Repeat
+

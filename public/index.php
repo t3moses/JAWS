@@ -12,6 +12,18 @@ declare(strict_types=1);
 // Load Composer autoloader
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// Load environment variables from .env file
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad(); // Use safeLoad() to avoid errors if .env doesn't exist
+
+// Putenv support - phpdotenv 5.x only populates $_ENV and $_SERVER by default
+// We need to also populate getenv() for backward compatibility
+foreach ($_ENV as $key => $value) {
+    if (!getenv($key)) {
+        putenv("{$key}={$value}");
+    }
+}
+
 // Load configuration
 $config = require __DIR__ . '/../config/config.php';
 
