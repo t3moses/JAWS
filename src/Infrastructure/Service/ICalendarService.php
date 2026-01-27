@@ -45,9 +45,26 @@ class ICalendarService implements CalendarServiceInterface
         string $location,
         string $description
     ): string {
-        // Parse times
-        $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date->format('Y-m-d') . ' ' . $startTime);
-        $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date->format('Y-m-d') . ' ' . $finishTime);
+        // Parse times - handle both HH:MM:SS and HH:MM formats
+        $dateString = $date->format('Y-m-d');
+
+        $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $dateString . ' ' . $startTime);
+        if ($start === false) {
+            // Try without seconds
+            $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i', $dateString . ' ' . $startTime);
+            if ($start === false) {
+                throw new \RuntimeException("Failed to parse start time: {$startTime}");
+            }
+        }
+
+        $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $dateString . ' ' . $finishTime);
+        if ($end === false) {
+            // Try without seconds
+            $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i', $dateString . ' ' . $finishTime);
+            if ($end === false) {
+                throw new \RuntimeException("Failed to parse finish time: {$finishTime}");
+            }
+        }
 
         $event = new Event();
         $event
