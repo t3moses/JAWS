@@ -388,18 +388,109 @@ EOF
 
 ### LocalStack Setup (for testing AWS services locally)
 
-LocalStack allows you to test AWS SES email functionality locally without actually sending emails or incurring AWS costs.
+LocalStack is a fully functional local AWS cloud stack that allows you to develop and test cloud applications offline. For JAWS, we use LocalStack to test AWS SES (Simple Email Service) email functionality locally without actually sending emails or incurring AWS costs.
+
+#### What LocalStack Does
+
+- **Emulates AWS SES**: Simulates AWS email service locally
+- **No Real Emails**: Emails are captured in logs instead of being sent
+- **Cost-Free Testing**: No AWS charges during development
+- **Offline Development**: Work without internet or AWS credentials
+- **Fast Feedback**: Instant email testing without SMTP delays
 
 #### Prerequisites
 
-- Docker installed
-- Docker Compose installed
+Before setting up LocalStack, you need:
 
-#### Setup LocalStack
+##### 1. Docker Desktop
 
-##### 1. Create `docker-compose.yml`
+- **Windows**: Download from <https://www.docker.com/products/docker-desktop/>
+- **Mac**: Download from <https://www.docker.com/products/docker-desktop/>
+- **Linux**: Install Docker and Docker Compose separately
+- Verify installation: `docker --version` and `docker-compose --version`
 
-Create this file in your project root:
+##### 2. Ensure Docker is Running
+
+- Start Docker Desktop application
+- Wait for "Docker Desktop is running" status
+
+#### Quick Start
+
+##### 1. Start LocalStack
+
+The project includes a `docker-compose.yml` file. To start LocalStack:
+
+```bash
+# Start LocalStack in background
+docker-compose up -d
+```
+
+**Expected Output:**
+```
+[+] Running 2/2
+ ✔ Network jaws_default       Created
+ ✔ Container jaws-localstack-1 Started
+```
+
+##### 2. Verify LocalStack is Running
+
+Check container status:
+```bash
+docker-compose ps
+```
+
+Expected output:
+```
+NAME                IMAGE                         STATUS
+jaws-localstack-1   localstack/localstack:latest  Up 30 seconds
+```
+
+Verify SES service is available:
+```bash
+# Using curl
+curl http://localhost:4566/_localstack/health | grep ses
+
+# Or view full health check
+curl http://localhost:4566/_localstack/health
+```
+
+Expected response should include:
+```json
+{
+  "services": {
+    "ses": "available"
+  }
+}
+```
+
+##### 3. View LocalStack Logs
+
+Monitor LocalStack activity in real-time:
+
+```bash
+# Follow logs (Ctrl+C to exit)
+docker-compose logs -f localstack
+
+# View last 100 lines
+docker-compose logs --tail=100 localstack
+
+# View logs since specific time
+docker-compose logs --since 5m localstack
+```
+
+When emails are sent, you'll see log entries like:
+```
+localstack  | 2026-01-27 ... INFO --- [...]  SES: SendEmail called
+localstack  | 2026-01-27 ... INFO --- [...]  From: noreply@nepean-sailing.ca
+localstack  | 2026-01-27 ... INFO --- [...]  To: john@example.com
+localstack  | 2026-01-27 ... INFO --- [...]  Subject: Your Flotilla Assignment
+```
+
+#### Configuration
+
+##### Current Docker Compose Configuration
+
+The project includes this `docker-compose.yml` (already created):
 
 ```yaml
 version: '3.8'
@@ -408,58 +499,310 @@ services:
   localstack:
     image: localstack/localstack:latest
     ports:
-      - "4566:4566"  # LocalStack gateway
-      - "4571:4571"  # SES service
+      - "4566:4566"  # LocalStack gateway (all services)
+      - "4571:4571"  # Legacy SES port (optional)
     environment:
       - SERVICES=ses
       - DEBUG=1
-      - DATA_DIR=/tmp/localstack/data
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=ca-central-1
     volumes:
-      - "./localstack:/tmp/localstack"
+      - localstack-data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+volumes:
+  localstack-data:
 ```
 
-##### 2. Start LocalStack
+**Key Configuration:**
 
-```bash
-docker-compose up -d
-```
+- **Port 4566**: Main LocalStack endpoint (handles all AWS services)
+- **Port 4571**: Legacy SES-specific port (backward compatibility)
+- **SERVICES=ses**: Only run SES service (faster startup)
+- **DEBUG=1**: Enable verbose logging for troubleshooting
+- **Named Volume**: `localstack-data` persists state between restarts
 
-Verify it's running:
-```bash
-docker-compose ps
-```
+##### Configure JAWS to Use LocalStack
 
-##### 3. Configure JAWS to Use LocalStack
+###### Option 1: Environment Variables (Recommended)
 
-Update your `.env` file:
+Create or update your `.env` file:
 
 ```bash
 # LocalStack SES Configuration
 SES_REGION=ca-central-1
 SES_SMTP_USERNAME=test
 SES_SMTP_PASSWORD=test
-SES_ENDPOINT=http://localhost:4566  # LocalStack endpoint
+EMAIL_FROM=noreply@nepean-sailing.ca
+EMAIL_FROM_NAME=JAWS - Nepean Sailing Club
+
+# Optional: Override default endpoints
+AWS_ENDPOINT_URL=http://localhost:4566
 ```
 
-##### 4. Verify SES Emails in LocalStack
+###### Option 2: Direct Configuration in Code
 
-LocalStack logs all email operations. To view:
+**Note:** Currently, `src/Infrastructure/Service/AwsSesEmailService.php` may require modifications to support custom endpoints. See [Future Enhancements](#future-enhancements-for-localstack) below.
 
+#### Testing Email Functionality
+
+##### 1. Start JAWS Development Server
+
+In a separate terminal:
+```bash
+php -S localhost:8000 -t public
+```
+
+##### 2. Send Test Email via API
+
+Use the admin notification endpoint to trigger an email:
+
+```bash
+curl -X POST http://localhost:8000/api/admin/notifications/FriMay29 \
+  -H "Content-Type: application/json" \
+  -H "X-User-FirstName: Admin" \
+  -H "X-User-LastName: User"
+```
+
+##### 3. View Email in LocalStack Logs
+
+Switch to your LocalStack logs terminal:
 ```bash
 docker-compose logs -f localstack
 ```
 
-##### 5. Stop LocalStack
-
-```bash
-docker-compose down
+You should see:
+```
+localstack  | INFO --- SES: SendEmail called
+localstack  | INFO --- From: noreply@nepean-sailing.ca
+localstack  | INFO --- To: crew1@example.com, crew2@example.com
+localstack  | INFO --- Subject: JAWS Flotilla Assignment - Fri May 29
+localstack  | INFO --- Message sent successfully (message-id: xxxxxxxx)
 ```
 
-**Note:** The current JAWS codebase may require modifications to `src/Infrastructure/Service/AwsSesEmailService.php` to support custom endpoints for LocalStack. This is a future enhancement.
+##### 4. Verify Email Content
+
+LocalStack captures the full email content. To see the HTML/text body, increase debug level or use the LocalStack SES API:
+
+```bash
+# List sent emails (requires LocalStack Pro for persistence)
+curl http://localhost:4566/_aws/ses/sent-emails
+
+# View specific email
+curl http://localhost:4566/_aws/ses/sent-emails/{message-id}
+```
+
+**Note:** Free LocalStack version doesn't persist emails. Emails are logged but not stored. For persistence, consider LocalStack Pro.
+
+#### Common Operations
+
+##### Stop LocalStack
+
+```bash
+# Stop containers (keeps volumes)
+docker-compose stop
+
+# Stop and remove containers (keeps volumes)
+docker-compose down
+
+# Stop and remove everything including volumes
+docker-compose down -v
+```
+
+##### Restart LocalStack
+
+```bash
+# Quick restart
+docker-compose restart localstack
+
+# Full restart (stop + start)
+docker-compose down
+docker-compose up -d
+```
+
+##### Reset LocalStack State
+
+```bash
+# Remove all data and start fresh
+docker-compose down -v
+docker-compose up -d
+```
+
+##### Check Resource Usage
+
+```bash
+# View container stats
+docker stats jaws-localstack-1
+
+# View logs size
+docker-compose logs --tail=1000 localstack | wc -l
+```
+
+#### Troubleshooting
+
+##### Error: "Device or resource busy" (Windows)
+
+**Symptom:**
+```
+ERROR: 'rm -rf "/tmp/localstack"': exit code 1; output: b"rm: cannot remove '/tmp/localstack': Device or resource busy\n"
+```
+
+**Cause:** Bind mount conflict on Windows with Docker Desktop.
+
+**Solution:**
+
+1. Stop all containers:
+
+   ```bash
+   docker-compose down -v
+   ```
+
+2. If that doesn't work, try full cleanup:
+
+   ```bash
+   docker-compose down
+   docker system prune -f
+   docker volume prune -f
+   ```
+
+3. Restart Docker Desktop (sometimes necessary on Windows)
+
+4. Start fresh:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+**Prevention:** The current `docker-compose.yml` uses a named Docker volume (`localstack-data`) instead of a bind mount, which prevents this issue.
+
+##### Error: "port 4566 is already allocated"
+
+**Symptom:**
+```
+Error starting userland proxy: listen tcp4 0.0.0.0:4566: bind: address already in use
+```
+
+**Solution:**
+
+Find what's using port 4566:
+```bash
+# Windows
+netstat -ano | findstr :4566
+
+# Mac/Linux
+lsof -i :4566
+```
+
+Option 1: Stop the conflicting process
+
+Option 2: Change LocalStack port in `docker-compose.yml`:
+```yaml
+ports:
+  - "14566:4566"  # Use port 14566 instead
+```
+
+Then update your `.env`:
+```bash
+AWS_ENDPOINT_URL=http://localhost:14566
+```
+
+##### Error: "Cannot connect to the Docker daemon"
+
+**Symptom:**
+```
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock
+```
+
+**Solution:**
+
+1. Start Docker Desktop
+2. Wait for "Docker Desktop is running" status
+3. Retry `docker-compose up -d`
+
+##### LocalStack Not Receiving Email Requests
+
+**Checklist:**
+
+1. Verify LocalStack is running: `docker-compose ps`
+2. Check LocalStack health: `curl http://localhost:4566/_localstack/health`
+3. Verify JAWS configuration points to LocalStack endpoint
+4. Check JAWS application logs for connection errors
+5. Ensure `AwsSesEmailService.php` supports custom endpoints (see Future Enhancements)
+
+##### Viewing Detailed LocalStack Logs
+
+For more verbose debugging:
+
+```bash
+# Update docker-compose.yml environment
+environment:
+  - DEBUG=1
+  - LOG_LEVEL=trace  # Add this line
+
+# Restart LocalStack
+docker-compose down
+docker-compose up -d
+
+# View detailed logs
+docker-compose logs -f localstack
+```
+
+#### Future Enhancements for LocalStack
+
+**Note:** The current JAWS codebase may require modifications to fully support LocalStack:
+
+**Required Changes:**
+
+1. **Update `AwsSesEmailService.php`** to accept custom endpoint:
+
+```php
+// src/Infrastructure/Service/AwsSesEmailService.php
+
+public function __construct(array $config)
+{
+    $this->config = $config;
+    $this->mailer = new PHPMailer(true);
+
+    // SMTP settings
+    $this->mailer->isSMTP();
+
+    // Support custom endpoint for LocalStack
+    $host = $config['endpoint'] ?? "email-smtp.{$config['region']}.amazonaws.com";
+    $this->mailer->Host = $host;
+
+    // ... rest of configuration
+}
+```
+
+2. **Update `config/config.php`** to read endpoint from environment:
+
+```php
+'ses' => [
+    'region' => $_ENV['SES_REGION'] ?? 'ca-central-1',
+    'smtp_username' => $_ENV['SES_SMTP_USERNAME'] ?? '',
+    'smtp_password' => $_ENV['SES_SMTP_PASSWORD'] ?? '',
+    'endpoint' => $_ENV['AWS_ENDPOINT_URL'] ?? null,  // Add this line
+    // ...
+],
+```
+
+3. **Alternative: Use AWS SDK directly** instead of PHPMailer for better LocalStack compatibility:
+
+```bash
+composer require aws/aws-sdk-php
+```
+
+Then implement SES using AWS SDK with custom endpoint support.
+
+**These enhancements are tracked as future work.**
+
+#### Additional Resources
+
+- **LocalStack Documentation**: <https://docs.localstack.cloud/>
+- **LocalStack SES Coverage**: <https://docs.localstack.cloud/user-guide/aws/ses/>
+- **Docker Desktop Docs**: <https://docs.docker.com/desktop/>
+- **PHPMailer Documentation**: <https://github.com/PHPMailer/PHPMailer>
 
 ---
 
