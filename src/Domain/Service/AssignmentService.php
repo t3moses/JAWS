@@ -170,6 +170,7 @@ class AssignmentService
 
         if ($this->debugFile !== null) {
             fclose($this->debugFile);
+            $this->debugFile = null;
         }
 
         return $this->flotilla;
