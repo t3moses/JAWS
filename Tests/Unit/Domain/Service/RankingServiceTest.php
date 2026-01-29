@@ -58,6 +58,7 @@ class RankingServiceTest extends TestCase
         );
     }
 
+    // Tests that boat with no absences receives absence rank of 0
     public function testUpdateBoatAbsenceRanksWithNoAbsences(): void
     {
         $boat = $this->createBoat('sailaway');
@@ -72,6 +73,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
+    // Tests that boat absence rank equals the count of past event absences
     public function testUpdateBoatAbsenceRanksWithAbsences(): void
     {
         $boat = $this->createBoat('sailaway');
@@ -87,6 +89,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(2, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
+    // Tests absence ranking calculation across multiple boats with different histories
     public function testUpdateBoatAbsenceRanksWithMultipleBoats(): void
     {
         $boat1 = $this->createBoat('sailaway');
@@ -104,6 +107,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $boat2->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
+    // Tests that crew with no absences receives absence rank of 0
     public function testUpdateCrewAbsenceRanksWithNoAbsences(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -118,6 +122,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
+    // Tests that crew absence rank equals the count of past event absences
     public function testUpdateCrewAbsenceRanksWithAbsences(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -133,6 +138,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
+    // Tests absence ranking calculation across multiple crews with different histories
     public function testUpdateCrewAbsenceRanksWithMultipleCrews(): void
     {
         $crew1 = $this->createCrew('johndoe');
@@ -150,6 +156,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew2->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
+    // Tests that crew with guaranteed availability receives commitment rank of 0
     public function testUpdateCrewCommitmentRanksWithGuaranteed(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -161,6 +168,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests that crew with available status receives commitment rank of 1
     public function testUpdateCrewCommitmentRanksWithAvailable(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -172,6 +180,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests that crew with withdrawn status receives commitment rank of 2
     public function testUpdateCrewCommitmentRanksWithWithdrawn(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -183,6 +192,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests that crew with unavailable status receives commitment rank of 3
     public function testUpdateCrewCommitmentRanksWithUnavailable(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -194,6 +204,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests commitment ranking calculation across multiple crews with different availability
     public function testUpdateCrewCommitmentRanksWithMultipleCrews(): void
     {
         $crew1 = $this->createCrew('johndoe');
@@ -209,6 +220,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(3, $crew2->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests that crew with membership number receives membership rank of 1
     public function testUpdateCrewMembershipRankWithMember(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -219,6 +231,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 
+    // Tests that crew without membership number receives membership rank of 0
     public function testUpdateCrewMembershipRankWithoutMember(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -229,6 +242,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 
+    // Tests comprehensive boat ranking update including all rank dimensions
     public function testUpdateAllBoatRanks(): void
     {
         $boat = $this->createBoat('sailaway');
@@ -239,6 +253,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
+    // Tests comprehensive crew ranking update including all rank dimensions
     public function testUpdateAllCrewRanks(): void
     {
         $crew = $this->createCrew('johndoe');
@@ -252,6 +267,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
+    // Tests that absence ranking handles empty past events list without errors
     public function testUpdateAbsenceRanksWithEmptyPastEvents(): void
     {
         $boat = $this->createBoat('sailaway');
