@@ -1,5 +1,5 @@
 
-The .cal standard is desribed in RFC5545
+The .ical standard is desribed in RFC5545
 
 eluceo/ical is described here ...
 

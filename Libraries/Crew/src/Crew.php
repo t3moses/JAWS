@@ -3,13 +3,9 @@
 namespace nsc\sdc\crew;
 
 use nsc\sdc\season as season;
-use nsc\sdc\fleet as fleet;
-use nsc\sdc\name as name;
 use nsc\sdc\config\rank as rank;
 
 require_once __DIR__ . '/../../Season/src/Season.php';
-require_once __DIR__ . '/../../Fleet/src/Fleet.php';
-require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Config/src/Rank.php';
 
     class Crew {
@@ -138,14 +134,6 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
             // Append the new boat key to the crew whitelist
             $this->whitelist[] = $_boat_key;
         }
-        public function update_whitelist() {
-            // Create a whitelist for the new crew from existing boat keys
-            $_fleet = new fleet\Fleet();
-            $this->whitelist = [];
-            foreach( $_fleet->boats as $_boat ) {
-                $this->whitelist[] = $_boat->key;
-            }
-        }
         public function set_membership_number( $_membership_number) {
             return $this->membership_number = $_membership_number;
         }
@@ -197,24 +185,6 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
             return true;
             }
         }
-
-        public function is_flex() : bool {
-
-            /*
-            If the crew is also a boat owner, return true and update the crew and boat rank tensors
-            */
-            $_fleet = new fleet\Fleet();
-            foreach( $_fleet->boats as $_boat ) {
-                $_owner_key = name\key_from_strings( $_boat->owner_first_name, $_boat->owner_last_name );
-                if ( $_owner_key === $this->key ) {
-                    $this->set_rank( rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION, 0 );
-                    $_boat->set_rank( rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, 0 );
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public function update_absence_rank() {
 
             $_past_events = season\Season::get_past_events();

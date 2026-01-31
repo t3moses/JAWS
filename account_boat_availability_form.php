@@ -1,6 +1,5 @@
 <?php
 
-use nsc\sdc\fleet as fleet;
 use nsc\sdc\season as season;
 
 // Prevent caching of this page
@@ -10,41 +9,32 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
-require_once __DIR__ . '/Libraries/Fleet/src/Fleet.php';
+require_once __DIR__ . '/Libraries/Authn/src/Authn.php';
+
 /*
 
 ARRIVE HERE ONLY IF THE BOAT DOES CURRENTLY HAVE AN ACCOUNT.
+CHECK THAT THE SESSION IS VALID.
+AND GET THE BOAT KEY FROM THE SESSION.
 
 */
 
-function boat_key_from_get_url() {
-
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-
-        // Retrieve form data
-        $_boat_key = $_GET['bkey'] ?? '';
-
-        // Validate the data
-        if (empty($_boat_key)) {
-            return null;
-        }
-        else {
-            return $_boat_key;
-        }
-    }
-}
-
-$_fleet = new fleet\Fleet();
-
-// Get the boat key provided through the get url query string.
-// Get the boat name corresponding to the boat key for display at the top of the html form.
-
-$_user_boat_key = boat_key_from_get_url();
-$_boat = $_fleet->get_boat( $_user_boat_key );
-$_display_name = $_boat->get_display_name();
-$_berths = $_boat->get_all_berths();
+requireLogin();
+$bkey = $_SESSION['entity_key'];
+$db = getDatabase();
 season\Season::load_season_data();
+
+$stmt = $db->prepare("SELECT display_name, berths FROM fleet WHERE entity_key = :entity_key");
+$stmt->execute([':entity_key' => $bkey]);
+
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$_display_name = $row['display_name'];
+$berths = $row['berths'] ?? null;
+
+$berths = explode( ";", $berths );
 $_event_ids = season\Season::get_future_events();
+$_berths = array_slice($berths, count($berths) - count($_event_ids));
+$_berths = array_combine($_event_ids, $_berths);
 
 ?>
 
@@ -62,7 +52,6 @@ $_event_ids = season\Season::get_future_events();
         </div>
         <p class = "p_class" >Boat name: <?php echo $_display_name; ?></p>
         <form method="get" action="/account_boat_availability_update.php">
-            <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_boat_key; ?>"required>
 
 <!--
 

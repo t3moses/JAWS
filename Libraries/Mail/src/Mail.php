@@ -9,19 +9,22 @@ use PHPMailer\PHPMailer\Exception;
 
     class Mail {
 
-        public static function send_new_crew_email( $_crew ){
+        public static function send_new_crew_email( $_display_name, $_membership_number,
+        $_crew_skill, $_crew_email, $_crew_mobile, $_crew_social_preference,
+        $_crew_notification_preference ){
 
             $_html_body =
                 "<h2>New crew</h2></br>" .
-                "<p>Display name: " . $_crew->display_name . "</p>" .
-                "<p>Membership number: " . $_crew->membership_number . "</p>" .
-                "<p>Skill: " . $_crew->skill . "</p>" .
-                "<p>Email address: " . $_crew->email . "</p>" .
-                "<p>Mobile number: " . $_crew->mobile . "</p>" .
-                "<p>Social preference: " . $_crew->social_preference . "</p>" .
-                "<p>Paste:</p>" .
+                "<p>Display name: " . $_display_name . "</p>" .
+                "<p>Membership number: " . $_membership_number . "</p>" .
+                "<p>Skill: " . $_crew_skill . "</p>" .
+                "<p>Email address: " . $_crew_email . "</p>" .
+                "<p>Mobile number: " . $_crew_mobile . "</p>" .
+                "<p>Social preference: " . $_crew_social_preference . "</p>" .
+                "<p>Notification preference: " . $_crew_notification_preference . "</p>" .
+                "<p>If notification preference is 'Yes', paste:</p>" .
                 "</p>" .
-                "<p>aws ses verify-email-identity --email-address" . " " . $_crew->email . "</p>" .
+                "<p>aws ses verify-email-identity --email-address" . " " . $_crew_email . "</p>" .
                 "</p>" .
                 "<p>into the SES command line.</p>";
 
@@ -29,17 +32,17 @@ use PHPMailer\PHPMailer\Exception;
 
         }
 
-        public static function send_new_boat_email( $_boat ){
+        public static function send_new_boat_email( $_display_name, $_owner_email, $_owner_mobile, $_social_preference ){
 
             $_html_body =
                 "<h2>New boat</h2></br>" .
-                "<p>Display name: " . $_boat->display_name . "</p>" .
-                "<p>Email address: " . $_boat->owner_email . "</p>" .
-                "<p>Mobile number: " . $_boat->owner_mobile . "</p>" .
-                "<p>Social preference: " . $_boat->social_preference . "</p>" .
+                "<p>Display name: " . $_display_name . "</p>" .
+                "<p>Email address: " . $_owner_email . "</p>" .
+                "<p>Mobile number: " . $_owner_mobile . "</p>" .
+                "<p>Social preference: " . $_social_preference . "</p>" .
                 "<p>Paste:</p>" .
                 "</p>" .
-                "<p>aws ses verify-email-identity --email-address" . " " . $_boat->owner_email . "</p>" .
+                "<p>aws ses verify-email-identity --email-address" . " " . $_owner_email . "</p>" .
                 "</p>" .
                 "<p>into the SES command line.</p>";
 

@@ -4,13 +4,11 @@ namespace nsc\sdc\boat;
 
 use nsc\sdc\name as name;
 use nsc\sdc\season as season;
-use nsc\sdc\squad as squad;
 use nsc\sdc\config\rank as rank;
 
 
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Season/src/Season.php';
-require_once __DIR__ . '/../../Squad/src/Squad.php';
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Config/src/Rank.php';
 
@@ -144,30 +142,6 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
                 $this->history[ $_event_id ] = $_history;
             }
         }
-        public function update_whitelist() {
-            // Append the boat key to all crew whitelists
-            $_squad = new squad\Squad();
-            foreach( $_squad->crews as $_crew ) {
-                $_crew->set_whitelist( $this->key );
-            }
-            $_squad->save();
-        }
-        public function is_flex() : bool {
-
-            /*
-            If the boat owner is also a crew, return true and update the crew rank tensors
-            */
-
-            $_squad = new squad\Squad();
-            foreach( $_squad->crews as $_crew ) {
-                if ( $this->get_owner_key() === $_crew->get_key() ) {
-                    $_crew->set_rank( 1, 0 );
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public function update_absence_rank() {
 
             $_past_events = season\Season::get_past_events();

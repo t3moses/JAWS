@@ -1,9 +1,6 @@
 <?php
 
-use nsc\sdc\squad as squad;
 use nsc\sdc\season as season;
-
-use nsc\sdc\calendar as calendar;
 
 // Prevent caching of this page
 
@@ -11,9 +8,8 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
-require_once __DIR__ . '/Libraries/Calendar/src/Calendar.php';
+require_once __DIR__ . '/Libraries/Authn/src/Authn.php';
 
 /*
 
@@ -28,6 +24,50 @@ Then the result has to be written back to crews_availability.csv file.
 */
 
 
+function string_from_get_url() {
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+        // Retrieve get data
+        $_user_str = $_SERVER['QUERY_STRING'];
+
+        // Validate the data
+        if (empty( $_user_str )) {
+            return null;
+        }
+        else {
+            return $_user_str;
+        }
+    }
+}
+
+requireLogin();
+$_crew_key = $_SESSION['entity_key'];
+$db = getDatabase();
+season\Season::load_season_data();
+
+$_user_str = string_from_get_url();
+
+$_user_str = substr( $_user_str, strlen( "avail=" ));
+$_available = explode( "&avail=", $_user_str );
+$_available_str = implode( ';', $_available );
+
+$stmt = $db->prepare("SELECT display_name FROM squad WHERE entity_key = :entity_key");
+$stmt->execute([':entity_key' => $_crew_key]);
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$_display_name = $row['display_name'];
+
+$stmt = $db->prepare("UPDATE squad SET available = :available WHERE entity_key = :entity_key");
+$stmt->execute([
+    ':available' => $_available_str,
+    ':entity_key' => $_crew_key
+]);
+
+$_event_ids = season\Season::get_future_events();
+$_available = array_slice($_available, count($_available) - count($_event_ids));
+$_available = array_combine($_event_ids, $_available);
+
+/*
 function string_from_get_url() {
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -69,6 +109,8 @@ $_squad->set_crew( $_crew );
 $_squad->save();
 
 calendar\crew( $_crew );
+*/
+
 
 ?>
 
@@ -85,17 +127,18 @@ calendar\crew( $_crew );
             </a>
         </div>
         <div>
-            <p class = "p_class" ><?php echo $_crew->get_display_name(); ?>'s availability has been updated</p>
+            <p class = "p_class" ><?php echo $_display_name; ?>'s availability has been updated</p>
         </div>
 <!--
 
 Loop through the list of events, displaying the event value.
 
 -->
-        <?php for ( $i = 0; $i < count($_event_ids); $i++ ) { ?>
+        <?php foreach( $_event_ids as $_event_id ) { ?>
+ 
             <div class='flex-container'>
-                <div class='column'><p class = "p_class" > <?php echo $_event_ids[ $i ]; ?></p></div>
-                <div class='column'><p class = "p_class" > <?php if( $_crew->get_available( $_event_ids[ $i ]) === '0' ) {
+                <div class='column'><p class = "p_class" > <?php echo $_event_id; ?></p></div>
+                <div class='column'><p class = "p_class" > <?php if( $_available[ $_event_id ] === '0' ) {
                 echo 'I am not available'; }
                 else {
                 echo 'I am available'; }
@@ -104,16 +147,10 @@ Loop through the list of events, displaying the event value.
             </div>
         <?php } ?>
         <div>
-            <button class = "button_class" id="registrationDownloadBtn">Download Registrations</button>
-            <button class = "button_class" id="cancellationDownloadBtn">Download Cancellations</button>
-        </div>
-        <div>
-            <button class = "button_class" id="downloadBtn">Download Calendar</button>
-        </div>
-        <div>
             <button type = "button" class = "button_class" onclick = "window.location.href='/season_update.php'">Next</button>
         </div>
 
+<!--
         <script>
 
             const registrationDownloadBtn = document.getElementById('registrationDownloadBtn');
@@ -160,6 +197,6 @@ Loop through the list of events, displaying the event value.
 */
 
         </script>
-
+-->
     </body>
 </html>
