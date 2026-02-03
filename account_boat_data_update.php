@@ -1,9 +1,13 @@
 <?php
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 use nsc\sdc\name as name;
 use nsc\sdc\mail as mail;
 use nsc\sdc\season as season;
 use nsc\sdc\config\rank as rank;
+use nsc\sdc\fleet as fleet;
 
 // Prevent caching of this page
 
@@ -73,7 +77,7 @@ $_history = implode( ';', $_history );
 // Absence value is zero.
 // Flexibility value is FLEXIBLE if the owner is also registered as crew,
 
-$_crew_key = crew_as_boat_owner( $_boat_key );
+$_crew_key = fleet\Fleet::crew_as_boat_owner( $_owner_key );
 $_rank = [];
 if( $_crew_key !== false ) {
     $_flex = true;
@@ -83,21 +87,21 @@ if( $_crew_key !== false ) {
 else {
     $_flex = false;
     $_rank[ rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION ] = rank\Rank::INFLEXIBLE;
-    update_rank( 'squad', $_crew_key, rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
 }
+
 $_rank[ rank\Rank::BOAT_RANK_ABSENCE_DIMENSION ] = 0;
 $_rank = implode( ';', $_rank );
 
-registerBoat($_boat_key, $_boat_name, $_owner_key,
+fleet\Fleet::registerBoat($_boat_key, $_boat_name, $_owner_key,
     $_owner_email, $_owner_mobile, $_min_berths, $_max_berths,
     $_assistance_required, $_social_preference, $_rank,
     $_occupied_berths, $_berths, $_history);
 
-// Add the boat to all crew whitelists, separated by ';'.
+// Add the boat to all registered crew whitelists, separated by ';'.
 
-$stmt = $db->prepare("UPDATE squad SET whitelist = CONCAT(whitelist, ';', :boat_key) WHERE whitelist IS NOT NULL AND is_active = 1");
+$stmt = $db->prepare("UPDATE squad SET whitelist = whitelist || ';' || :boat_key WHERE whitelist IS NOT NULL AND is_active = 1");
 $stmt->execute([':boat_key' => $_boat_key]);
-$stmt = $db->prepare("UPDATE squad SET whitelist = CONCAT(whitelist, :boat_key) WHERE whitelist IS NULL AND is_active = 1");
+$stmt = $db->prepare("UPDATE squad SET whitelist = whitelist || :boat_key WHERE whitelist IS NULL AND is_active = 1");
 $stmt->execute([':boat_key' => $_boat_key]);
 
 // Send a confirmation email to the admin.

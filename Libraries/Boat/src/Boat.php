@@ -31,6 +31,23 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
 
         public function __construct( ) {
         }
+        public function hydrate( array $data ){
+            $this->key = $data['entity_key'] ?? null;
+            $this->display_name = $data['display_name'] ?? null;
+            $this->owner_first_name = $data['owner_first_name'] ?? null;
+            $this->owner_last_name = $data['owner_last_name'] ?? null;
+            $this->owner_email = $data['owner_email'] ?? null;
+            $this->owner_mobile = $data['owner_mobile'] ?? null;
+            $this->min_berths = $data['min_berths'] ?? null;
+            $this->max_berths = $data['max_berths'] ?? null;
+            $this->occupied_berths = $data['occupied_berths'] ?? null;;
+            $this->assistance_required = $data['assistance_required'] ?? null;;
+            $this->social_preference = $data['social_preference'] ?? null;;
+            $this->rank = $data['rank'] ?? null;
+            $this->berths = $data['berths'] ?? null;
+            $this->history = $data['history'] ?? null;
+        return $this;
+        }
         public function set_default() {
             $this->key = '';
             $this->owner_first_name = '';

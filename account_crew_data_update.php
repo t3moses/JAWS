@@ -62,12 +62,11 @@ $_history = implode( ';', $_history );
 
 // Set crew rank.
 
-$_filename = __DIR__ . '/rank.txt';
-$f = fopen( $_filename, "w");
-
 $_rank = [];
 
 $_rank[ rank\Rank::CREW_RANK_COMMITMENT_DIMENSION ] = rank\Rank::UNAVAILABLE;
+
+// If the crew is also a boat owner, set both the crew and boat flexibility rank accordingly.
 
 $_boat_key = boat_owner_as_crew( $_crew_key );
 if( $_boat_key !== false ) {
@@ -78,7 +77,6 @@ if( $_boat_key !== false ) {
 else {
     $_flex = false;
     $_rank[ rank\Rank::CREW_RANK_FLEXIBILITY_DIMENSION ] = rank\Rank::INFLEXIBLE;
-    update_rank( 'fleet', $_boat_key, rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
 }
 
 if( is_member( $_membership_number ) ) {
@@ -91,22 +89,13 @@ else {
 $_rank[ rank\Rank::CREW_RANK_ABSENCE_DIMENSION ] = 0;
 
 $_rank = implode( ';', $_rank );
-fwrite( $f, $_rank );
-fclose( $f );
 
-// If the crew is also a boat owner, set the boat flexibility dimension accordingly.
+// Add all registered boats to the crew whitelist, separated by ';' and omiting any leading semicolon.
 
-if( $_flex === true ) {
-    update_rank( 'fleet', $_crew_key, rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, rank\Rank::FLEXIBLE );
-}
-else {
-    update_rank( 'fleet', $_crew_key, rank\Rank::BOAT_RANK_FLEXIBILITY_DIMENSION, rank\Rank::INFLEXIBLE );
-}
-
-// Add all boats to the whitelist, separated by ';' and omiting any leading semicolon.
-
-$_result = $db->query("SELECT GROUP_CONCAT(entity_key, ';') FROM fleet");
-$_whitelist = $_result->fetchColumn();
+$query = "SELECT GROUP_CONCAT(entity_key, ';') AS entity_keys FROM fleet";
+$result = $db->query($query);
+$row = $result->fetch(PDO::FETCH_ASSOC);
+$_whitelist = $row['entity_keys'] ?? '';
 
 registerCrew($_crew_key, $_display_name, $_first_name, $_last_name, $_partner_key, 
             $_email, $_mobile, $_social_preference, $_notification_preference, $_rank,
