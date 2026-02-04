@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Now - NSC Social Day Cruising</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li><a href="account.html" class="active">Join Now</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Let's Get You Sailing!</h1>
+            <p>First things first—are you crew or captain?</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+            <section class="section">
+                <h2>I Am A...</h2>
+                <p style="margin-bottom: 3rem; color: var(--text-gray); text-align: center;">Pick one to get started (you can always add the other role later!)</p>
+
+                <form action="#">
+                    <div class="form-group">
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="crew" name="account_type" value="crew" required>
+                                <label for="crew">
+                                    <div style="font-size: 4rem; margin-bottom: 1rem;">🌊</div>
+                                    <div style="font-size: 1.3rem; margin-bottom: 0.5rem;">Crew Member</div>
+                                    <div style="font-size: 0.95rem; font-weight: 400; color: var(--text-gray); margin-top: 1rem;">I want to sail as crew</div>
+                                </label>
+                            </div>
+
+                            <div class="radio-option">
+                                <input type="radio" id="boat_owner" name="account_type" value="boat_owner" required>
+                                <label for="boat_owner">
+                                    <div style="font-size: 4rem; margin-bottom: 1rem;">⛵</div>
+                                    <div style="font-size: 1.3rem; margin-bottom: 0.5rem;">Boat Owner</div>
+                                    <div style="font-size: 0.95rem; font-weight: 400; color: var(--text-gray); margin-top: 1rem;">I want to host crew</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 3rem;">
+                        <button type="submit" class="btn btn-primary">Let's Go!</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="section" style="margin-top: 2rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <h3>What Happens Next?</h3>
+                <ul style="line-height: 2.2;">
+                    <li><strong>Crew Members:</strong> Fill out your profile, check out the schedule, and pick your sailing dates!</li>
+                    <li><strong>Boat Owners:</strong> Register your boat, set when you're available, and meet your crew!</li>
+                </ul>
+            </section>
+
+            <div class="alert alert-info" style="margin-top: 2rem;">
+                <strong>Already have an account?</strong> <a href="signin.html" style="color: var(--teal); font-weight: 600;">Sign in</a> to manage your profile and events. Need help? Contact the admin!
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Nepean Sailing Club — Social Day Cruising</strong></p>
+            <p><a href="https://nsc.ca">NSC Website</a> | <a href="faq.html">FAQ</a> | <a href="account.html">Join Now</a></p>
+            <p style="margin-top: 1rem; opacity: 0.7;">&copy; 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- Application modules -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/mobile-menu.js"></script>
+    <script type="module" src="js/pages/account-page.js"></script>
+</body>
+</html>

@@ -63,10 +63,63 @@ try {
 
     // Serve frontend for non-API routes
     if (!str_starts_with($path, '/api')) {
-        $frontendPath = __DIR__ . '/app/index.html';
+        // Map frontend asset paths to /app/ directory
+        // /js/* -> /app/js/*, /css/* -> /app/css/*, etc.
+        if (preg_match('/^\/(js|css|assets)\/(.+)$/', $path, $matches)) {
+            $requestedFile = __DIR__ . '/app/' . $matches[1] . '/' . $matches[2];
+            if (file_exists($requestedFile) && is_file($requestedFile)) {
+                // Determine MIME type based on file extension
+                $extension = strtolower(pathinfo($requestedFile, PATHINFO_EXTENSION));
+                $mimeTypes = [
+                    'js' => 'application/javascript',
+                    'mjs' => 'application/javascript',
+                    'css' => 'text/css',
+                    'json' => 'application/json',
+                    'png' => 'image/png',
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'gif' => 'image/gif',
+                    'svg' => 'image/svg+xml',
+                    'ico' => 'image/x-icon',
+                    'woff' => 'font/woff',
+                    'woff2' => 'font/woff2',
+                ];
+                $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
 
+                header('Content-Type: ' . $mimeType);
+                readfile($requestedFile);
+                exit;
+            }
+        }
+
+        // Check if the request is for an actual static file
+        $requestedFile = __DIR__ . $path;
+        if (file_exists($requestedFile) && is_file($requestedFile)) {
+            // Let PHP built-in server serve the static file with correct MIME type
+            return false;
+        }
+
+        // Check if the request is for an HTML file in /app/ directory
+        // Handle both /filename.html and /app/filename.html paths
+        $htmlFile = null;
+        if (preg_match('/^\/(.+\.html)$/', $path, $matches)) {
+            // Request like /events.html - look in /app/ directory
+            $htmlFile = __DIR__ . '/app/' . $matches[1];
+        } elseif ($path === '/' || $path === '') {
+            // Root path - serve index.html
+            $htmlFile = __DIR__ . '/app/index.html';
+        }
+
+        if ($htmlFile && file_exists($htmlFile)) {
+            // Serve the HTML file
+            header('Content-Type: text/html; charset=UTF-8');
+            readfile($htmlFile);
+            exit;
+        }
+
+        // Fallback to index.html for unknown routes
+        $frontendPath = __DIR__ . '/app/index.html';
         if (file_exists($frontendPath)) {
-            // Serve the frontend SPA
             header('Content-Type: text/html; charset=UTF-8');
             readfile($frontendPath);
             exit;
