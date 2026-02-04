@@ -280,17 +280,8 @@ jobs:
 #       url: https://nsc-sdc.ca
 
 #     steps:
-#       - name: Checkout JAWS backend
+#       - name: Checkout code
 #         uses: actions/checkout@v4
-#         with:
-#           repository: RobJohnston/JAWS
-#           ref: clean-architecture
-#           path: backend
-
-#       - name: Checkout NSC-SDC frontend
-#         uses: actions/checkout@v4
-#         with:
-#           path: frontend
 
 #       - name: Configure AWS credentials
 #         uses: aws-actions/configure-aws-credentials@v4
@@ -312,11 +303,9 @@ jobs:
 #           # Deploy backend
 #           ssh -i ~/.ssh/lightsail.pem ubuntu@nsc-sdc.ca << 'EOF'
 #             cd /var/www/jaws
-#             git pull origin clean-architecture
+#             git pull origin main
 #             composer install --no-dev --optimize-autoloader
-#             php artisan migrate --force
-#             php artisan cache:clear
-#             php artisan config:clear
+#             vendor/bin/phinx migrate -e production
 #             sudo systemctl restart apache2
 #           EOF
 
@@ -327,7 +316,7 @@ jobs:
 #             --exclude '.git' \
 #             --exclude 'node_modules' \
 #             --exclude 'tests' \
-#             frontend/ ubuntu@nsc-sdc.ca:/var/www/html/
+#             nsc-sdc/ ubuntu@nsc-sdc.ca:/var/www/html/
 
 #           # Set permissions
 #           ssh -i ~/.ssh/lightsail.pem ubuntu@nsc-sdc.ca << 'EOF'
