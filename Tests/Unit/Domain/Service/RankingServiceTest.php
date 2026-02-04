@@ -63,48 +63,57 @@ class RankingServiceTest extends TestCase
     // Tests that boat with no absences receives absence rank of 0
     public function testUpdateBoatAbsenceRanksWithNoAbsences(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $boat->setHistory(EventId::fromString('Fri May 29'), 'Y');
         $boat->setHistory(EventId::fromString('Sat May 30'), 'Y');
 
+        // Act
         $this->service->updateBoatAbsenceRanks(
             [$boat],
             ['Fri May 29', 'Sat May 30']
         );
 
+        // Assert
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     // Tests that boat absence rank equals the count of past event absences
     public function testUpdateBoatAbsenceRanksWithAbsences(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $boat->setHistory(EventId::fromString('Fri May 29'), 'Y');
         $boat->setHistory(EventId::fromString('Sat May 30'), '');
         $boat->setHistory(EventId::fromString('Sun May 31'), '');
 
+        // Act
         $this->service->updateBoatAbsenceRanks(
             [$boat],
             ['Fri May 29', 'Sat May 30', 'Sun May 31']
         );
 
+        // Assert
         $this->assertEquals(2, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     // Tests absence ranking calculation across multiple boats with different histories
     public function testUpdateBoatAbsenceRanksWithMultipleBoats(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway');
         $boat1->setHistory(EventId::fromString('Fri May 29'), 'Y');
 
         $boat2 = $this->createBoat('seabreeze');
         $boat2->setHistory(EventId::fromString('Fri May 29'), '');
 
+        // Act
         $this->service->updateBoatAbsenceRanks(
             [$boat1, $boat2],
             ['Fri May 29']
         );
 
+        // Assert
         $this->assertEquals(0, $boat1->getRank()->getDimension(BoatRankDimension::ABSENCE));
         $this->assertEquals(1, $boat2->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
@@ -112,48 +121,57 @@ class RankingServiceTest extends TestCase
     // Tests that crew with no absences receives absence rank of 0
     public function testUpdateCrewAbsenceRanksWithNoAbsences(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $crew->setHistory(EventId::fromString('Fri May 29'), 'sailaway');
         $crew->setHistory(EventId::fromString('Sat May 30'), 'seabreeze');
 
+        // Act
         $this->service->updateCrewAbsenceRanks(
             [$crew],
             ['Fri May 29', 'Sat May 30']
         );
 
+        // Assert
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
     // Tests that crew absence rank equals the count of past event absences
     public function testUpdateCrewAbsenceRanksWithAbsences(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $crew->setHistory(EventId::fromString('Fri May 29'), 'sailaway');
         $crew->setHistory(EventId::fromString('Sat May 30'), '');
         $crew->setHistory(EventId::fromString('Sun May 31'), '');
 
+        // Act
         $this->service->updateCrewAbsenceRanks(
             [$crew],
             ['Fri May 29', 'Sat May 30', 'Sun May 31']
         );
 
+        // Assert
         $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
     // Tests absence ranking calculation across multiple crews with different histories
     public function testUpdateCrewAbsenceRanksWithMultipleCrews(): void
     {
+        // Arrange
         $crew1 = $this->createCrew('johndoe');
         $crew1->setHistory(EventId::fromString('Fri May 29'), 'sailaway');
 
         $crew2 = $this->createCrew('janedoe');
         $crew2->setHistory(EventId::fromString('Fri May 29'), '');
 
+        // Act
         $this->service->updateCrewAbsenceRanks(
             [$crew1, $crew2],
             ['Fri May 29']
         );
 
+        // Assert
         $this->assertEquals(0, $crew1->getRank()->getDimension(CrewRankDimension::ABSENCE));
         $this->assertEquals(1, $crew2->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
@@ -161,54 +179,67 @@ class RankingServiceTest extends TestCase
     // Tests that crew with guaranteed availability receives commitment rank of 0
     public function testUpdateCrewCommitmentRanksWithGuaranteed(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $eventId = EventId::fromString('Fri May 29');
         $crew->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
 
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
+        // Assert
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that crew with available status receives commitment rank of 1
     public function testUpdateCrewCommitmentRanksWithAvailable(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $eventId = EventId::fromString('Fri May 29');
         $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
 
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
+        // Assert
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that crew with withdrawn status receives commitment rank of 2
     public function testUpdateCrewCommitmentRanksWithWithdrawn(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $eventId = EventId::fromString('Fri May 29');
         $crew->setAvailability($eventId, AvailabilityStatus::WITHDRAWN);
 
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
+        // Assert
         $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that crew with unavailable status receives commitment rank of 3
     public function testUpdateCrewCommitmentRanksWithUnavailable(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $eventId = EventId::fromString('Fri May 29');
         $crew->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
 
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
+        // Assert
         $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests commitment ranking calculation across multiple crews with different availability
     public function testUpdateCrewCommitmentRanksWithMultipleCrews(): void
     {
+        // Arrange
         $crew1 = $this->createCrew('johndoe');
         $crew2 = $this->createCrew('janedoe');
         $eventId = EventId::fromString('Fri May 29');
@@ -216,8 +247,10 @@ class RankingServiceTest extends TestCase
         $crew1->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
         $crew2->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
 
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew1, $crew2], $eventId);
 
+        // Assert
         $this->assertEquals(0, $crew1->getRank()->getDimension(CrewRankDimension::COMMITMENT));
         $this->assertEquals(3, $crew2->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
@@ -225,46 +258,58 @@ class RankingServiceTest extends TestCase
     // Tests that crew with membership number receives membership rank of 1
     public function testUpdateCrewMembershipRankWithMember(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $crew->setMembershipNumber('12345');
 
+        // Act
         $this->service->updateCrewMembershipRank($crew);
 
+        // Assert
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 
     // Tests that crew without membership number receives membership rank of 0
     public function testUpdateCrewMembershipRankWithoutMember(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $crew->setMembershipNumber(null);
 
+        // Act
         $this->service->updateCrewMembershipRank($crew);
 
+        // Assert
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 
     // Tests comprehensive boat ranking update including all rank dimensions
     public function testUpdateAllBoatRanks(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $boat->setHistory(EventId::fromString('Fri May 29'), '');
 
+        // Act
         $this->service->updateAllBoatRanks([$boat], ['Fri May 29']);
 
+        // Assert
         $this->assertEquals(1, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     // Tests comprehensive crew ranking update including all rank dimensions
     public function testUpdateAllCrewRanks(): void
     {
+        // Arrange
         $crew = $this->createCrew('johndoe');
         $eventId = EventId::fromString('Fri May 29');
         $crew->setHistory(EventId::fromString('Sat May 30'), '');
         $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
 
+        // Act
         $this->service->updateAllCrewRanks([$crew], ['Sat May 30'], $eventId);
 
+        // Assert
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
@@ -272,12 +317,15 @@ class RankingServiceTest extends TestCase
     // Tests that absence ranking handles empty past events list without errors
     public function testUpdateAbsenceRanksWithEmptyPastEvents(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $crew = $this->createCrew('johndoe');
 
+        // Act
         $this->service->updateBoatAbsenceRanks([$boat], []);
         $this->service->updateCrewAbsenceRanks([$crew], []);
 
+        // Assert
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }

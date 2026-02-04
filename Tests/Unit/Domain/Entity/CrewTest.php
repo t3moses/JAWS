@@ -36,8 +36,10 @@ class CrewTest extends TestCase
 
     public function testConstructorSetsProperties(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Assert
         $this->assertEquals('johndoe', $crew->getKey()->toString());
         $this->assertEquals('John Doe', $crew->getDisplayName());
         $this->assertEquals('John', $crew->getFirstName());
@@ -53,9 +55,11 @@ class CrewTest extends TestCase
 
     public function testConstructorInitializesDefaultRank(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
         $rank = $crew->getRank();
+        // Assert
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::COMMITMENT));
         $this->assertEquals(1, $rank->getDimension(CrewRankDimension::FLEXIBILITY));
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // Has membership number
@@ -64,6 +68,7 @@ class CrewTest extends TestCase
 
     public function testConstructorSetsDefaultRankWithoutMembership(): void
     {
+        // Arrange
         $crew = new Crew(
             key: CrewKey::fromString('johndoe'),
             displayName: 'John Doe',
@@ -79,26 +84,32 @@ class CrewTest extends TestCase
         $crew->setEmail('john@example.com');
 
         $rank = $crew->getRank();
+        // Assert
         $this->assertEquals(1, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // No membership
     }
 
     public function testIdStartsAsNull(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Assert
         $this->assertNull($crew->getId());
     }
 
     public function testSetIdUpdatesId(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $crew->setId(42);
 
+        // Assert
         $this->assertEquals(42, $crew->getId());
     }
 
     public function testSetters(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $partnerKey = CrewKey::fromString('janedoe');
 
@@ -113,6 +124,7 @@ class CrewTest extends TestCase
         $crew->setSkill(SkillLevel::ADVANCED);
         $crew->setExperience('10 years');
 
+        // Assert
         $this->assertEquals('Jane Doe', $crew->getDisplayName());
         $this->assertEquals('Jane', $crew->getFirstName());
         $this->assertEquals('Doe', $crew->getLastName());
@@ -127,39 +139,49 @@ class CrewTest extends TestCase
 
     public function testHasPartnerReturnsFalseWhenNoPartner(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Assert
         $this->assertFalse($crew->hasPartner());
     }
 
     public function testHasPartnerReturnsTrueWhenPartnerSet(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $crew->setPartnerKey(CrewKey::fromString('janedoe'));
 
+        // Assert
         $this->assertTrue($crew->hasPartner());
     }
 
     public function testIsMemberReturnsTrueWithMembershipNumber(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Assert
         $this->assertTrue($crew->isMember());
     }
 
     public function testIsMemberReturnsFalseWithoutMembershipNumber(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $crew->setMembershipNumber(null);
 
+        // Assert
         $this->assertFalse($crew->isMember());
     }
 
     public function testSetMembershipNumberUpdatesRank(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
         $crew->setMembershipNumber(null);
+        // Assert
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
 
         $crew->setMembershipNumber('12345');
@@ -168,6 +190,7 @@ class CrewTest extends TestCase
 
     public function testSetAndGetRank(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $rank = Rank::forCrew(
             commitment: 1,
@@ -178,20 +201,24 @@ class CrewTest extends TestCase
 
         $crew->setRank($rank);
 
+        // Assert
         $this->assertEquals($rank, $crew->getRank());
     }
 
     public function testSetRankDimension(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
         $crew->setRankDimension(CrewRankDimension::ABSENCE, 5);
 
+        // Assert
         $this->assertEquals(5, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
     public function testUpdateAbsenceRankWithNoAbsences(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -201,11 +228,13 @@ class CrewTest extends TestCase
 
         $crew->updateAbsenceRank(['Fri May 29', 'Sat May 30']);
 
+        // Assert
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
     public function testUpdateAbsenceRankWithAbsences(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -217,29 +246,35 @@ class CrewTest extends TestCase
 
         $crew->updateAbsenceRank(['Fri May 29', 'Sat May 30', 'Sun May 31']);
 
+        // Assert
         $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
     public function testGetAvailabilityReturnsUnavailableByDefault(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertEquals(AvailabilityStatus::UNAVAILABLE, $crew->getAvailability($eventId));
     }
 
     public function testSetAndGetAvailability(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
 
+        // Assert
         $this->assertEquals(AvailabilityStatus::AVAILABLE, $crew->getAvailability($eventId));
     }
 
     public function testGetAllAvailability(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -249,12 +284,14 @@ class CrewTest extends TestCase
 
         $availability = $crew->getAllAvailability();
 
+        // Assert
         $this->assertEquals(AvailabilityStatus::AVAILABLE, $availability['Fri May 29']);
         $this->assertEquals(AvailabilityStatus::GUARANTEED, $availability['Sat May 30']);
     }
 
     public function testSetAllAvailability(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventIds = [
             EventId::fromString('Fri May 29'),
@@ -263,78 +300,95 @@ class CrewTest extends TestCase
 
         $crew->setAllAvailability($eventIds, AvailabilityStatus::AVAILABLE);
 
+        // Assert
         $this->assertEquals(AvailabilityStatus::AVAILABLE, $crew->getAvailability($eventIds[0]));
         $this->assertEquals(AvailabilityStatus::AVAILABLE, $crew->getAvailability($eventIds[1]));
     }
 
     public function testIsAvailableForReturnsFalseWhenUnavailable(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertFalse($crew->isAvailableFor($eventId));
     }
 
     public function testIsAvailableForReturnsTrueWhenAvailable(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
 
+        // Assert
         $this->assertTrue($crew->isAvailableFor($eventId));
     }
 
     public function testIsAvailableForReturnsTrueWhenGuaranteed(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
 
+        // Assert
         $this->assertTrue($crew->isAvailableFor($eventId));
     }
 
     public function testIsAssignedToReturnsFalseWhenNotAssigned(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
 
+        // Assert
         $this->assertFalse($crew->isAssignedTo($eventId));
     }
 
     public function testIsAssignedToReturnsTrueWhenGuaranteed(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
 
+        // Assert
         $this->assertTrue($crew->isAssignedTo($eventId));
     }
 
     public function testGetHistoryReturnsEmptyStringByDefault(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertEquals('', $crew->getHistory($eventId));
     }
 
     public function testSetAndGetHistory(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Act
         $crew->setHistory($eventId, 'sailaway');
 
+        // Assert
         $this->assertEquals('sailaway', $crew->getHistory($eventId));
     }
 
     public function testGetAllHistory(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -342,60 +396,76 @@ class CrewTest extends TestCase
         $crew->setHistory($eventId1, 'sailaway');
         $crew->setHistory($eventId2, 'anotherboat');
 
+        // Act
         $history = $crew->getAllHistory();
 
+        // Assert
         $this->assertEquals('sailaway', $history['Fri May 29']);
         $this->assertEquals('anotherboat', $history['Sat May 30']);
     }
 
     public function testSetAllHistory(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventIds = [
             EventId::fromString('Fri May 29'),
             EventId::fromString('Sat May 30')
         ];
 
+        // Act
         $crew->setAllHistory($eventIds, 'sailaway');
 
+        // Assert
         $this->assertEquals('sailaway', $crew->getHistory($eventIds[0]));
         $this->assertEquals('sailaway', $crew->getHistory($eventIds[1]));
     }
 
     public function testWasAssignedToReturnsNullWhenNoHistory(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertNull($crew->wasAssignedTo($eventId));
     }
 
     public function testWasAssignedToReturnsBoatKey(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $eventId = EventId::fromString('Fri May 29');
 
         $crew->setHistory($eventId, 'sailaway');
 
+        // Act
         $boatKey = $crew->wasAssignedTo($eventId);
+
+        // Assert
         $this->assertNotNull($boatKey);
         $this->assertEquals('sailaway', $boatKey->toString());
     }
 
     public function testGetWhitelistReturnsEmptyArrayByDefault(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Assert
         $this->assertEmpty($crew->getWhitelist());
     }
 
     public function testAddToWhitelist(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $boatKey = BoatKey::fromString('sailaway');
 
+        // Act
         $crew->addToWhitelist($boatKey);
 
+        // Assert
         $whitelist = $crew->getWhitelist();
         $this->assertCount(1, $whitelist);
         $this->assertEquals('sailaway', $whitelist[0]);
@@ -403,26 +473,33 @@ class CrewTest extends TestCase
 
     public function testAddToWhitelistPreventsDuplicates(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $boatKey = BoatKey::fromString('sailaway');
 
+        // Act
         $crew->addToWhitelist($boatKey);
         $crew->addToWhitelist($boatKey);
 
+        // Assert
         $whitelist = $crew->getWhitelist();
         $this->assertCount(1, $whitelist);
     }
 
     public function testRemoveFromWhitelist(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $boatKey1 = BoatKey::fromString('sailaway');
         $boatKey2 = BoatKey::fromString('anotherboat');
 
         $crew->addToWhitelist($boatKey1);
         $crew->addToWhitelist($boatKey2);
+
+        // Act
         $crew->removeFromWhitelist($boatKey1);
 
+        // Assert
         $whitelist = $crew->getWhitelist();
         $this->assertCount(1, $whitelist);
         $this->assertEquals('anotherboat', $whitelist[0]);
@@ -430,29 +507,36 @@ class CrewTest extends TestCase
 
     public function testIsWhitelistedReturnsFalseWhenNotInWhitelist(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $boatKey = BoatKey::fromString('sailaway');
 
+        // Assert
         $this->assertFalse($crew->isWhitelisted($boatKey));
     }
 
     public function testIsWhitelistedReturnsTrueWhenInWhitelist(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $boatKey = BoatKey::fromString('sailaway');
 
         $crew->addToWhitelist($boatKey);
 
+        // Assert
         $this->assertTrue($crew->isWhitelisted($boatKey));
     }
 
     public function testSetWhitelist(): void
     {
+        // Arrange
         $crew = $this->createCrew();
 
+        // Act
         $crew->setWhitelist(['sailaway', 'anotherboat']);
 
         $whitelist = $crew->getWhitelist();
+        // Assert
         $this->assertCount(2, $whitelist);
         $this->assertEquals('sailaway', $whitelist[0]);
         $this->assertEquals('anotherboat', $whitelist[1]);
@@ -460,11 +544,13 @@ class CrewTest extends TestCase
 
     public function testToArrayReturnsCompleteArray(): void
     {
+        // Arrange
         $crew = $this->createCrew();
         $crew->setId(1);
 
         $array = $crew->toArray();
 
+        // Assert
         $this->assertEquals(1, $array['id']);
         $this->assertEquals('johndoe', $array['key']);
         $this->assertEquals('John Doe', $array['display_name']);

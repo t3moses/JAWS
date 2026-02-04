@@ -188,6 +188,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteGeneratesFlotillaForSingleEvent(): void
     {
+        // Arrange
         // Create 2 boats, 4 crews, 1 future event
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $boat2Id = $this->createTestBoat('boat2', 2, 2);
@@ -207,6 +208,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         // Execute use case
         $result = $this->useCase->execute();
 
@@ -228,6 +230,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteGeneratesFlotillasForMultipleEvents(): void
     {
+        // Arrange
         // Create 3 boats, 6 crews, 3 future events
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $boat2Id = $this->createTestBoat('boat2', 2, 2);
@@ -255,6 +258,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
             $this->setCrewAvailability($crewId, 'Fri Jun 12', AvailabilityStatus::AVAILABLE->value);
         }
 
+        // Act
         // Execute use case
         $result = $this->useCase->execute();
 
@@ -282,6 +286,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteUpdatesExistingFlotilla(): void
     {
+        // Arrange
         // Boat with capacity for 3 crews
         $boat1Id = $this->createTestBoat('boat1', 2, 3);
         $crew1Id = $this->createTestCrew('crew1');
@@ -295,6 +300,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         // First execution
         $this->useCase->execute();
         $initialFlotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
@@ -318,6 +324,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testFlotillaDataStructureMatchesExpectedFormat(): void
     {
+        // Arrange
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $crew1Id = $this->createTestCrew('crew1');
 
@@ -325,10 +332,12 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
         $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         $this->useCase->execute();
 
         $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // Verify structure
         $this->assertIsArray($flotilla);
         $this->assertArrayHasKey('event_id', $flotilla);
@@ -357,6 +366,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteProducesDeterministicResults(): void
     {
+        // Arrange
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $crew1Id = $this->createTestCrew('crew1');
         $crew2Id = $this->createTestCrew('crew2');
@@ -366,6 +376,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         // First execution
         $this->useCase->execute();
         $flotilla1 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
@@ -377,6 +388,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->useCase->execute();
         $flotilla2 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // Compare structures (excluding timestamp fields)
         $this->assertEquals($flotilla1['event_id'], $flotilla2['event_id']);
         $this->assertEquals(count($flotilla1['crewed_boats']), count($flotilla2['crewed_boats']));
@@ -389,6 +401,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteUpdatesCrewAvailabilityToGuaranteed(): void
     {
+        // Arrange
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $crew1Id = $this->createTestCrew('crew1');
         $crew2Id = $this->createTestCrew('crew2');
@@ -400,6 +413,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         $this->useCase->execute();
 
         // Check which crews were selected
@@ -409,6 +423,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
             $selectedCrewCount += count($crewedBoat['crews']);
         }
 
+        // Assert
         // Verify that selected crews have GUARANTEED status
         // Note: We can't easily check all crew statuses without knowing which were selected,
         // but we can verify the count is less than total (someone was waitlisted)
@@ -420,14 +435,17 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteWithNoAvailableEntities(): void
     {
+        // Arrange
         $this->createTestBoat('boat1', 2, 2); // No availability set
         $this->createTestCrew('crew1'); // No availability set
         $this->createTestEvent('Fri May 29', '2026-05-29');
 
+        // Act
         $this->useCase->execute();
 
         $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // Flotilla should exist but be empty
         $this->assertNotNull($flotilla);
         $this->assertCount(0, $flotilla['crewed_boats']);
@@ -440,6 +458,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteWithPerfectCrewToBoatFit(): void
     {
+        // Arrange
         // 2 boats * 2 berths = 4 total berths, 4 crews = perfect fit
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $boat2Id = $this->createTestBoat('boat2', 2, 2);
@@ -458,10 +477,12 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         $this->useCase->execute();
 
         $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // All boats should be crewed
         $this->assertCount(2, $flotilla['crewed_boats']);
         $this->assertCount(0, $flotilla['waitlist_boats']);
@@ -481,6 +502,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     public function testExecuteWithTooManyCrews(): void
     {
         // 2 boats * 2 berths = 4 total berths, 6 crews = 2 crews waitlisted
+        // Arrange
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $boat2Id = $this->createTestBoat('boat2', 2, 2);
 
@@ -497,10 +519,12 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
             $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         }
 
+        // Act
         $this->useCase->execute();
 
         $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // All boats should be crewed (no waitlist boats)
         $this->assertCount(2, $flotilla['crewed_boats']);
         $this->assertCount(0, $flotilla['waitlist_boats']);
@@ -519,6 +543,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
      */
     public function testExecuteWithTooFewCrews(): void
     {
+        // Arrange
         // 3 boats * 2 berths = 6 total berths, 4 crews = not enough
         $boat1Id = $this->createTestBoat('boat1', 2, 2);
         $boat2Id = $this->createTestBoat('boat2', 2, 2);
@@ -539,10 +564,12 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
         $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
+        // Act
         $this->useCase->execute();
 
         $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
 
+        // Assert
         // Some boats should be crewed
         $this->assertGreaterThan(0, count($flotilla['crewed_boats']));
 

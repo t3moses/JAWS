@@ -33,8 +33,10 @@ class BoatTest extends TestCase
 
     public function testConstructorSetsProperties(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
+        // Assert
         $this->assertEquals('sailaway', $boat->getKey()->toString());
         $this->assertEquals('Sail Away', $boat->getDisplayName());
         $this->assertEquals('John', $boat->getOwnerFirstName());
@@ -49,38 +51,48 @@ class BoatTest extends TestCase
 
     public function testConstructorInitializesDefaultRank(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
         $rank = $boat->getRank();
+        // Assert
         $this->assertEquals(1, $rank->getDimension(BoatRankDimension::FLEXIBILITY));
         $this->assertEquals(0, $rank->getDimension(BoatRankDimension::ABSENCE));
     }
 
     public function testIdStartsAsNull(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
+        // Assert
         $this->assertNull($boat->getId());
     }
 
     public function testSetIdUpdatesId(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $boat->setId(42);
 
+        // Assert
         $this->assertEquals(42, $boat->getId());
     }
 
     public function testGetOwnerKeyCreatesCorrectCrewKey(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
+        // Act
         $ownerKey = $boat->getOwnerKey();
+        // Assert
         $this->assertEquals('johndoe', $ownerKey->toString());
     }
 
     public function testSetters(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
         $boat->setDisplayName('New Name');
@@ -93,6 +105,7 @@ class BoatTest extends TestCase
         $boat->setAssistanceRequired(true);
         $boat->setSocialPreference(false);
 
+        // Assert
         $this->assertEquals('New Name', $boat->getDisplayName());
         $this->assertEquals('Jane', $boat->getOwnerFirstName());
         $this->assertEquals('Smith', $boat->getOwnerLastName());
@@ -106,25 +119,32 @@ class BoatTest extends TestCase
 
     public function testSetAndGetRank(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $rank = Rank::forBoat(flexibility: 0, absence: 3);
 
+        // Act
         $boat->setRank($rank);
 
+        // Assert
         $this->assertEquals($rank, $boat->getRank());
     }
 
     public function testSetRankDimension(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
+        // Act
         $boat->setRankDimension(BoatRankDimension::ABSENCE, 5);
 
+        // Assert
         $this->assertEquals(5, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     public function testUpdateAbsenceRankWithNoAbsences(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -132,13 +152,16 @@ class BoatTest extends TestCase
         $boat->setHistory($eventId1, 'Y');
         $boat->setHistory($eventId2, 'Y');
 
+        // Act
         $boat->updateAbsenceRank(['Fri May 29', 'Sat May 30']);
 
+        // Assert
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     public function testUpdateAbsenceRankWithAbsences(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -148,31 +171,39 @@ class BoatTest extends TestCase
         $boat->setHistory($eventId2, '');
         $boat->setHistory($eventId3, '');
 
+        // Act
         $boat->updateAbsenceRank(['Fri May 29', 'Sat May 30', 'Sun May 31']);
 
+        // Assert
         $this->assertEquals(2, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
     }
 
     public function testGetBerthsReturnsZeroByDefault(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertEquals(0, $boat->getBerths($eventId));
     }
 
     public function testSetAndGetBerths(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Act
         $boat->setBerths($eventId, 2);
 
+        // Assert
         $this->assertEquals(2, $boat->getBerths($eventId));
     }
 
     public function testGetAllBerths(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -180,64 +211,79 @@ class BoatTest extends TestCase
         $boat->setBerths($eventId1, 2);
         $boat->setBerths($eventId2, 3);
 
+        // Act
         $berths = $boat->getAllBerths();
 
+        // Assert
         $this->assertEquals(2, $berths['Fri May 29']);
         $this->assertEquals(3, $berths['Sat May 30']);
     }
 
     public function testSetAllBerths(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventIds = [
             EventId::fromString('Fri May 29'),
             EventId::fromString('Sat May 30')
         ];
 
+        // Act
         $boat->setAllBerths($eventIds, 2);
 
+        // Assert
         $this->assertEquals(2, $boat->getBerths($eventIds[0]));
         $this->assertEquals(2, $boat->getBerths($eventIds[1]));
     }
 
     public function testIsAvailableForReturnsFalseWhenNoBerths(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertFalse($boat->isAvailableFor($eventId));
     }
 
     public function testIsAvailableForReturnsTrueWhenBerthsAvailable(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
         $boat->setBerths($eventId, 2);
 
+        // Assert
         $this->assertTrue($boat->isAvailableFor($eventId));
     }
 
     public function testGetHistoryReturnsEmptyStringByDefault(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Assert
         $this->assertEquals('', $boat->getHistory($eventId));
     }
 
     public function testSetAndGetHistory(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Act
         $boat->setHistory($eventId, 'Y');
 
+        // Assert
         $this->assertEquals('Y', $boat->getHistory($eventId));
     }
 
     public function testGetAllHistory(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -245,61 +291,75 @@ class BoatTest extends TestCase
         $boat->setHistory($eventId1, 'Y');
         $boat->setHistory($eventId2, '');
 
+        // Act
         $history = $boat->getAllHistory();
 
+        // Assert
         $this->assertEquals('Y', $history['Fri May 29']);
         $this->assertEquals('', $history['Sat May 30']);
     }
 
     public function testSetAllHistory(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventIds = [
             EventId::fromString('Fri May 29'),
             EventId::fromString('Sat May 30')
         ];
 
+        // Act
         $boat->setAllHistory($eventIds, 'Y');
 
+        // Assert
         $this->assertEquals('Y', $boat->getHistory($eventIds[0]));
         $this->assertEquals('Y', $boat->getHistory($eventIds[1]));
     }
 
     public function testDidParticipateReturnsTrueForY(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
         $boat->setHistory($eventId, 'Y');
 
+        // Assert
         $this->assertTrue($boat->didParticipate($eventId));
     }
 
     public function testDidParticipateReturnsFalseForEmptyString(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
         $boat->setHistory($eventId, '');
 
+        // Assert
         $this->assertFalse($boat->didParticipate($eventId));
     }
 
     public function testDidParticipateReturnsFalseForUnsetHistory(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $eventId = EventId::fromString('Fri May 29');
 
+        // Act & Assert
         $this->assertFalse($boat->didParticipate($eventId));
     }
 
     public function testToArrayReturnsCompleteArray(): void
     {
+        // Arrange
         $boat = $this->createBoat();
         $boat->setId(1);
 
+        // Act
         $array = $boat->toArray();
 
+        // Assert
         $this->assertEquals(1, $array['id']);
         $this->assertEquals('sailaway', $array['key']);
         $this->assertEquals('Sail Away', $array['display_name']);
@@ -318,10 +378,13 @@ class BoatTest extends TestCase
 
     public function testOccupiedBerthsCanBeSetDirectly(): void
     {
+        // Arrange
         $boat = $this->createBoat();
 
+        // Act
         $boat->occupied_berths = 2;
 
+        // Assert
         $this->assertEquals(2, $boat->occupied_berths);
     }
 }

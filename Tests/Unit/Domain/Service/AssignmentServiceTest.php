@@ -91,6 +91,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that the assign method returns the expected flotilla data structure
     public function testAssignReturnsFlotillaStructure(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway');
         $crew1 = $this->createCrew('alice', SkillLevel::ADVANCED);
         $crew2 = $this->createCrew('bob', SkillLevel::INTERMEDIATE);
@@ -99,8 +100,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat1, 'crews' => [$crew1, $crew2]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
 
+        // Assert
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
         $this->assertCount(1, $result['crewed_boats']);
@@ -109,17 +112,18 @@ class AssignmentServiceTest extends TestCase
     // Tests ASSIST rule crew loss calculation based on skill level for assistance-required boats
     public function testCrewLossForAssistRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway', true);
         $highSkillCrew = $this->createCrew('alice', SkillLevel::ADVANCED);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
 
         $crewedBoat = ['boat' => $boat, 'crews' => [$lowSkillCrew]];
 
-        // Low skill crew on assistance-required boat should have loss of 2
+        // Act & Assert - Low skill crew on assistance-required boat should have loss of 2
         $loss = $this->service->crewLoss(AssignmentRule::ASSIST, $lowSkillCrew, $crewedBoat);
         $this->assertEquals(2, $loss);
 
-        // High skill crew on assistance-required boat should have loss of 0
+        // Act & Assert - High skill crew on assistance-required boat should have loss of 0
         $crewedBoat = ['boat' => $boat, 'crews' => [$highSkillCrew]];
         $loss = $this->service->crewLoss(AssignmentRule::ASSIST, $highSkillCrew, $crewedBoat);
         $this->assertEquals(0, $loss);
@@ -128,34 +132,38 @@ class AssignmentServiceTest extends TestCase
     // Tests that low skill crew has no loss when assistance boat already has high skill crew
     public function testCrewLossForAssistRuleWithExistingHighSkill(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway', true);
         $highSkillCrew = $this->createCrew('alice', SkillLevel::ADVANCED);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
-
-        // Boat already has high skill crew
         $crewedBoat = ['boat' => $boat, 'crews' => [$highSkillCrew, $lowSkillCrew]];
 
-        // Low skill crew should have loss of 0 since boat already has high skill
+        // Act
         $loss = $this->service->crewLoss(AssignmentRule::ASSIST, $lowSkillCrew, $crewedBoat);
+
+        // Assert
         $this->assertEquals(0, $loss);
     }
 
     // Tests that ASSIST rule produces no loss when boat doesn't require assistance
     public function testCrewLossForAssistRuleNoAssistanceRequired(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway', false);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
-
         $crewedBoat = ['boat' => $boat, 'crews' => [$lowSkillCrew]];
 
-        // No assistance required, so loss should be 0
+        // Act
         $loss = $this->service->crewLoss(AssignmentRule::ASSIST, $lowSkillCrew, $crewedBoat);
+
+        // Assert
         $this->assertEquals(0, $loss);
     }
 
     // Tests WHITELIST rule crew loss calculation based on boat whitelist membership
     public function testCrewLossForWhitelistRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $whitelistedCrew = $this->createCrew('alice', SkillLevel::INTERMEDIATE, null, [
             BoatKey::fromString('sailaway')
@@ -164,6 +172,7 @@ class AssignmentServiceTest extends TestCase
 
         $crewedBoat = ['boat' => $boat, 'crews' => [$whitelistedCrew]];
 
+        // Act & Assert
         // Whitelisted crew should have loss of 0
         $loss = $this->service->crewLoss(AssignmentRule::WHITELIST, $whitelistedCrew, $crewedBoat);
         $this->assertEquals(0, $loss);
@@ -177,10 +186,12 @@ class AssignmentServiceTest extends TestCase
     // Tests HIGH_SKILL rule which penalizes high skill crew on boats with skill spread
     public function testCrewLossForHighSkillRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $highSkillCrew = $this->createCrew('alice', SkillLevel::ADVANCED);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
 
+        // Act & Assert
         // High skill spread (2-0=2) with high skill crew
         $crewedBoat = ['boat' => $boat, 'crews' => [$highSkillCrew, $lowSkillCrew]];
         $loss = $this->service->crewLoss(AssignmentRule::HIGH_SKILL, $highSkillCrew, $crewedBoat);
@@ -194,10 +205,12 @@ class AssignmentServiceTest extends TestCase
     // Tests LOW_SKILL rule which penalizes low skill crew on boats with skill spread
     public function testCrewLossForLowSkillRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $highSkillCrew = $this->createCrew('alice', SkillLevel::ADVANCED);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
 
+        // Act & Assert
         // High skill spread (2-0=2) with low skill crew
         $crewedBoat = ['boat' => $boat, 'crews' => [$highSkillCrew, $lowSkillCrew]];
         $loss = $this->service->crewLoss(AssignmentRule::LOW_SKILL, $lowSkillCrew, $crewedBoat);
@@ -211,6 +224,7 @@ class AssignmentServiceTest extends TestCase
     // Tests PARTNER rule which prevents partners from being assigned to the same boat
     public function testCrewLossForPartnerRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $aliceKey = CrewKey::fromString('alice');
         $bobKey = CrewKey::fromString('bob');
@@ -219,6 +233,7 @@ class AssignmentServiceTest extends TestCase
         $bob = $this->createCrew('bob', SkillLevel::INTERMEDIATE, $aliceKey);
         $charlie = $this->createCrew('charlie', SkillLevel::INTERMEDIATE);
 
+        // Act & Assert
         // Alice and Bob are partners on the same boat - violation
         $crewedBoat = ['boat' => $boat, 'crews' => [$alice, $bob]];
         $loss = $this->service->crewLoss(AssignmentRule::PARTNER, $alice, $crewedBoat);
@@ -238,6 +253,7 @@ class AssignmentServiceTest extends TestCase
     // Tests REPEAT rule which counts how many times crew has been on the same boat
     public function testCrewLossForRepeatRule(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
 
         // Crew has been on this boat 3 times
@@ -248,25 +264,33 @@ class AssignmentServiceTest extends TestCase
             'Mon Jun 01' => 'seabreeze'
         ]);
 
+        // Act
         $crewedBoat = ['boat' => $boat, 'crews' => [$crew]];
         $loss = $this->service->crewLoss(AssignmentRule::REPEAT, $crew, $crewedBoat);
+
+        // Assert
         $this->assertEquals(3, $loss);
     }
 
     // Tests that REPEAT rule produces zero loss when crew has no history with the boat
     public function testCrewLossForRepeatRuleNoHistory(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $crew = $this->createCrew('alice', SkillLevel::INTERMEDIATE);
 
+        // Act
         $crewedBoat = ['boat' => $boat, 'crews' => [$crew]];
         $loss = $this->service->crewLoss(AssignmentRule::REPEAT, $crew, $crewedBoat);
+
+        // Assert
         $this->assertEquals(0, $loss);
     }
 
     // Tests that crew gradient for ASSIST rule reflects skill value for swap optimization
     public function testCrewGradForAssistRule(): void
     {
+        // Arrange
         // Create a scenario where low skill crew is on an assistance boat (violation)
         // High skill crew on a different boat can help by swapping
         $boatNeedsAssist = $this->createBoat('sailaway', true);
@@ -280,8 +304,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boatNoAssist, 'crews' => [$highSkillCrew]]
         ]);
 
+        // Act
         $this->service->assign($flotilla);
 
+        // Assert
         // High skill crew has gradient of 2 (skill value for ASSIST rule)
         // Gradient represents their ability to help resolve violations
         $this->assertArrayHasKey('alice', $this->service->grads);
@@ -291,6 +317,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that whitelisted crew gets optimally assigned to whitelisted boat
     public function testCrewGradForWhitelistRule(): void
     {
+        // Arrange
         // Crew with whitelist has higher gradient (more valuable for swaps)
         // Verify through optimization: whitelisted crew should be assigned to whitelisted boat
         $boat1 = $this->createBoat('sailaway');
@@ -306,8 +333,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat2, 'crews' => [$crewWithWhitelist]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
 
+        // Assert
         // After optimization, whitelisted crew should be on boat they're whitelisted for
         $sailawayBoat = $result['crewed_boats'][0];
         $sailawayCrewKeys = array_map(fn($crew) => $crew->getKey()->toString(), $sailawayBoat['crews']);
@@ -317,6 +346,7 @@ class AssignmentServiceTest extends TestCase
     // Tests gradient calculation for HIGH_SKILL rule in optimization scenarios
     public function testCrewGradForHighSkillRule(): void
     {
+        // Arrange
         // Low skill crew has higher gradient for HIGH_SKILL violations
         // Verify through optimization that algorithm produces valid result
         $boat1 = $this->createBoat('sailaway');
@@ -333,7 +363,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat3, 'crews' => [$this->createCrew('dave', SkillLevel::INTERMEDIATE)]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
+
+        // Assert
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
     }
@@ -341,6 +374,7 @@ class AssignmentServiceTest extends TestCase
     // Tests gradient calculation for LOW_SKILL rule in optimization scenarios
     public function testCrewGradForLowSkillRule(): void
     {
+        // Arrange
         // High skill crew has higher gradient for LOW_SKILL violations
         // Verify through optimization that algorithm produces valid result
         $boat1 = $this->createBoat('sailaway');
@@ -357,7 +391,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat3, 'crews' => [$this->createCrew('dave', SkillLevel::INTERMEDIATE)]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
+
+        // Assert
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
     }
@@ -365,6 +402,7 @@ class AssignmentServiceTest extends TestCase
     // Tests gradient calculation for PARTNER rule to separate partners via swaps
     public function testCrewGradForPartnerRule(): void
     {
+        // Arrange
         // Solo crew has higher gradient for PARTNER violations
         // Verify through optimization that algorithm produces valid result
         $boat1 = $this->createBoat('sailaway');
@@ -381,7 +419,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat2, 'crews' => [$crewSolo]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
+
+        // Assert
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
     }
@@ -389,6 +430,7 @@ class AssignmentServiceTest extends TestCase
     // Tests gradient calculation for REPEAT rule based on available history slots
     public function testCrewGradForRepeatRule(): void
     {
+        // Arrange
         // Create a scenario where crew has been assigned to same boat multiple times (violation)
         // Crew with empty history slots can help by swapping
         $boat1 = $this->createBoat('sailaway');
@@ -414,8 +456,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat2, 'crews' => [$crewWithEmptyHistory]]
         ]);
 
+        // Act
         $this->service->assign($flotilla);
 
+        // Assert
         // Crew with empty history slots has gradient equal to empty slot count
         $this->assertArrayHasKey('bob', $this->service->grads);
         $this->assertEquals(2, $this->service->grads['bob']);
@@ -424,6 +468,7 @@ class AssignmentServiceTest extends TestCase
     // Tests helper method that retrieves crew entity by key from flotilla
     public function testCrewFromKey(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $crew1 = $this->createCrew('alice', SkillLevel::ADVANCED);
         $crew2 = $this->createCrew('bob', SkillLevel::NOVICE);
@@ -435,7 +480,10 @@ class AssignmentServiceTest extends TestCase
         // Set the flotilla on the service
         $this->service->assign($flotilla);
 
+        // Act
         $foundCrew = $this->service->crewFromKey('alice');
+
+        // Assert
         $this->assertNotNull($foundCrew);
         $this->assertEquals('alice', $foundCrew->getKey()->toString());
 
@@ -446,6 +494,7 @@ class AssignmentServiceTest extends TestCase
     // Tests helper method that retrieves the boat a crew is assigned to by crew key
     public function testCrewedBoatFromKey(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $crew1 = $this->createCrew('alice', SkillLevel::ADVANCED);
 
@@ -453,9 +502,11 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat, 'crews' => [$crew1]]
         ]);
 
+        // Act
         // Set the flotilla on the service
         $this->service->assign($flotilla);
 
+        // Assert
         $crewedBoat = $this->service->crewedBoatFromKey('alice');
         $this->assertNotNull($crewedBoat);
         $this->assertArrayHasKey('boat', $crewedBoat);
@@ -469,6 +520,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that bestSwap algorithm finds and executes beneficial crew swaps
     public function testBestSwapFindsValidSwap(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', true);
         $boat2 = $this->createBoat('seabreeze', false);
 
@@ -480,9 +532,11 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat2, 'crews' => [$highSkillCrew]]
         ]);
 
+        // Act
         // First call assign to populate the service's internal flotilla state
         $this->service->assign($flotilla);
 
+        // Assert
         // After assign, the losses and grads arrays are populated by the algorithm
         // Verify that bestSwap was called and found a valid swap (the assignment happened)
         $this->assertIsArray($this->service->losses);
@@ -493,6 +547,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that bestSwap handles scenarios where no beneficial swap exists
     public function testBestSwapReturnsNullWhenNoValidSwap(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway');
         $crew1 = $this->createCrew('alice', SkillLevel::ADVANCED);
 
@@ -500,9 +555,11 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat1, 'crews' => [$crew1]]
         ]);
 
+        // Act
         // Call assign to populate internal state
         $this->service->assign($flotilla);
 
+        // Assert
         // With only one crew on one boat, bestSwap should not find a valid swap for most rules
         // Verify the algorithm completed without errors
         $this->assertIsArray($this->service->losses);
@@ -512,6 +569,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that prettyPrint debug method executes without throwing exceptions
     public function testPrettyPrintDoesNotThrowException(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway', true);
         $crew = $this->createCrew('alice', SkillLevel::ADVANCED);
 
@@ -519,14 +577,18 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat, 'crews' => [$crew]]
         ]);
 
+        // Act & Assert
         // Should not throw exception
         $this->service->prettyPrint($flotilla);
+
+        // Assert
         $this->assertTrue(true);
     }
 
     // Tests that high skill crew remains on assistance-required boats during optimization
     public function testAssignLocksHighSkillCrewOnAssistanceBoats(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway', true);
         $highSkillCrew = $this->createCrew('alice', SkillLevel::ADVANCED);
         $lowSkillCrew = $this->createCrew('bob', SkillLevel::NOVICE);
@@ -535,8 +597,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat, 'crews' => [$lowSkillCrew, $highSkillCrew]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
 
+        // Assert
         // Verify flotilla structure is returned
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
@@ -555,6 +619,7 @@ class AssignmentServiceTest extends TestCase
     // Tests assignment with multiple boats and crews to verify overall algorithm behavior
     public function testAssignWithMultipleBoatsAndCrews(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', true);
         $boat2 = $this->createBoat('seabreeze', false);
 
@@ -568,8 +633,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat2, 'crews' => [$crew3, $crew4]]
         ]);
 
+        // Act
         $result = $this->service->assign($flotilla);
 
+        // Assert
         // Verify the result structure
         $this->assertIsArray($result);
         $this->assertArrayHasKey('crewed_boats', $result);
@@ -586,6 +653,7 @@ class AssignmentServiceTest extends TestCase
     // Tests that losses and grads arrays are publicly accessible after assignment
     public function testLossesAndGradsArraysArePublic(): void
     {
+        // Arrange
         $boat = $this->createBoat('sailaway');
         $crew = $this->createCrew('alice', SkillLevel::ADVANCED);
 
@@ -593,8 +661,10 @@ class AssignmentServiceTest extends TestCase
             ['boat' => $boat, 'crews' => [$crew]]
         ]);
 
+        // Act
         $this->service->assign($flotilla);
 
+        // Assert
         // Verify we can access the public properties
         $this->assertIsArray($this->service->losses);
         $this->assertIsArray($this->service->grads);

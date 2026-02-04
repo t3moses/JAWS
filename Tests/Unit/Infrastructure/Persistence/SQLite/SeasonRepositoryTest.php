@@ -120,9 +120,11 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testSaveFlotillaInsertsNewRecord(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
         $flotillaData = $this->createTestFlotilla('Fri May 29');
 
+        // Act
         // Insert flotilla
         $this->repository->saveFlotilla($eventId, $flotillaData);
 
@@ -131,6 +133,7 @@ class SeasonRepositoryTest extends TestCase
         $stmt->execute(['Fri May 29']);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Assert
         $this->assertNotFalse($row, 'Flotilla record should exist');
         $this->assertEquals('Fri May 29', $row['event_id']);
         $this->assertNotEmpty($row['flotilla_data']);
@@ -147,6 +150,7 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testSaveFlotillaUpdatesExistingRecord(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
 
         // Insert initial flotilla
@@ -161,6 +165,7 @@ class SeasonRepositoryTest extends TestCase
         // Small delay to ensure timestamp changes
         sleep(1);
 
+        // Act
         // Update with different data
         $updatedData = $this->createTestFlotilla('Fri May 29');
         $updatedData['crewed_boats'][] = [
@@ -169,6 +174,7 @@ class SeasonRepositoryTest extends TestCase
         ];
         $this->repository->saveFlotilla($eventId, $updatedData);
 
+        // Assert
         // Verify only ONE record exists (no duplicates)
         $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM flotillas WHERE event_id = ?');
         $stmt->execute(['Fri May 29']);
@@ -192,6 +198,7 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testSaveFlotillaSerializesDataToJson(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri Jun 05');
 
         // Create complex flotilla with nested structures
@@ -226,8 +233,10 @@ class SeasonRepositoryTest extends TestCase
             ],
         ];
 
+        // Act
         $this->repository->saveFlotilla($eventId, $complexData);
 
+        // Assert
         // Query raw database
         $stmt = $this->pdo->prepare('SELECT flotilla_data FROM flotillas WHERE event_id = ?');
         $stmt->execute(['Fri Jun 05']);
@@ -253,15 +262,18 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testGetFlotillaReturnsDeserializedData(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
         $originalData = $this->createTestFlotilla('Fri May 29');
 
         // Save flotilla
         $this->repository->saveFlotilla($eventId, $originalData);
 
+        // Act
         // Retrieve flotilla
         $retrievedData = $this->repository->getFlotilla($eventId);
 
+        // Assert
         // Verify it's an array, not a JSON string
         $this->assertIsArray($retrievedData);
         $this->assertNotNull($retrievedData);
@@ -283,10 +295,13 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testGetFlotillaReturnsNullWhenNotFound(): void
     {
+        // Arrange
         $eventId = EventId::fromString('NonExistent Event');
 
+        // Act
         $result = $this->repository->getFlotilla($eventId);
 
+        // Assert
         $this->assertNull($result, 'Should return null for non-existent flotilla');
     }
 
@@ -295,6 +310,7 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testDeleteFlotillaRemovesRecord(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
         $flotillaData = $this->createTestFlotilla('Fri May 29');
 
@@ -304,9 +320,11 @@ class SeasonRepositoryTest extends TestCase
         // Verify it exists
         $this->assertTrue($this->repository->flotillaExists($eventId));
 
+        // Act
         // Delete flotilla
         $this->repository->deleteFlotilla($eventId);
 
+        // Assert
         // Verify it's gone
         $this->assertFalse($this->repository->flotillaExists($eventId));
         $this->assertNull($this->repository->getFlotilla($eventId));
@@ -323,6 +341,7 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testFlotillaExistsReturnsTrueWhenExists(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
         $flotillaData = $this->createTestFlotilla('Fri May 29');
 
@@ -332,6 +351,7 @@ class SeasonRepositoryTest extends TestCase
         // Save flotilla
         $this->repository->saveFlotilla($eventId, $flotillaData);
 
+        // Act & Assert
         // After saving
         $this->assertTrue($this->repository->flotillaExists($eventId));
     }
@@ -341,6 +361,7 @@ class SeasonRepositoryTest extends TestCase
      */
     public function testSaveFlotillaHandlesEmptyData(): void
     {
+        // Arrange
         $eventId = EventId::fromString('Fri May 29');
 
         // Create flotilla with all empty arrays
@@ -351,11 +372,13 @@ class SeasonRepositoryTest extends TestCase
             'waitlist_crews' => [],
         ];
 
+        // Act
         $this->repository->saveFlotilla($eventId, $emptyData);
 
         // Retrieve and verify
         $retrievedData = $this->repository->getFlotilla($eventId);
 
+        // Assert
         $this->assertNotNull($retrievedData);
         $this->assertIsArray($retrievedData['crewed_boats']);
         $this->assertIsArray($retrievedData['waitlist_boats']);

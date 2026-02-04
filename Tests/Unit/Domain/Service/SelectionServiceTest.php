@@ -88,6 +88,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that when total berths exactly match crew count, all boats and crews are selected
     public function testSelectWithPerfectFit(): void
     {
+        // Arrange
         // 2 boats with 2 berths each = 4 berths, 4 crews = perfect fit
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
@@ -97,12 +98,14 @@ class SelectionServiceTest extends TestCase
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
         $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2],
             [$crew1, $crew2, $crew3, $crew4],
             $this->eventId
         );
 
+        // Assert
         $this->assertCount(2, $this->service->getSelectedBoats());
         $this->assertCount(4, $this->service->getSelectedCrews());
         $this->assertEmpty($this->service->getWaitlistBoats());
@@ -112,6 +115,7 @@ class SelectionServiceTest extends TestCase
     // Tests that when there aren't enough crews for minimum berths, lowest ranked boats are cut
     public function testSelectWithTooFewCrews(): void
     {
+        // Arrange
         // 3 boats need 2 berths each = 6 berths minimum, but only 4 crews
         $boat1 = $this->createBoat('sailaway', 2, 3, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 3, Rank::forBoat(flexibility: 0, absence: 1));
@@ -122,12 +126,14 @@ class SelectionServiceTest extends TestCase
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
         $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2, $boat3],
             [$crew1, $crew2, $crew3, $crew4],
             $this->eventId
         );
 
+        // Assert
         // Should cut boats (lowest ranked first)
         $selectedBoats = $this->service->getSelectedBoats();
         $this->assertLessThan(3, count($selectedBoats));
@@ -140,6 +146,7 @@ class SelectionServiceTest extends TestCase
     // Tests that when there are more crews than maximum berths, lowest ranked crews go to waitlist
     public function testSelectWithTooManyCrews(): void
     {
+        // Arrange
         // 2 boats with 2 berths each = 4 berths maximum, but 6 crews
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
@@ -151,12 +158,14 @@ class SelectionServiceTest extends TestCase
         $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 4));
         $crew6 = $this->createCrew('frank', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 5));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2],
             [$crew1, $crew2, $crew3, $crew4, $crew5, $crew6],
             $this->eventId
         );
 
+        // Assert
         // Should cut crews (lowest ranked first)
         $this->assertCount(2, $this->service->getSelectedBoats());
         $this->assertCount(4, $this->service->getSelectedCrews());
@@ -167,6 +176,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that boats with flexible berth counts can expand to accommodate available crews
     public function testSelectWithFlexibleBerths(): void
     {
+        // Arrange
         // 2 boats: min 2, max 3 each = 4-6 berths flexible
         $boat1 = $this->createBoat('sailaway', 2, 3, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 3, Rank::forBoat(flexibility: 0, absence: 1));
@@ -177,12 +187,14 @@ class SelectionServiceTest extends TestCase
         $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
         $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 4));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2],
             [$crew1, $crew2, $crew3, $crew4, $crew5],
             $this->eventId
         );
 
+        // Assert
         // Should fit 5 crews by expanding berths
         $this->assertCount(2, $this->service->getSelectedBoats());
         $this->assertCount(5, $this->service->getSelectedCrews());
@@ -290,8 +302,12 @@ class SelectionServiceTest extends TestCase
     // Tests edge case where both boats and crews lists are empty
     public function testSelectWithEmptyBoatsAndCrews(): void
     {
+        // Arrange
+        // Act
+        // Assert
         $this->service->select([], [], $this->eventId);
 
+        // Assert
         $this->assertEmpty($this->service->getSelectedBoats());
         $this->assertEmpty($this->service->getSelectedCrews());
         $this->assertEmpty($this->service->getWaitlistBoats());
@@ -301,11 +317,14 @@ class SelectionServiceTest extends TestCase
     // Tests that boats without crews all go to waitlist
     public function testSelectWithOnlyBoatsNoCrews(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
 
+        // Act
         $this->service->select([$boat1, $boat2], [], $this->eventId);
 
+        // Assert
         // All boats should be on waitlist since no crews
         $this->assertEmpty($this->service->getSelectedBoats());
         $this->assertEmpty($this->service->getSelectedCrews());
@@ -316,11 +335,14 @@ class SelectionServiceTest extends TestCase
     // Tests that crews without boats result in no selections
     public function testSelectWithOnlyCrewsNoBoats(): void
     {
+        // Arrange
         $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
 
+        // Act
         $this->service->select([], [$crew1, $crew2], $this->eventId);
 
+        // Assert
         $this->assertEmpty($this->service->getSelectedBoats());
         $this->assertEmpty($this->service->getSelectedCrews());
         $this->assertEmpty($this->service->getWaitlistBoats());
@@ -330,6 +352,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that using the same event ID produces identical selection results
     public function testDeterministicShuffleWithSameSeed(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
@@ -338,6 +361,7 @@ class SelectionServiceTest extends TestCase
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
 
+        // Act
         // First selection
         $service1 = new SelectionService();
         $service1->select([$boat1, $boat2, $boat3], [$crew1, $crew2, $crew3], $this->eventId);
@@ -350,6 +374,7 @@ class SelectionServiceTest extends TestCase
         $result2Boats = $service2->getSelectedBoats();
         $result2Crews = $service2->getSelectedCrews();
 
+        // Assert
         // Results should be identical
         $this->assertEquals(
             array_map(fn($b) => $b->getKey()->toString(), $result1Boats),
@@ -364,6 +389,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that different event IDs can produce different selection results
     public function testDeterministicShuffleWithDifferentSeeds(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
@@ -375,6 +401,7 @@ class SelectionServiceTest extends TestCase
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
 
+        // Act
         // Selection with first event ID
         $service1 = new SelectionService();
         $service1->select([$boat1, $boat2, $boat3], [$crew1, $crew2, $crew3], $eventId1);
@@ -385,6 +412,7 @@ class SelectionServiceTest extends TestCase
         $service2->select([$boat1, $boat2, $boat3], [$crew1, $crew2, $crew3], $eventId2);
         $result2Boats = $service2->getSelectedBoats();
 
+        // Assert
         // Results will likely be different (though not guaranteed due to randomness)
         // At minimum, verify both completed successfully
         $this->assertNotEmpty($result1Boats);
@@ -394,6 +422,7 @@ class SelectionServiceTest extends TestCase
     // Tests that multi-dimensional ranks are compared lexicographically
     public function testLexicographicRankComparison(): void
     {
+        // Arrange
         // Test with multi-dimensional ranks
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 1, absence: 2));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 1, absence: 3));
@@ -402,12 +431,14 @@ class SelectionServiceTest extends TestCase
         $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 1, flexibility: 0, membership: 0, absence: 0));
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 2, flexibility: 0, membership: 0, absence: 0));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2, $boat3],
             [$crew1, $crew2],
             $this->eventId
         );
 
+        // Assert
         $selectedBoats = $this->service->getSelectedBoats();
 
         // Boats should be sorted: [1,2,3] < [1,3,2] < [2,1,1]
@@ -418,6 +449,7 @@ class SelectionServiceTest extends TestCase
     // Tests scenario where cutting one boat results in perfect crew-to-berth fit
     public function testCase1PerfectFitAfterCuttingBoats(): void
     {
+        // Arrange
         // 3 boats needing 2 berths each = 6 berths
         // 4 crews available
         // Should cut 1 boat to get 4 berths = perfect fit
@@ -430,12 +462,14 @@ class SelectionServiceTest extends TestCase
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
         $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2, $boat3],
             [$crew1, $crew2, $crew3, $crew4],
             $this->eventId
         );
 
+        // Assert
         $this->assertCount(2, $this->service->getSelectedBoats());
         $this->assertCount(4, $this->service->getSelectedCrews());
         $this->assertCount(1, $this->service->getWaitlistBoats());
@@ -445,6 +479,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that crews are distributed evenly across boats with flexible berths
     public function testCase3DistributesCrewsOptimally(): void
     {
+        // Arrange
         // Boats with flexible berths
         $boat1 = $this->createBoat('sailaway', 1, 3, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 1, 3, Rank::forBoat(flexibility: 0, absence: 1));
@@ -455,12 +490,14 @@ class SelectionServiceTest extends TestCase
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
         $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2],
             [$crew1, $crew2, $crew3, $crew4],
             $this->eventId
         );
 
+        // Assert
         $selectedBoats = $this->service->getSelectedBoats();
 
         // Both boats should have occupied_berths set
@@ -471,6 +508,7 @@ class SelectionServiceTest extends TestCase
     // Tests that the bubble sort optimization terminates early for already sorted data
     public function testBubbleSortTerminatesEarlyWhenSorted(): void
     {
+        // Arrange
         // Already sorted boats
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
@@ -479,6 +517,7 @@ class SelectionServiceTest extends TestCase
         $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
 
+        // Act
         // This should complete quickly without many comparisons
         $this->service->select(
             [$boat1, $boat2, $boat3],
@@ -486,6 +525,7 @@ class SelectionServiceTest extends TestCase
             $this->eventId
         );
 
+        // Assert
         // Verify it completed successfully
         $this->assertNotEmpty($this->service->getSelectedBoats());
     }
@@ -493,6 +533,7 @@ class SelectionServiceTest extends TestCase
     // Tests that entities with identical ranks can still be differentiated via shuffle
     public function testSelectHandlesIdenticalRanks(): void
     {
+        // Arrange
         // All boats have same rank - shuffle should differentiate
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
@@ -501,12 +542,14 @@ class SelectionServiceTest extends TestCase
         $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
 
+        // Act
         $this->service->select(
             [$boat1, $boat2, $boat3],
             [$crew1, $crew2],
             $this->eventId
         );
 
+        // Assert
         // Should still make a selection
         $this->assertCount(1, $this->service->getSelectedBoats());
         $this->assertCount(2, $this->service->getSelectedCrews());
@@ -515,6 +558,7 @@ class SelectionServiceTest extends TestCase
     // Verifies that occupied berths stay within the boat's min and max berth limits
     public function testOccupiedBerthsRespectsBounds(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 4, Rank::forBoat(flexibility: 0, absence: 0));
 
         // 3 crews - should fit on one boat with flexible berths
@@ -522,8 +566,10 @@ class SelectionServiceTest extends TestCase
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
         $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
 
+        // Act
         $this->service->select([$boat1], [$crew1, $crew2, $crew3], $this->eventId);
 
+        // Assert
         $selectedBoats = $this->service->getSelectedBoats();
         $occupiedBerths = $selectedBoats[0]->occupied_berths;
 
@@ -536,6 +582,7 @@ class SelectionServiceTest extends TestCase
     // Tests that boat and crew entities maintain their identity after selection
     public function testSelectMaintainsBoatAndCrewIntegrity(): void
     {
+        // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
         $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
@@ -544,8 +591,10 @@ class SelectionServiceTest extends TestCase
         $originalCrew1Key = $crew1->getKey()->toString();
         $originalCrew2Key = $crew2->getKey()->toString();
 
+        // Act
         $this->service->select([$boat1], [$crew1, $crew2], $this->eventId);
 
+        // Assert
         // Verify entities maintain their identity
         $selectedBoats = $this->service->getSelectedBoats();
         $selectedCrews = $this->service->getSelectedCrews();
