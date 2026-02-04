@@ -4,13 +4,11 @@ namespace nsc\sdc\boat;
 
 use nsc\sdc\name as name;
 use nsc\sdc\season as season;
-use nsc\sdc\squad as squad;
 use nsc\sdc\config\rank as rank;
 
 
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Season/src/Season.php';
-require_once __DIR__ . '/../../Squad/src/Squad.php';
 require_once __DIR__ . '/../../Name/src/Name.php';
 require_once __DIR__ . '/../../Config/src/Rank.php';
 
@@ -32,6 +30,23 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
         public $history = []; // Associative array
 
         public function __construct( ) {
+        }
+        public function hydrate( array $data ){
+            $this->key = $data['entity_key'] ?? null;
+            $this->display_name = $data['display_name'] ?? null;
+            $this->owner_first_name = $data['owner_first_name'] ?? null;
+            $this->owner_last_name = $data['owner_last_name'] ?? null;
+            $this->owner_email = $data['owner_email'] ?? null;
+            $this->owner_mobile = $data['owner_mobile'] ?? null;
+            $this->min_berths = $data['min_berths'] ?? null;
+            $this->max_berths = $data['max_berths'] ?? null;
+            $this->occupied_berths = $data['occupied_berths'] ?? null;;
+            $this->assistance_required = $data['assistance_required'] ?? null;;
+            $this->social_preference = $data['social_preference'] ?? null;;
+            $this->rank = $data['rank'] ?? null;
+            $this->berths = $data['berths'] ?? null;
+            $this->history = $data['history'] ?? null;
+        return $this;
         }
         public function set_default() {
             $this->key = '';
@@ -144,30 +159,6 @@ require_once __DIR__ . '/../../Config/src/Rank.php';
                 $this->history[ $_event_id ] = $_history;
             }
         }
-        public function update_whitelist() {
-            // Append the boat key to all crew whitelists
-            $_squad = new squad\Squad();
-            foreach( $_squad->crews as $_crew ) {
-                $_crew->set_whitelist( $this->key );
-            }
-            $_squad->save();
-        }
-        public function is_flex() : bool {
-
-            /*
-            If the boat owner is also a crew, return true and update the crew rank tensors
-            */
-
-            $_squad = new squad\Squad();
-            foreach( $_squad->crews as $_crew ) {
-                if ( $this->get_owner_key() === $_crew->get_key() ) {
-                    $_crew->set_rank( 1, 0 );
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public function update_absence_rank() {
 
             $_past_events = season\Season::get_past_events();

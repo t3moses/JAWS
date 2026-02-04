@@ -1,13 +1,12 @@
 <?php
 
-use nsc\sdc\squad as squad;
 use nsc\sdc\season as season;
-
-// Prevent caching of this page
 
 /*
 
 ARRIVE HERE ONLY IF THE CREW MEMBER DOES CURRENTLY HAVE AN ACCOUNT.
+
+Prevent caching of this page
 
 */
 
@@ -17,6 +16,7 @@ header("Expires: 0");
 
 require_once __DIR__ . '/Libraries/Season/src/Season.php';
 require_once __DIR__ . '/Libraries/Squad/src/Squad.php';
+require_once __DIR__ . '/Libraries/Authn/src/Authn.php';
 
 function crew_key_from_get_url() {
 
@@ -35,16 +35,22 @@ function crew_key_from_get_url() {
     }
 }
 
-$_user_crew_key = crew_key_from_get_url();
-
-$_squad = new squad\Squad();
-
+requireLogin();
+$_user_crew_key = $_SESSION['entity_key'];
+$db = getDatabase();
 season\Season::load_season_data();
 
-$_crew = $_squad->get_crew( $_user_crew_key );
-$_display_name = $_crew->get_display_name();
-$_available = $_crew->get_all_available();
+$stmt = $db->prepare("SELECT display_name, available FROM squad WHERE entity_key = :entity_key");
+$stmt->execute([':entity_key' => $_user_crew_key]);
+
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$_display_name = $row['display_name'];
+$_available = $row['available'] ?? null;
+
+$_available = explode( ";", $_available );
 $_event_ids = season\Season::get_future_events();
+$_available = array_slice($_available, count($_available) - count($_event_ids));
+$_available = array_combine($_event_ids, $_available);
 
 ?>
 
@@ -60,13 +66,10 @@ $_event_ids = season\Season::get_future_events();
             <img src='/Libraries/Html/data/NSC-SDC_logo.png' alt='Program page' width = '100'>
         </a>
         </div>
-        <p class = "p_class" >Username: <?php echo $_crew->get_display_name(); ?></p>
-        <form method="get" action="account_crew_availability_update.php">
-            <input class = "hidden_class" type="text" id="key" name="key" value="<?php echo $_user_crew_key; ?>"required>
-
+        <p class = "p_class" >Crew name: <?php echo $_display_name; ?></p>
+        <form method="get" action="/account_crew_availability_update.php">
 
 <!--
-
 Lopp through the list of events, displaying the event value and
 offering a choice betweenAvailable and not available.  
 
