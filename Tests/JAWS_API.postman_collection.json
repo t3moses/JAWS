@@ -1,0 +1,715 @@
+{
+  "info": {
+    "_postman_id": "a70838c8-ac3a-41b8-9a71-92024e39f072",
+    "name": "JAWS API",
+    "description": "API collection for JAWS (Sailing/Boating Management System) - A PHP Clean Architecture application for managing boats, crews, events, and availability scheduling.\n\n## Authentication\nThis API uses JWT (JSON Web Token) authentication. After logging in, include the token in the Authorization header as a Bearer token.\n\n## Base URL\nSet the `{{baseUrl}}` variable to your API server address (e.g., `http://localhost:8080/api`).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51906033",
+    "_collection_link": "https://go.postman.co/collection/51906033-a70838c8-ac3a-41b8-9a71-92024e39f072?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user account. Returns authentication token upon successful registration."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Automatically capture JWT token from login response",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    try {",
+                  "        const response = pm.response.json();",
+                  "        ",
+                  "        // Check common field names for JWT token",
+                  "        const token = response.token || ",
+                  "                      response.access_token || ",
+                  "                      response.authToken || ",
+                  "                      response.data?.token ||",
+                  "                      response.data?.access_token ||",
+                  "                      response.data?.authToken;",
+                  "        ",
+                  "        if (token) {",
+                  "            pm.environment.set(\"authToken\", token);",
+                  "            console.log(\"✅ JWT token saved to environment variable 'authToken'\");",
+                  "        } else {",
+                  "            console.log(\"⚠️ Token not found in response. Available fields:\", Object.keys(response));",
+                  "        }",
+                  "    } catch (error) {",
+                  "        console.log(\"❌ Error parsing response:\", error.message);",
+                  "    }",
+                  "} else {",
+                  "    console.log(\"⚠️ Login request did not return success status. Status:\", pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate user and receive JWT token for subsequent API calls."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "session"
+              ]
+            },
+            "description": "Get current user session information. Requires valid JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Invalidate current user session and JWT token."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for user authentication including login, registration, session management, and logout."
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "profile"
+              ]
+            },
+            "description": "Retrieve the current user's profile information."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"555-123-4567\",\n  \"emergencyContact\": \"Jane Doe\",\n  \"emergencyPhone\": \"555-987-6543\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "profile"
+              ]
+            },
+            "description": "Create a new user profile with personal details."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"555-123-4567\",\n  \"emergencyContact\": \"Jane Doe\",\n  \"emergencyPhone\": \"555-987-6543\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "profile"
+              ]
+            },
+            "description": "Update the current user's profile information."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing user profiles including viewing and updating profile information."
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            },
+            "description": "Retrieve a list of all sailing events."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/:eventId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events",
+                ":eventId"
+              ],
+              "variable": [
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Retrieve details of a specific event by its ID."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing sailing events and schedules."
+    },
+    {
+      "name": "Crew Availability",
+      "item": [
+        {
+          "name": "Get Crew Availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/availability/crew",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "crew"
+              ]
+            },
+            "description": "Get the current user's crew availability for all events."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Crew Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": 1,\n  \"available\": true,\n  \"notes\": \"Available for morning session only\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/availability/crew",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "crew"
+              ]
+            },
+            "description": "Update crew availability for a specific event."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crew Availability by Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/availability/crew/:eventId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "crew",
+                ":eventId"
+              ],
+              "variable": [
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Get crew availability for a specific event."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing crew member availability for events."
+    },
+    {
+      "name": "Boat Availability",
+      "item": [
+        {
+          "name": "Get Boat Availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/availability/boat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "boat"
+              ]
+            },
+            "description": "Get boat availability for all events."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Boat Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": 1,\n  \"boatId\": 1,\n  \"available\": true,\n  \"notes\": \"Boat available with full equipment\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/availability/boat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "boat"
+              ]
+            },
+            "description": "Update boat availability for a specific event."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Boat Availability by Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/availability/boat/:eventId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "availability",
+                "boat",
+                ":eventId"
+              ],
+              "variable": [
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Get boat availability for a specific event."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing boat availability for events."
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Get User Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assignments"
+              ]
+            },
+            "description": "Get all assignments for the current user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assignments by Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assignments/:eventId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assignments",
+                ":eventId"
+              ],
+              "variable": [
+                {
+                  "key": "eventId"
+                }
+              ]
+            },
+            "description": "Get all crew-to-boat assignments for a specific event."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing crew assignments to boats and events."
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Matching Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/matching",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "matching"
+              ]
+            },
+            "description": "Get data for crew-to-boat matching algorithm. Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"reminder\",\n  \"eventId\": 1,\n  \"message\": \"Reminder: Please update your availability\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "notifications"
+              ]
+            },
+            "description": "Send notifications to users. Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Season Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seasonName\": \"Summer 2025\",\n  \"startDate\": \"2025-06-01\",\n  \"endDate\": \"2025-09-30\",\n  \"registrationDeadline\": \"2025-05-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "config"
+              ]
+            },
+            "description": "Update season configuration settings. Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Season Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/season/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "season",
+                "process"
+              ]
+            },
+            "description": "Trigger season update processing. Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Flotilla",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/flotilla/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "flotilla",
+                "generate"
+              ]
+            },
+            "description": "Generate flotilla assignments for an event. Admin only."
+          },
+          "response": []
+        }
+      ],
+      "description": "Administrative endpoints for system configuration and management. Requires admin privileges."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

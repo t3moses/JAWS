@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(done)",
+      "WebFetch(domain:github.com)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(composer install:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(APP_DEBUG=true php:*)",
+      "Bash(sqlite3:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(./vendor/bin/phpunit:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(composer require:*)",
+      "Bash(aws --endpoint-url=http://localhost:4566 ses verify-email-identity:*)",
+      "Bash(composer remove:*)",
+      "Bash(vendor\\\\bin\\\\phinx migrate:*)",
+      "Bash(dir:*)",
+      "Bash(vendor/bin/phinx migrate:*)"
+    ]
+  }
+}

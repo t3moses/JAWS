@@ -3,3 +3,45 @@ bitnamo password.txt
 JAWS UI.key
 mailer.php
 toggle.html
+
+# Composer
+/vendor/
+composer.phar
+
+# Database
+/database/*.db
+/database/*.db-journal
+/database/*.db-wal
+/database/*.db-shm
+/database/*.backup.*
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHPUnit
+.phpunit.result.cache
+/phpunit.xml
+/.phpunit.cache
+.phpunit.result.cache
+
+# Logs
+*.log
+
+# Legacy CSV backups
+/legacy/Libraries/Fleet/data/*.backup.csv
+/legacy/Libraries/Squad/data/*.backup.csv
+
+# Debug files
+database/assignment_debug.txt

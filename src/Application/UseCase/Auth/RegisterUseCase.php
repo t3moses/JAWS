@@ -1,0 +1,258 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\UseCase\Auth;
+
+use App\Application\DTO\Request\RegisterRequest;
+use App\Application\DTO\Response\AuthResponse;
+use App\Application\DTO\Response\UserResponse;
+use App\Application\Exception\UserAlreadyExistsException;
+use App\Application\Exception\ValidationException;
+use App\Application\Exception\WeakPasswordException;
+use App\Application\Port\Repository\BoatRepositoryInterface;
+use App\Application\Port\Repository\CrewRepositoryInterface;
+use App\Application\Port\Repository\UserRepositoryInterface;
+use App\Application\Port\Service\PasswordServiceInterface;
+use App\Application\Port\Service\TokenServiceInterface;
+use App\Domain\Entity\Boat;
+use App\Domain\Entity\Crew;
+use App\Domain\Entity\User;
+use App\Domain\Service\RankingService;
+use App\Domain\ValueObject\BoatKey;
+use App\Domain\ValueObject\CrewKey;
+use App\Domain\Enum\SkillLevel;
+use App\Infrastructure\Persistence\SQLite\Connection;
+
+/**
+ * Register Use Case
+ *
+ * Handles user registration with crew or boat_owner account type.
+ * Creates user account and associated crew or boat profile in a single transaction.
+ */
+class RegisterUseCase
+{
+    public function __construct(
+        private UserRepositoryInterface $userRepository,
+        private CrewRepositoryInterface $crewRepository,
+        private BoatRepositoryInterface $boatRepository,
+        private PasswordServiceInterface $passwordService,
+        private TokenServiceInterface $tokenService,
+        private RankingService $rankingService,
+    ) {
+    }
+
+    /**
+     * Execute registration
+     *
+     * @param RegisterRequest $request Registration request
+     * @return AuthResponse Authentication response with token
+     * @throws ValidationException If validation fails
+     * @throws UserAlreadyExistsException If email already exists
+     * @throws WeakPasswordException If password doesn't meet requirements
+     */
+    public function execute(RegisterRequest $request): AuthResponse
+    {
+        // Validate request
+        $errors = $request->validate();
+        if (!empty($errors)) {
+            throw new ValidationException($errors);
+        }
+
+        // Check if email already exists
+        if ($this->userRepository->emailExists($request->email)) {
+            throw new UserAlreadyExistsException($request->email);
+        }
+
+        // Validate password strength
+        if (!$this->passwordService->meetsRequirements($request->password)) {
+            throw new WeakPasswordException($this->passwordService->getRequirementsMessage());
+        }
+
+        // Hash password
+        $passwordHash = $this->passwordService->hash($request->password);
+
+        // Create user entity
+        $user = new User(
+            email: $request->email,
+            passwordHash: $passwordHash,
+            accountType: $request->accountType,
+            isAdmin: false,
+        );
+
+        // Begin transaction to ensure atomic creation of user and profile
+        Connection::beginTransaction();
+
+        try {
+            // Save user
+            $this->userRepository->save($user);
+
+            // Create crew or boat profile based on account type
+            if ($request->accountType === 'crew') {
+                $this->createCrewProfile($user, $request->profile);
+            } elseif ($request->accountType === 'boat_owner') {
+                $this->createBoatProfile($user, $request->profile);
+            }
+
+            // Commit transaction if all successful
+            Connection::commit();
+        } catch (\Exception $e) {
+            // Rollback transaction on any error
+            Connection::rollBack();
+            throw $e;
+        }
+
+        // Generate JWT token
+        $token = $this->tokenService->generate(
+            $user->getId(),
+            $user->getEmail(),
+            $user->getAccountType(),
+            $user->isAdmin()
+        );
+
+        // Create response
+        return new AuthResponse(
+            token: $token,
+            user: UserResponse::fromEntity($user),
+            expiresIn: $this->tokenService->getExpirationMinutes() * 60, // Convert to seconds
+        );
+    }
+
+    private function parseYesNo(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value === 1;
+        }
+
+        if (is_string($value)) {
+            return strcasecmp($value, 'Yes') === 0
+                || strcasecmp($value, 'true') === 0
+                || $value === '1';
+        }
+
+        return false;
+    }
+
+    /**
+     * Generate display name from first name and last initial
+     *
+     * @param string $firstName First name
+     * @param string $lastName Last name
+     * @return string Display name in format "FirstName L."
+     */
+    private function generateDisplayName(string $firstName, string $lastName): string
+    {
+        $lastInitial = mb_substr($lastName, 0, 1);
+        return trim($firstName) . $lastInitial;
+    }
+
+    /**
+     * Create crew profile
+     *
+     * @param User $user User entity
+     * @param array $profile Crew profile data
+     * @return void
+     */
+    private function createCrewProfile(User $user, array $profile): void
+    {
+        $crewKey = CrewKey::fromName($profile['firstName'], $profile['lastName']);
+
+        // Check if crew already exists with this key
+        $existingCrew = $this->crewRepository->findByKey($crewKey);
+        if ($existingCrew !== null) {
+            throw new ValidationException(['profile' => 'A crew member with this name already exists']);
+        }
+
+        // Generate displayName if not provided
+        $displayName = $profile['displayName'] ?? null;
+        if ($displayName === null || trim($displayName) === '') {
+            $displayName = $this->generateDisplayName(
+                $profile['firstName'],
+                $profile['lastName']
+            );
+        }
+
+        // Create crew entity
+        $crew = new Crew(
+            key: $crewKey,
+            displayName: $displayName,
+            firstName: $profile['firstName'],
+            lastName: $profile['lastName'],
+            partnerKey: isset($profile['partnerKey']) ? new CrewKey($profile['partnerKey']) : null,
+            mobile: $profile['mobile'] ?? null,
+            socialPreference: $this->parseYesNo($profile['socialPreference'] ?? null),
+            membershipNumber: $profile['membershipNumber'] ?? null,
+            skill: isset($profile['skill']) ? SkillLevel::from((int)$profile['skill']) : SkillLevel::NOVICE,
+            experience: $profile['experience'] ?? null,
+        );
+
+        // Calculate initial rank
+        $rank = $this->rankingService->calculateCrewRank($crew, []);
+
+        // Set rank directly
+        $crew->setRank($rank);
+
+        // Link to user
+        $crew->setUserId($user->getId());
+
+        // Save crew
+        $this->crewRepository->save($crew);
+    }
+
+    /**
+     * Create boat profile
+     *
+     * @param User $user User entity
+     * @param array $profile Boat profile data
+     * @return void
+     */
+    private function createBoatProfile(User $user, array $profile): void
+    {
+        // Generate displayName if not provided
+        $displayName = $profile['displayName'] ?? null;
+        if ($displayName === null || trim($displayName) === '') {
+            $displayName = $this->generateDisplayName(
+                $profile['ownerFirstName'],
+                $profile['ownerLastName']
+            );
+        }
+
+        // Use displayName for boat key
+        $boatKey = BoatKey::fromBoatName($displayName);
+
+        // Check if boat already exists with this key
+        $existingBoat = $this->boatRepository->findByKey($boatKey);
+        if ($existingBoat !== null) {
+            throw new ValidationException(['profile' => 'A boat with this name already exists']);
+        }
+
+        // Create boat entity
+        $boat = new Boat(
+            key: $boatKey,
+            displayName: $displayName,
+            ownerFirstName: $profile['ownerFirstName'],
+            ownerLastName: $profile['ownerLastName'],
+            ownerMobile: $profile['ownerMobile'] ?? null,
+            minBerths: (int)$profile['minBerths'],
+            maxBerths: (int)$profile['maxBerths'],
+            assistanceRequired: $this->parseYesNo($profile['assistanceRequired'] ?? null),
+            socialPreference: $this->parseYesNo($profile['socialPreference'] ?? null),
+        );
+
+        // Calculate initial rank
+        $rank = $this->rankingService->calculateBoatRank($boat, []);
+
+        // Set rank directly
+        $boat->setRank($rank);
+
+        // Link to user
+        $boat->setOwnerUserId($user->getId());
+
+        // Save boat
+        $this->boatRepository->save($boat);
+    }
+}
