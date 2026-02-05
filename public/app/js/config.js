@@ -19,6 +19,7 @@ export const API_CONFIG = {
         USER_BY_ID: '/users/:id',
         USER_BY_EMAIL: '/users/email/:email',
         USER_AVAILABILITY: '/users/me/availability',
+        ASSIGNMENTS: '/assignments',
 
         // Event endpoints
         EVENTS: '/events',

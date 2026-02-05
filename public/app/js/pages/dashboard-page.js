@@ -6,6 +6,8 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { getAllEvents, isDeadlinePassed } from '../eventService.js';
 import { updateEventAvailability } from '../userService.js';
+import { get } from '../apiService.js';
+import { API_CONFIG } from '../config.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -114,6 +116,91 @@ function formatExperience(value) {
     return labels[value] || value;
 }
 
+/**
+ * Populate user's boat assignments
+ */
+async function populateAssignments() {
+    const container = document.getElementById('assignments-container');
+
+    // Show loading state
+    container.innerHTML = '<div class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-gray);">Loading assignments...</div>';
+
+    try {
+        // Fetch assignments from API
+        const response = await get(API_CONFIG.ENDPOINTS.ASSIGNMENTS);
+        const assignments = response.data?.assignments || [];
+
+        // Filter for guaranteed assignments only (status = 2)
+        const guaranteedAssignments = assignments.filter(a => a.availabilityStatus === 2 && a.boatName);
+
+        if (guaranteedAssignments.length === 0) {
+            // Show empty state
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⛵</div>
+                    <p><strong>No assignments yet</strong></p>
+                    <p>Mark your availability above to get matched with a boat and crew!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Clear container
+        container.innerHTML = '';
+
+        // Render each assignment
+        guaranteedAssignments.forEach(assignment => {
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+
+            // Format date for display (parse as local date to avoid timezone issues)
+            const [year, month, day] = assignment.eventDate.split('-').map(Number);
+            const date = new Date(year, month - 1, day); // month is 0-indexed
+            const displayDate = date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            // Format time range
+            const timeRange = `${formatTime(assignment.startTime)} - ${formatTime(assignment.finishTime)}`;
+
+            // Build crewmates HTML
+            let crewmatesHTML = '';
+            if (assignment.crewmates && assignment.crewmates.length > 0) {
+                crewmatesHTML = `
+                    <div class="assignment-crew">
+                        ${assignment.crewmates
+                            .map(c => `<span class="crew-tag">${c.display_name}</span>`)
+                            .join('')}
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="assignment-date">${displayDate} • ${timeRange}</div>
+                <div class="assignment-boat">⛵ ${assignment.boatName}</div>
+                ${crewmatesHTML}
+            `;
+
+            container.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Failed to load assignments:', error);
+        container.innerHTML = '<div class="alert alert-error">Failed to load assignments. Please refresh the page.</div>';
+    }
+}
+
+/**
+ * Format time from HH:MM:SS to H:MM AM/PM
+ */
+function formatTime(timeString) {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
 // Populate event availability checkboxes
 async function populateEventCheckboxes() {
     const availabilityList = document.getElementById('availability-list');
@@ -152,6 +239,9 @@ async function populateEventCheckboxes() {
 
 // Call the async function
 populateEventCheckboxes();
+
+// Load user's boat assignments
+populateAssignments();
 
 // Handle save availability button
 document.getElementById('save-availability').addEventListener('click', async function() {
@@ -224,6 +314,9 @@ document.getElementById('save-availability').addEventListener('click', async fun
 
     successMessage.textContent = 'Availability updated successfully!';
     successMessage.style.display = 'block';
+
+    // Reload assignments in case they changed
+    populateAssignments();
 
     // Hide success message after 3 seconds
     setTimeout(() => {
