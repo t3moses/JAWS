@@ -52,6 +52,63 @@ resource "aws_lightsail_instance" "app" {
   blueprint_id      = var.blueprint_id
   bundle_id         = var.bundle_id
   key_pair_name     = local.key_pair_name
+
+  user_data = <<-EOF
+    #!/bin/bash
+    set -e
+
+    # Update system
+    apt-get update
+    apt-get upgrade -y
+
+    # Install Apache, PHP, and required extensions
+    apt-get install -y apache2 php8.1 php8.1-cli php8.1-common php8.1-curl \
+      php8.1-mbstring php8.1-xml php8.1-zip php8.1-sqlite3 git composer
+
+    # Enable Apache mod_rewrite for clean URLs
+    a2enmod rewrite
+
+    # Create web directory
+    mkdir -p /var/www/html
+
+    # Set proper permissions
+    chown -R www-data:www-data /var/www/html
+    chmod -R 755 /var/www/html
+
+    # Configure Apache to allow .htaccess
+    cat > /etc/apache2/sites-available/000-default.conf <<'APACHE'
+    <VirtualHost *:80>
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html
+
+        <Directory /var/www/html>
+            Options Indexes FollowSymLinks
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+    </VirtualHost>
+    APACHE
+
+    # Restart Apache
+    systemctl restart apache2
+    systemctl enable apache2
+
+    ## Clone repository (optional - can be done in deployment step instead)
+    #cd /var/www/html
+    #git clone https://github.com/RobJohnston/JAWS.git .
+    #
+    ## Install composer dependencies
+    #composer install --no-dev --optimize-autoloader
+    #
+    ## Set up database directory
+    #mkdir -p database
+    #chown -R www-data:www-data database
+    #chmod -R 775 database
+  EOF
+
   tags = {
     Application = "JAWS"
     Environment = "production"
