@@ -1,7 +1,9 @@
 # Continuous Deployment workflow
-# NOTE: Create the "production" environment in GitHub settings and set required reviewers
-# to "robjohnston" or "t3moses" (or whomever) to enable the manual approval gate.
-# Repo Settings -> Environments -> New environment -> production -> Required reviewers
+# REQUIRED SETUP:
+# 1. Create "production" environment in: Repo Settings → Environments → New environment
+# 2. Add required reviewers (e.g., "robjohnston", "t3moses")
+# 3. Optionally set deployment branches to "main" only
+# 4. Add secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 
 name: CD Pipeline
 
@@ -9,23 +11,42 @@ on:
   workflow_run:
     workflows: ["CI Pipeline"]
     types: [completed]
-    branches: [main, ci-cd_pipeline]
+    branches: [main, ci-cd_pipeline]  # Only deploy from main
 
 permissions:
   contents: read
   actions: read
 
-# Queue deployments instead of cancelling in-progress runs
 concurrency:
   group: production
   cancel-in-progress: false
 
 jobs:
+  check-ci-status:
+    name: Verify CI Pipeline Passed
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      ci_passed: ${{ steps.check.outputs.ci_passed }}
+    steps:
+      - name: Check CI status
+        id: check
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
+            echo "ci_passed=true" >> $GITHUB_OUTPUT
+            echo "✅ CI pipeline passed - ready for approval"
+          else
+            echo "ci_passed=false" >> $GITHUB_OUTPUT
+            echo "❌ CI pipeline failed - deployment cancelled"
+            exit 1
+          fi
+
   deploy-production:
     name: Deploy to AWS Production
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    needs: check-ci-status
 
+    # This environment configuration requires approval
     environment:
       name: production
       url: https://nsc-sdc.ca
@@ -33,8 +54,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_commit }}
 
-      # Download artifacts from the CI workflow run
       - name: Download vendor artifacts
         uses: actions/download-artifact@v4
         with:
@@ -63,17 +85,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Cache Terraform state
-        uses: actions/cache@v4
-        with:
-          path: |
-            terraform/.terraform
-            terraform/terraform.tfstate
-            terraform/terraform.tfstate.backup
-          key: terraform-${{ github.ref_name }}
-          restore-keys: |
-            terraform-
-
       - name: Terraform init
         run: terraform init
         working-directory: terraform
@@ -98,32 +109,33 @@ jobs:
           chmod 600 ~/.ssh/lightsail.pem
         working-directory: terraform
 
-      - name: Read Terraform outputs
+      - name: Get instance IP
         id: terraform-outputs
         run: |
           INSTANCE_IP="$(terraform output -raw instance_ip)"
-          echo "instance_ip=$INSTANCE_IP" >> "$GITHUB_OUTPUT"
+          echo "instance_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
         working-directory: terraform
 
-      - name: Add Lightsail to known hosts
+      - name: Add host to known_hosts
         run: ssh-keyscan -H ${{ steps.terraform-outputs.outputs.instance_ip }} >> ~/.ssh/known_hosts
 
-      - name: Deploy backend to Lightsail
+      - name: Deploy backend
         run: |
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
-            cd /var/www/jaws
+            cd /var/www/html
             git pull origin main
             composer install --no-dev --optimize-autoloader
             vendor/bin/phinx migrate -e production
-            sudo systemctl restart apache2
+            sudo systemctl restart apache2 || sudo /opt/bitnami/ctlscript.sh restart apache
           EOF
 
-      - name: Deploy frontend to Lightsail
+      - name: Deploy frontend
         run: |
           rsync -avz -e "ssh -i ~/.ssh/lightsail.pem" \
             --exclude '.git' \
             --exclude 'node_modules' \
             --exclude 'tests' \
+            --exclude '.env' \
             public/ ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }}:/var/www/html/
 
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
@@ -131,31 +143,31 @@ jobs:
             sudo chmod -R 755 /var/www/html
           EOF
 
-      - name: Run smoke tests
+      - name: Smoke tests
         run: |
-          sleep 10
-
-          # Update these URLs to the domain once DNS is enabled
+          sleep 5
           curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/ || exit 1
           curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/api/events || exit 1
 
-          echo "Smoke tests passed!"
-
-      - name: Notify deployment status
-        if: always()
+      - name: Deployment success notification
+        if: success()
         uses: actions/github-script@v6
         with:
           script: |
-            const status = '${{ job.status }}';
-            const message = status === 'success'
-              ? '✅ Deployment to production succeeded!'
-              : '❌ Deployment to production failed!';
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'notification.yml',
+              ref: context.ref,
+              inputs: {
+                status: 'success',
+                deployment: 'production'
+              }
+            });
 
-            if (context.issue?.number) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: message
-              });
-            }
+      - name: Deployment failure notification
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            console.log('❌ Deployment failed - check logs for details');
