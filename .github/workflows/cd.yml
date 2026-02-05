@@ -11,35 +11,66 @@ on:
   workflow_run:
     workflows: ["CI Pipeline"]
     types: [completed]
-    branches: [main, ci-cd_pipeline]  # Only deploy from main
+    branches: [main, ci-cd_pipeline]  # Testing on both branches
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: production
+  group: production-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false
 
 jobs:
   check-ci-status:
     name: Verify CI Pipeline Passed
     runs-on: ubuntu-latest
+    # Only proceed if CI succeeded
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       ci_passed: ${{ steps.check.outputs.ci_passed }}
+      branch: ${{ steps.check.outputs.branch }}
+      run_id: ${{ steps.check.outputs.run_id }}
     steps:
-      - name: Check CI status
+      - name: Check CI status and capture metadata
         id: check
         run: |
-          if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
-            echo "ci_passed=true" >> $GITHUB_OUTPUT
-            echo "✅ CI pipeline passed - ready for approval"
-          else
-            echo "ci_passed=false" >> $GITHUB_OUTPUT
-            echo "❌ CI pipeline failed - deployment cancelled"
-            exit 1
-          fi
+          echo "✅ CI pipeline passed - ready for deployment approval"
+          echo "ci_passed=true" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+
+          echo "📋 CI Run Details:"
+          echo "  - Branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "  - Run ID: ${{ github.event.workflow_run.id }}"
+          echo "  - Commit: ${{ github.event.workflow_run.head_sha }}"
+          echo "  - Event: ${{ github.event.workflow_run.event }}"
+
+  ci-failed-notification:
+    name: CI Failed - Deployment Cancelled
+    runs-on: ubuntu-latest
+    # Only run if CI failed
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    steps:
+      - name: Report CI failure
+        run: |
+          echo "❌ ================================"
+          echo "❌ CI PIPELINE FAILED"
+          echo "❌ ================================"
+          echo "Deployment to production has been cancelled."
+          echo ""
+          echo "📋 CI Run Details:"
+          echo "  - Branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "  - Run ID: ${{ github.event.workflow_run.id }}"
+          echo "  - Conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "  - Event: ${{ github.event.workflow_run.event }}"
+          echo ""
+          echo "🔍 Next Steps:"
+          echo "  1. Review the failed CI workflow run"
+          echo "  2. Fix any test failures or linting issues"
+          echo "  3. Push your fixes to trigger a new CI run"
+          echo "  4. CD will automatically trigger when CI passes"
+          exit 1
 
   deploy-production:
     name: Deploy to AWS Production
@@ -47,15 +78,30 @@ jobs:
     needs: check-ci-status
 
     # This environment configuration requires approval
+    # IMPORTANT: If deployment doesn't wait for approval, the "production" environment
+    # may not be configured. See setup instructions at the top of this file.
     environment:
       name: production
       url: https://nsc-sdc.ca
 
     steps:
+      - name: Deployment environment check
+        run: |
+          echo "🚀 Starting deployment to production"
+          echo "📋 Deployment Details:"
+          echo "  - Branch: ${{ needs.check-ci-status.outputs.branch }}"
+          echo "  - CI Run ID: ${{ needs.check-ci-status.outputs.run_id }}"
+          echo "  - Environment: production"
+          echo ""
+          echo "⚠️  If this deployment started without approval, check that:"
+          echo "  1. The 'production' environment exists in repository settings"
+          echo "  2. Required reviewers are configured for the environment"
+          echo "  3. Deployment branch rules are set (if applicable)"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_commit }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Download vendor artifacts
         uses: actions/download-artifact@v4
@@ -64,7 +110,19 @@ jobs:
           path: vendor
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+        continue-on-error: false
+
+      - name: Verify vendor artifacts
+        run: |
+          if [ ! -d "vendor" ] || [ -z "$(ls -A vendor)" ]; then
+            echo "❌ ERROR: Vendor artifacts not found or empty"
+            echo "This may indicate:"
+            echo "  1. Artifacts expired (retention: 1 day)"
+            echo "  2. CI workflow didn't upload artifacts successfully"
+            echo "  3. Artifact download failed"
+            exit 1
+          fi
+          echo "✅ Vendor artifacts verified"
 
       - name: Download database artifacts
         uses: actions/download-artifact@v4
@@ -73,7 +131,20 @@ jobs:
           path: database/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+        continue-on-error: false
+
+      - name: Verify database artifacts
+        run: |
+          if [ ! -f "database/jaws.db" ]; then
+            echo "❌ ERROR: Database artifact not found"
+            echo "This may indicate:"
+            echo "  1. Artifacts expired (retention: 1 day)"
+            echo "  2. CI workflow didn't upload database successfully"
+            echo "  3. Artifact download failed"
+            exit 1
+          fi
+          echo "✅ Database artifacts verified"
+          ls -lh database/jaws.db
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -82,55 +153,99 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ca-central-1
 
+      - name: Verify AWS credentials
+        run: |
+          if ! aws sts get-caller-identity > /dev/null 2>&1; then
+            echo "❌ ERROR: AWS credentials invalid or not configured"
+            echo "Check that AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set correctly"
+            exit 1
+          fi
+          echo "✅ AWS credentials verified"
+          aws sts get-caller-identity
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform init
-        run: terraform init
+        run: |
+          echo "🔧 Initializing Terraform..."
+          terraform init
         working-directory: terraform
 
       - name: Terraform plan
-        run: terraform plan -out tfplan
+        run: |
+          echo "📋 Planning Terraform changes..."
+          terraform plan -out tfplan
         working-directory: terraform
 
       - name: Terraform apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          echo "🚀 Applying Terraform configuration..."
+          terraform apply -auto-approve tfplan
+          echo "✅ Infrastructure provisioned successfully"
         working-directory: terraform
 
       # If you replace the auto-generated key pair with an existing key pair,
       # update this step to write the private key from a secret instead.
       - name: Prepare SSH key
         run: |
+          echo "🔑 Retrieving SSH key from Terraform..."
           SSH_PRIVATE_KEY="$(terraform output -raw ssh_private_key)"
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "❌ ERROR: Failed to retrieve SSH private key from Terraform"
+            exit 1
+          fi
           mkdir -p ~/.ssh
-          cat << 'EOF' > ~/.ssh/lightsail.pem
-          $SSH_PRIVATE_KEY
-          EOF
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/lightsail.pem
           chmod 600 ~/.ssh/lightsail.pem
+          echo "✅ SSH key configured"
         working-directory: terraform
 
       - name: Get instance IP
         id: terraform-outputs
         run: |
+          echo "🌐 Retrieving instance IP from Terraform..."
           INSTANCE_IP="$(terraform output -raw instance_ip)"
+          if [ -z "$INSTANCE_IP" ]; then
+            echo "❌ ERROR: Failed to retrieve instance IP from Terraform"
+            exit 1
+          fi
           echo "instance_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+          echo "✅ Instance IP: $INSTANCE_IP"
         working-directory: terraform
 
       - name: Add host to known_hosts
-        run: ssh-keyscan -H ${{ steps.terraform-outputs.outputs.instance_ip }} >> ~/.ssh/known_hosts
+        run: |
+          echo "🔐 Adding host to known_hosts..."
+          ssh-keyscan -H ${{ steps.terraform-outputs.outputs.instance_ip }} >> ~/.ssh/known_hosts
+          echo "✅ Host key verified"
 
       - name: Deploy backend
         run: |
+          echo "🚀 Deploying backend to production..."
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
+            set -e
+            echo "📂 Navigating to web directory..."
             cd /var/www/html
-            git pull origin main
+
+            echo "📥 Pulling latest code..."
+            git pull origin ${{ needs.check-ci-status.outputs.branch }}
+
+            echo "📦 Installing dependencies..."
             composer install --no-dev --optimize-autoloader
+
+            echo "🗄️  Running database migrations..."
             vendor/bin/phinx migrate -e production
+
+            echo "🔄 Restarting web server..."
             sudo systemctl restart apache2 || sudo /opt/bitnami/ctlscript.sh restart apache
+
+            echo "✅ Backend deployment complete"
           EOF
 
       - name: Deploy frontend
         run: |
+          echo "🎨 Deploying frontend to production..."
           rsync -avz -e "ssh -i ~/.ssh/lightsail.pem" \
             --exclude '.git' \
             --exclude 'node_modules' \
@@ -138,36 +253,54 @@ jobs:
             --exclude '.env' \
             public/ ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }}:/var/www/html/
 
+          echo "🔒 Setting file permissions..."
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
             sudo chown -R www-data:www-data /var/www/html
             sudo chmod -R 755 /var/www/html
           EOF
+          echo "✅ Frontend deployment complete"
 
       - name: Smoke tests
         run: |
+          echo "🧪 Running smoke tests..."
           sleep 5
-          curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/ || exit 1
-          curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/api/events || exit 1
 
-      - name: Deployment success notification
-        if: success()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'notification.yml',
-              ref: context.ref,
-              inputs: {
-                status: 'success',
-                deployment: 'production'
-              }
-            });
+          echo "Testing homepage..."
+          if ! curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/; then
+            echo "❌ Homepage test failed"
+            exit 1
+          fi
+          echo "✅ Homepage is accessible"
 
-      - name: Deployment failure notification
-        if: failure()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            console.log('❌ Deployment failed - check logs for details');
+          echo "Testing API endpoint..."
+          if ! curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/api/events; then
+            echo "❌ API test failed"
+            exit 1
+          fi
+          echo "✅ API is responding"
+
+          echo "🎉 All smoke tests passed!"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ ================================"
+            echo "✅ DEPLOYMENT SUCCESSFUL"
+            echo "✅ ================================"
+            echo "📋 Deployment Details:"
+            echo "  - Branch: ${{ needs.check-ci-status.outputs.branch }}"
+            echo "  - Environment: production"
+            echo "  - URL: https://nsc-sdc.ca"
+            echo "  - Instance IP: ${{ steps.terraform-outputs.outputs.instance_ip }}"
+          else
+            echo "❌ ================================"
+            echo "❌ DEPLOYMENT FAILED"
+            echo "❌ ================================"
+            echo "📋 Troubleshooting:"
+            echo "  - Review the failed step above"
+            echo "  - Check AWS credentials and permissions"
+            echo "  - Verify Terraform state is valid"
+            echo "  - Check instance connectivity"
+            echo "  - Review application logs on the server"
+          fi
