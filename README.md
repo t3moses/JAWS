@@ -1,6 +1,6 @@
 # JAWS - Social Day Cruising Program Management System
 
-JAWS is a REST API for managing the Social Day Cruising program at Nepean Sailing Club. It handles boat fleet management, crew registration, and intelligent assignment of crew members to boats for seasonal sailing events using sophisticated optimization algorithms.
+JAWS is a front-end website and REST API for managing the Social Day Cruising program at Nepean Sailing Club. It handles boat fleet management, crew registration, and intelligent assignment of crew members to boats for seasonal sailing events using sophisticated optimization algorithms.
 
 ## Quick Start
 

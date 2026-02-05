@@ -21,6 +21,8 @@ This guide provides everything you need to know to develop features for JAWS, fr
 
 JAWS uses Clean Architecture (also called Hexagonal Architecture or Ports and Adapters) to separate business logic from external concerns like databases, frameworks, and user interfaces.
 
+![alt text](clean-architecture-diagram.png "Clean Architecture diagram")
+
 ### What is Clean Architecture?
 
 **Core Principles:**
