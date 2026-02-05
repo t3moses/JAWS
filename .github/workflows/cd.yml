@@ -11,7 +11,7 @@ on:
   workflow_run:
     workflows: ["CI Pipeline"]
     types: [completed]
-    branches: [main, ci-cd_pipeline]  # Testing on both branches
+    branches: [main]
 
 permissions:
   contents: read
@@ -82,7 +82,7 @@ jobs:
     # may not be configured. See setup instructions at the top of this file.
     environment:
       name: production
-      url: https://nsc-sdc.ca
+      url: https://nsc-sdc.ca   # a link to view the deployed environment (no impact on deployment).
 
     steps:
       - name: Deployment environment check
