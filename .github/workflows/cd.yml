@@ -220,19 +220,66 @@ jobs:
           ssh-keyscan -H ${{ steps.terraform-outputs.outputs.instance_ip }} >> ~/.ssh/known_hosts
           echo "✅ Host key verified"
 
+      - name: Wait for instance initialization
+        run: |
+          echo "⏳ Waiting for instance to complete initialization..."
+          INSTANCE_IP="${{ steps.terraform-outputs.outputs.instance_ip }}"
+          MAX_ATTEMPTS=30
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            echo "Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS: Checking if instance is ready..."
+
+            if ssh -i ~/.ssh/lightsail.pem -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+                ubuntu@$INSTANCE_IP "test -d /var/www/html && systemctl is-active apache2" 2>/dev/null; then
+              echo "✅ Instance is ready!"
+              break
+            fi
+
+            if [ $ATTEMPT -eq $((MAX_ATTEMPTS - 1)) ]; then
+              echo "❌ ERROR: Instance failed to initialize within expected time"
+              echo "Checking instance status..."
+              ssh -i ~/.ssh/lightsail.pem -o ConnectTimeout=10 ubuntu@$INSTANCE_IP "ls -la /var/ || echo 'Directory check failed'" || echo "SSH connection failed"
+              exit 1
+            fi
+
+            echo "Not ready yet, waiting 10 seconds..."
+            sleep 10
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
       - name: Deploy backend
         run: |
           echo "🚀 Deploying backend to production..."
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
             set -e
-            echo "📂 Navigating to web directory..."
+
+            echo "📂 Ensuring web directory exists..."
+            if [ ! -d "/var/www/html" ]; then
+              echo "⚠️  Web directory not found, creating it..."
+              sudo mkdir -p /var/www/html
+              sudo chown -R ubuntu:www-data /var/www/html
+            fi
+
             cd /var/www/html
 
-            echo "📥 Pulling latest code..."
-            git pull origin ${{ needs.check-ci-status.outputs.branch }}
+            echo "📥 Checking repository status..."
+            if [ ! -d ".git" ]; then
+              echo "📦 Initializing repository..."
+              git clone https://github.com/RobJohnston/JAWS.git .
+            else
+              echo "📥 Pulling latest code..."
+              git fetch origin
+              git reset --hard origin/${{ needs.check-ci-status.outputs.branch }}
+            fi
 
             echo "📦 Installing dependencies..."
             composer install --no-dev --optimize-autoloader
+
+            echo "🗄️  Setting up database directory..."
+            mkdir -p database
+            sudo chown -R www-data:www-data database
+            sudo chmod -R 775 database
 
             echo "🗄️  Running database migrations..."
             vendor/bin/phinx migrate -e production
