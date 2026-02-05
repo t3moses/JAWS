@@ -1,0 +1,161 @@
+# Continuous Deployment workflow
+# NOTE: Create the "production" environment in GitHub settings and set required reviewers
+# to "robjohnston" or "t3moses" (or whomever) to enable the manual approval gate.
+# Repo Settings -> Environments -> New environment -> production -> Required reviewers
+
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+# Queue deployments instead of cancelling in-progress runs
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy to AWS Production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+      url: https://nsc-sdc.ca
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Download artifacts from the CI workflow run
+      - name: Download vendor artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vendor-artifacts
+          path: vendor
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+
+      - name: Download database artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: database-artifacts
+          path: database/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Cache Terraform state
+        uses: actions/cache@v4
+        with:
+          path: |
+            terraform/.terraform
+            terraform/terraform.tfstate
+            terraform/terraform.tfstate.backup
+          key: terraform-${{ github.ref_name }}
+          restore-keys: |
+            terraform-
+
+      - name: Terraform init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform plan
+        run: terraform plan -out tfplan
+        working-directory: terraform
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform
+
+      # If you replace the auto-generated key pair with an existing key pair,
+      # update this step to write the private key from a secret instead.
+      - name: Prepare SSH key
+        run: |
+          SSH_PRIVATE_KEY="$(terraform output -raw ssh_private_key)"
+          mkdir -p ~/.ssh
+          cat << 'EOF' > ~/.ssh/lightsail.pem
+          $SSH_PRIVATE_KEY
+          EOF
+          chmod 600 ~/.ssh/lightsail.pem
+        working-directory: terraform
+
+      - name: Read Terraform outputs
+        id: terraform-outputs
+        run: |
+          INSTANCE_IP="$(terraform output -raw instance_ip)"
+          echo "instance_ip=$INSTANCE_IP" >> "$GITHUB_OUTPUT"
+        working-directory: terraform
+
+      - name: Add Lightsail to known hosts
+        run: ssh-keyscan -H ${{ steps.terraform-outputs.outputs.instance_ip }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend to Lightsail
+        run: |
+          ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
+            cd /var/www/jaws
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            vendor/bin/phinx migrate -e production
+            sudo systemctl restart apache2
+          EOF
+
+      - name: Deploy frontend to Lightsail
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/lightsail.pem" \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude 'tests' \
+            public/ ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }}:/var/www/html/
+
+          ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
+            sudo chown -R www-data:www-data /var/www/html
+            sudo chmod -R 755 /var/www/html
+          EOF
+
+      - name: Run smoke tests
+        run: |
+          sleep 10
+
+          # Update these URLs to the domain once DNS is enabled
+          curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/ || exit 1
+          curl -f http://${{ steps.terraform-outputs.outputs.instance_ip }}/api/events || exit 1
+
+          echo "Smoke tests passed!"
+
+      - name: Notify deployment status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            const message = status === 'success'
+              ? '✅ Deployment to production succeeded!'
+              : '❌ Deployment to production failed!';
+
+            if (context.issue?.number) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+            }
