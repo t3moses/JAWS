@@ -2,6 +2,11 @@
 
 The JAWS backend now serves both the REST API and a frontend application.
 
+📖 **See also:**
+- [Setup Guide](SETUP.md) - Complete setup instructions for the backend
+- [API Reference](API.md) - Complete documentation of all API endpoints
+- [Developer Guide](DEVELOPER_GUIDE.md) - Understanding the backend architecture
+
 ## Directory Structure
 
 ```

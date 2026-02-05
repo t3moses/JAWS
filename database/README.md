@@ -2,6 +2,11 @@
 
 This directory contains the SQLite database and Phinx migration scripts for the JAWS application.
 
+📖 **See also:**
+- [Setup Guide](../docs/SETUP.md) - Complete setup instructions for new installations
+- [Deployment Guide](../docs/DEPLOYMENT.md) - Production database management procedures
+- [Developer Guide](../docs/DEVELOPER_GUIDE.md#database-schema-changes) - How to create and apply migrations during development
+
 ## Database Initialization
 
 The project uses [Phinx](https://phinx.org/) for database migrations. To create and initialize the database, run:

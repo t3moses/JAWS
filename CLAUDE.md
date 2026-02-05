@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Human-Readable Documentation
+
+For human developers, the primary documentation is in the `/docs` folder:
+
+- **[README.md](README.md)** - Project overview and quick navigation hub
+- **[docs/SETUP.md](docs/SETUP.md)** - Installation and setup instructions for new developers
+- **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** - Architecture, development workflow, testing, and best practices
+- **[docs/API.md](docs/API.md)** - Complete API endpoint documentation with examples
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Production deployment procedures and monitoring
+- **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** - Code style, Git workflow, and PR process
+
+**IMPORTANT:** When developers ask general questions about setup, architecture, or API endpoints, direct them to the appropriate human-readable documentation file above rather than replicating content from this file.
+
+This CLAUDE.md file contains technical specifications optimized for AI assistant consumption. It serves as the "source of truth" for technical details but is not the primary documentation for human developers.
+
 ## Project Overview
 
 JAWS is a PHP-based REST API for managing the Social Day Cruising program at Nepean Sailing Club. It handles boat fleet management, crew registration, and intelligent assignment of crew members to boats for seasonal sailing events. The system optimizes crew-to-boat matching based on multiple constraints including skill levels, availability, preferences, and historical participation.

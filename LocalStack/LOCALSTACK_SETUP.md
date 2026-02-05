@@ -2,6 +2,10 @@
 
 This guide explains how to set up and use LocalStack to test AWS SES email functionality locally.
 
+📖 **See also:**
+- [Setup Guide](../docs/SETUP.md#localstack-setup-optional) - Quick LocalStack setup overview
+- [Deployment Guide](../docs/DEPLOYMENT.md) - Production AWS SES configuration
+
 ## Overview
 
 JAWS uses AWS SDK for PHP to send emails via AWS Simple Email Service (SES). For local development and testing, we use LocalStack to simulate AWS SES without actually sending emails or incurring AWS costs.
