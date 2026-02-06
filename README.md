@@ -104,7 +104,7 @@ curl http://localhost:8000/api/events
 
 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment and monitoring
 - Pre-deployment checklist
-- AWS Lightsail deployment steps
+- Manual deployment to AWS Lightsail via SFTP
 - Environment configuration for production
 - Database management (migrations, backups, restore)
 - Monitoring and health checks
@@ -190,13 +190,13 @@ After every user input (registration or availability update), JAWS runs this pip
 - REST API with JWT authentication
 - Database migrations with Phinx
 
-🔄 **Current**: Production deployment on AWS Lightsail
+🔄 **Current**: Production deployment on AWS Lightsail (manual SFTP deployment)
 
 📋 **Planned Enhancements**:
 - Phase 8: PostgreSQL migration for production scalability
 - Phase 9: Enhanced authentication system
 - Phase 10: Modern SPA frontend (React/Vue)
-- Phase 11: Expanded testing and CI/CD
+- Phase 11: Expanded testing and CI
 
 ## Development Commands
 

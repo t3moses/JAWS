@@ -951,7 +951,6 @@ Implementation in `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 - Real-time updates via WebSockets
 - Mobile-responsive design
 
-**Phase 11: Testing & CI/CD**
+**Phase 11: Testing & CI**
 - Expand test coverage to >80%
-- Set up GitHub Actions for CI/CD
-- Automated deployments to staging/production
+- Set up GitHub Actions for CI

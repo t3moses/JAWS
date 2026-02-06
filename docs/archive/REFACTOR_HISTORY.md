@@ -203,7 +203,7 @@ Here's an example of what happens when a user registers a boat:
   - 44 unit test files for Domain layer (2,900+ lines)
   - Integration tests for Infrastructure layer
   - API tests for Presentation layer
-  - GitHub Actions CI/CD pipeline
+  - GitHub Actions CI pipeline
 
 ### ✅ Dependency Inversion
 - **Before:** Business logic directly calls `new PDO()`, `new PHPMailer()`
@@ -609,7 +609,7 @@ When reviewing this PR, please check:
 - [ ] Documentation is clear and comprehensive
 - [ ] No security vulnerabilities introduced
 - [ ] Database migrations work correctly
-- [ ] CI/CD pipeline passes
+- [ ] CI pipeline passes
 
 ---
 
@@ -630,7 +630,7 @@ If you have questions about this refactoring:
 This PR represents **5 complete development phases** including:
 - Complete Clean Architecture refactoring
 - Comprehensive test suite (2,900+ lines)
-- CI/CD pipeline setup
+- CI pipeline setup
 - Database migration from CSV to SQLite
 - Documentation overhaul (3,800+ lines)
 - Performance optimizations
