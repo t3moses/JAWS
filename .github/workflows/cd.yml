@@ -166,71 +166,57 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform init
+      - name: Terraform init (local state)
         run: |
-          echo "🔧 Initializing Terraform..."
+          echo "🔧 Initializing Terraform with local state..."
           terraform init
         working-directory: terraform
 
-      - name: Import existing resources
+      - name: Create S3 backend resources
         run: |
-          echo "🔄 Checking for existing resources to import..."
+          echo "📦 Creating S3 bucket and DynamoDB table for state storage..."
 
-          # Import Lightsail instance
-          if terraform import -input=false aws_lightsail_instance.app jaws-production 2>&1 | tee /tmp/import_instance.log; then
-            echo "✅ Instance imported successfully"
-          else
-            if grep -q "already managed" /tmp/import_instance.log || grep -q "Resource already managed" /tmp/import_instance.log; then
-              echo "ℹ️  Instance already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_instance.log || grep -q "NotFoundException" /tmp/import_instance.log; then
-              echo "ℹ️  Instance doesn't exist yet - will be created"
-            else
-              echo "⚠️  Instance import failed, see above for details"
-            fi
-          fi
+          # Plan and apply to create backend resources
+          terraform plan -target=aws_s3_bucket.terraform_state \
+                         -target=aws_s3_bucket_versioning.terraform_state \
+                         -target=aws_s3_bucket_server_side_encryption_configuration.terraform_state \
+                         -target=aws_s3_bucket_public_access_block.terraform_state \
+                         -target=aws_dynamodb_table.terraform_locks \
+                         -out=backend.tfplan
 
-          # Import static IP
-          if terraform import -input=false aws_lightsail_static_ip.app jaws-production-static-ip 2>&1 | tee /tmp/import_ip.log; then
-            echo "✅ Static IP imported successfully"
-          else
-            if grep -q "already managed" /tmp/import_ip.log || grep -q "Resource already managed" /tmp/import_ip.log; then
-              echo "ℹ️  Static IP already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_ip.log || grep -q "NotFoundException" /tmp/import_ip.log; then
-              echo "ℹ️  Static IP doesn't exist yet - will be created"
-            else
-              echo "⚠️  Static IP import failed, see above for details"
-            fi
-          fi
+          terraform apply -auto-approve backend.tfplan
 
-          # Import static IP attachment (format: static_ip_name,instance_name)
-          if terraform import -input=false aws_lightsail_static_ip_attachment.app jaws-production-static-ip,jaws-production 2>&1 | tee /tmp/import_attachment.log; then
-            echo "✅ Static IP attachment imported successfully"
-          else
-            if grep -q "already managed" /tmp/import_attachment.log || grep -q "Resource already managed" /tmp/import_attachment.log; then
-              echo "ℹ️  Static IP attachment already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_attachment.log || grep -q "NotFoundException" /tmp/import_attachment.log; then
-              echo "ℹ️  Static IP attachment doesn't exist yet - will be created"
-            else
-              echo "⚠️  Static IP attachment import failed, see above for details"
-            fi
-          fi
-
-          # Import public ports configuration
-          if terraform import -input=false aws_lightsail_instance_public_ports.app jaws-production 2>&1 | tee /tmp/import_ports.log; then
-            echo "✅ Public ports imported successfully"
-          else
-            if grep -q "already managed" /tmp/import_ports.log || grep -q "Resource already managed" /tmp/import_ports.log; then
-              echo "ℹ️  Public ports already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_ports.log || grep -q "NotFoundException" /tmp/import_ports.log; then
-              echo "ℹ️  Public ports don't exist yet - will be configured"
-            else
-              echo "⚠️  Public ports import failed, see above for details"
-            fi
-          fi
-
-          echo "✅ Import check complete"
+          # Get bucket name for backend configuration
+          BUCKET_NAME=$(terraform output -raw terraform_state_bucket)
+          echo "TERRAFORM_BUCKET=$BUCKET_NAME" >> $GITHUB_ENV
+          echo "✅ Backend resources created: $BUCKET_NAME"
         working-directory: terraform
-        continue-on-error: true
+
+      - name: Configure S3 backend
+        run: |
+          echo "🔧 Configuring S3 backend..."
+
+          # Uncomment and update backend configuration
+          sed -i 's/# terraform {/terraform {/' backend_config.tf
+          sed -i 's/#   backend "s3" {/  backend "s3" {/' backend_config.tf
+          sed -i "s/#     bucket         = .*/    bucket         = \"$TERRAFORM_BUCKET\"/" backend_config.tf
+          sed -i 's/#     key            = /    key            = /' backend_config.tf
+          sed -i 's/#     region         = /    region         = /' backend_config.tf
+          sed -i 's/#     encrypt        = /    encrypt        = /' backend_config.tf
+          sed -i 's/#     dynamodb_table = /    dynamodb_table = /' backend_config.tf
+          sed -i 's/#   }/  }/' backend_config.tf
+          sed -i 's/# }/}/' backend_config.tf
+
+          echo "✅ Backend configuration updated"
+          cat backend_config.tf
+        working-directory: terraform
+
+      - name: Migrate state to S3
+        run: |
+          echo "📦 Migrating Terraform state to S3..."
+          terraform init -migrate-state -force-copy
+          echo "✅ State migrated to S3 backend"
+        working-directory: terraform
 
       - name: Terraform plan
         run: |

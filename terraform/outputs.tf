@@ -13,3 +13,13 @@ output "ssh_private_key" {
   value       = local.create_key_pair ? tls_private_key.generated[0].private_key_pem : ""
   sensitive   = true
 }
+
+output "terraform_state_bucket" {
+  description = "S3 bucket name for Terraform state storage"
+  value       = aws_s3_bucket.terraform_state.id
+}
+
+output "terraform_locks_table" {
+  description = "DynamoDB table name for Terraform state locking"
+  value       = aws_dynamodb_table.terraform_locks.id
+}
