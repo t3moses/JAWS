@@ -214,14 +214,15 @@ jobs:
   # Job 5: API Tests
   # This job runs tests that verify the REST API endpoints work correctly
   # API tests need dependencies, database, AND a running web server
+  # Only runs if integration tests pass
   # ============================================================================
   api-tests:
     name: Run API Tests
 
     runs-on: ubuntu-latest
 
-    # Must wait for BOTH build and database setup to complete
-    needs: [build, setup-database]
+    # Must wait for build, database setup, AND integration tests to pass
+    needs: [build, setup-database, integration-tests]
 
     steps:
       # Get the code
