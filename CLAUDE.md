@@ -87,8 +87,14 @@ php -S localhost:8000 -t public
 # Ensure dev server is running
 php -S localhost:8000 -t public &
 
-# Run API tests
-php Tests/Integration/api_test.php
+# Run all API tests (PHPUnit)
+./vendor/bin/phpunit --testsuite=API
+
+# Run specific API test file
+./vendor/bin/phpunit tests/Integration/Api/EventApiTest.php
+
+# Run with verbose output
+./vendor/bin/phpunit --testsuite=API --verbose
 ```
 
 ### Deploy to AWS Lightsail
@@ -605,7 +611,13 @@ Test cases are documented in `/Tests/Test cases.numbers` (Apple Numbers spreadsh
 **Test Structure:**
 - `tests/Unit/` - Unit tests (Domain layer, no external dependencies)
 - `tests/Integration/` - Integration tests (Infrastructure layer, in-memory SQLite)
-- `Tests/Integration/api_test.php` - Simple HTTP test suite (curl-based)
+- `tests/Integration/Api/` - API tests (PHPUnit test suite)
+  - `EventApiTest.php` - Event endpoint tests
+  - `AuthApiTest.php` - Authentication endpoint tests
+  - `UserProfileApiTest.php` - User profile endpoint tests
+  - `AvailabilityApiTest.php` - Availability endpoint tests
+  - `AssignmentApiTest.php` - Assignment endpoint tests
+  - `AdminApiTest.php` - Admin endpoint tests
 - `Tests/JAWS_API.postman_collection.json` - Postman test collection
 
 **Running Tests:**
@@ -720,7 +732,7 @@ Connection::resetTestConnection();
 3. Implement Controller method: `src/Presentation/Controller/*.php`
 4. Add route: `config/routes.php`
 5. Wire dependencies: `config/container.php`
-6. Write tests: `tests/Integration/Api/` or `Tests/Integration/api_test.php`
+6. Write tests: Create new test class in `tests/Integration/Api/`
 7. Update Postman collection: `Tests/JAWS_API.postman_collection.json`
 
 ### Working with Time
@@ -898,7 +910,7 @@ Implementation in `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 **Tests:**
 - `tests/Unit/Domain/` - Domain layer unit tests
 - `tests/Integration/Infrastructure/` - Infrastructure integration tests
-- `Tests/api_test.php` - HTTP API tests
+- `tests/Integration/Api/` - API endpoint tests (PHPUnit)
 - `Tests/JAWS_API.postman_collection.json` - Postman collection
 
 **Documentation:**

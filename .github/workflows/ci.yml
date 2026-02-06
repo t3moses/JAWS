@@ -260,8 +260,8 @@ jobs:
           # Wait for server to start
           sleep 2
 
-          # Run the API tests
-          php Tests/Integration/api_test.php -v
+          # Run the API tests (PHPUnit test suite)
+          php vendor/bin/phpunit --testsuite=API --verbose
 
           # Cleanup
           kill $SERVER_PID

@@ -174,12 +174,18 @@ JAWS/
 ├── tests/                 # Automated tests
 │   ├── Unit/             # Unit tests (Domain layer)
 │   │   └── Domain/       # Test domain logic without dependencies
-│   └── Integration/      # Integration tests (Infrastructure)
-│       └── Infrastructure/ # Test repositories with database
+│   └── Integration/      # Integration tests (Infrastructure + API)
+│       ├── Infrastructure/ # Test repositories with database
+│       └── Api/          # PHPUnit API endpoint tests
+│           ├── EventApiTest.php
+│           ├── AuthApiTest.php
+│           ├── UserProfileApiTest.php
+│           ├── AvailabilityApiTest.php
+│           ├── AssignmentApiTest.php
+│           ├── AdminApiTest.php
+│           └── ApiTestTrait.php  # Shared test utilities
 │
 ├── Tests/                 # Legacy test directory
-│   ├── Integration/      # API tests
-│   │   └── api_test.php  # Simple HTTP test suite
 │   └── JAWS_API.postman_collection.json
 │
 ├── .env                   # Environment configuration (gitignored)
