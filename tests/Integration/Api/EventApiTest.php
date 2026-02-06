@@ -58,6 +58,53 @@ class EventApiTest extends TestCase
         }
     }
 
+    public function testGetAllFlotillas(): void
+    {
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/flotillas");
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertArrayHasKey('flotillas', $response['body']['data']);
+        $this->assertIsArray($response['body']['data']['flotillas']);
+
+        // Verify basic structure - flotilla array exists
+        // Structure may vary depending on implementation
+        // Just verify it's an array and doesn't error
+    }
+
+    public function testGetEventWithInvalidId(): void
+    {
+        // Test SQL injection attempt
+        $sqlInjection = urlencode("'; DROP TABLE events--");
+        $response1 = $this->makeRequest('GET', "{$this->baseUrl}/events/{$sqlInjection}");
+        $this->assertContains($response1['status'], [404, 400]);
+        $this->assertNotEquals(500, $response1['status']); // Should not cause server error
+
+        // Test XSS attempt
+        $xssAttempt = urlencode('<script>alert("xss")</script>');
+        $response2 = $this->makeRequest('GET', "{$this->baseUrl}/events/{$xssAttempt}");
+        $this->assertContains($response2['status'], [404, 400]);
+        $this->assertNotEquals(500, $response2['status']);
+
+        // Test URL-unsafe characters
+        $unsafeChars = urlencode('../../../etc/passwd');
+        $response3 = $this->makeRequest('GET', "{$this->baseUrl}/events/{$unsafeChars}");
+        $this->assertContains($response3['status'], [404, 400]);
+        $this->assertNotEquals(500, $response3['status']);
+
+        // Test very long event ID
+        $longId = urlencode(str_repeat('A', 1000));
+        $response4 = $this->makeRequest('GET', "{$this->baseUrl}/events/{$longId}");
+        $this->assertContains($response4['status'], [404, 400]);
+        $this->assertNotEquals(500, $response4['status']);
+
+        // Test special characters
+        $specialChars = urlencode('!@#$%^&*()[]{}|\\');
+        $response5 = $this->makeRequest('GET', "{$this->baseUrl}/events/{$specialChars}");
+        $this->assertContains($response5['status'], [404, 400]);
+        $this->assertNotEquals(500, $response5['status']);
+    }
+
     public function testNonExistentRouteReturns404(): void
     {
         $response = $this->makeRequest('GET', "{$this->baseUrl}/nonexistent");

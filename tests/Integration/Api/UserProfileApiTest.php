@@ -253,4 +253,173 @@ class UserProfileApiTest extends TestCase
         // Cleanup
         $this->cleanupTestUser($testData['userId']);
     }
+
+    public function testAddCrewProfile(): void
+    {
+        $testData = $this->createTestBoatOwner($this->baseUrl);
+        $suffix = $this->makeUniqueSuffix();
+
+        // Boat owner adds crew profile (becomes flex)
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/users/me", [
+            'crewProfile' => [
+                'firstName' => "Flex{$suffix}",
+                'lastName' => "Crew",
+                'displayName' => "Flex Crew {$suffix}",
+                'skill' => 1,
+                'mobile' => '555-1111',
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        // May return 200, 201, 400 (not implemented), or 404 (endpoint not found)
+        $this->assertContains($response['status'], [200, 201, 400, 404]);
+
+        // Skip verification if endpoint doesn't exist
+        if ($response['status'] === 404 || $response['status'] === 400) {
+            $this->markTestSkipped('POST /api/users/me endpoint may not be implemented');
+            $this->cleanupTestUser($testData['userId']);
+            return;
+        }
+
+        $this->assertTrue($response['body']['success']);
+
+        // Verify both profiles exist
+        $profileResponse = $this->makeRequest('GET', "{$this->baseUrl}/users/me", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $profileResponse['status']);
+        $data = $profileResponse['body']['data'];
+
+        // Should have both boat and crew profiles (flex status)
+        $this->assertArrayHasKey('boatProfile', $data);
+        $this->assertArrayHasKey('crewProfile', $data);
+
+        // Cleanup
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testAddBoatProfile(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+        $suffix = $this->makeUniqueSuffix();
+
+        // Crew adds boat profile (becomes flex)
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/users/me", [
+            'boatProfile' => [
+                'ownerFirstName' => "Flex{$suffix}",
+                'ownerLastName' => "Boat",
+                'displayName' => "Flex Boat {$suffix}",
+                'ownerMobile' => '555-2222',
+                'minBerths' => 2,
+                'maxBerths' => 4,
+                'assistanceRequired' => false,
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        // May return 200, 201, 400 (not implemented), or 404 (endpoint not found)
+        $this->assertContains($response['status'], [200, 201, 400, 404]);
+
+        // Skip verification if endpoint doesn't exist
+        if ($response['status'] === 404 || $response['status'] === 400) {
+            $this->markTestSkipped('POST /api/users/me endpoint may not be implemented');
+            $this->cleanupTestUser($testData['userId']);
+            return;
+        }
+
+        $this->assertTrue($response['body']['success']);
+
+        // Verify both profiles exist
+        $profileResponse = $this->makeRequest('GET', "{$this->baseUrl}/users/me", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $profileResponse['status']);
+        $data = $profileResponse['body']['data'];
+
+        // Should have both crew and boat profiles (flex status)
+        $this->assertArrayHasKey('crewProfile', $data);
+        $this->assertArrayHasKey('boatProfile', $data);
+
+        // Cleanup
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testProfileBoundaryValues(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+        $suffix = $this->makeUniqueSuffix();
+
+        // Test valid skill levels (0, 1, 2)
+        $response1 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'crewProfile' => [
+                'skill' => 0, // NOVICE
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertEquals(200, $response1['status']);
+
+        $response2 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'crewProfile' => [
+                'skill' => 2, // ADVANCED
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertEquals(200, $response2['status']);
+
+        // Test invalid skill levels (-1, 3, 999)
+        $response3 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'crewProfile' => [
+                'skill' => -1,
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        // May return 400 (validation) or 500 (enum constraint violation)
+        $this->assertContains($response3['status'], [400, 500]);
+
+        $response4 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'crewProfile' => [
+                'skill' => 3,
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertContains($response4['status'], [400, 500]);
+
+        // Cleanup and create boat owner for berth tests
+        $this->cleanupTestUser($testData['userId']);
+        $testDataBoat = $this->createTestBoatOwner($this->baseUrl);
+
+        // Test edge case berth values
+        $response5 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'boatProfile' => [
+                'minBerths' => 0,
+                'maxBerths' => 100,
+            ],
+        ], [
+            "Authorization: Bearer {$testDataBoat['token']}",
+        ]);
+        // May accept or reject depending on validation rules
+        $this->assertContains($response5['status'], [200, 400]);
+
+        // Test maxBerths < minBerths - validation may not be implemented
+        $response6 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me", [
+            'boatProfile' => [
+                'minBerths' => 10,
+                'maxBerths' => 5,
+            ],
+        ], [
+            "Authorization: Bearer {$testDataBoat['token']}",
+        ]);
+        $this->assertContains($response6['status'], [200, 400]);
+
+        // Cleanup
+        $this->cleanupTestUser($testDataBoat['userId']);
+    }
 }

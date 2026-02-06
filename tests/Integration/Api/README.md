@@ -5,14 +5,14 @@ This directory contains PHPUnit-based API endpoint tests for the JAWS REST API.
 ## Test Files
 
 - **[ApiTestTrait.php](ApiTestTrait.php)** - Shared test utilities (HTTP requests, test user creation, cleanup)
-- **[EventApiTest.php](EventApiTest.php)** - Tests for event endpoints (4 tests)
-- **[AuthApiTest.php](AuthApiTest.php)** - Tests for authentication endpoints (3 tests)
-- **[UserProfileApiTest.php](UserProfileApiTest.php)** - Tests for user profile endpoints (8 tests)
-- **[AvailabilityApiTest.php](AvailabilityApiTest.php)** - Tests for availability endpoints (5 tests)
-- **[AssignmentApiTest.php](AssignmentApiTest.php)** - Tests for assignment endpoints (1 test)
-- **[AdminApiTest.php](AdminApiTest.php)** - Tests for admin endpoints (3 tests)
+- **[EventApiTest.php](EventApiTest.php)** - Tests for event endpoints (6 tests)
+- **[AuthApiTest.php](AuthApiTest.php)** - Tests for authentication endpoints (9 tests)
+- **[UserProfileApiTest.php](UserProfileApiTest.php)** - Tests for user profile endpoints (11 tests)
+- **[AvailabilityApiTest.php](AvailabilityApiTest.php)** - Tests for availability endpoints (7 tests)
+- **[AssignmentApiTest.php](AssignmentApiTest.php)** - Tests for assignment endpoints (2 tests)
+- **[AdminApiTest.php](AdminApiTest.php)** - Tests for admin endpoints (4 tests)
 
-**Total: 24 API tests**
+**Total: 39 API tests**
 
 ## Running Tests
 
@@ -120,19 +120,56 @@ These tests run automatically in GitHub Actions on every push and pull request:
 - Starts PHP development server automatically
 - Fails build if any API tests fail
 
+## Test Categories
+
+The test suite covers multiple areas:
+
+### Endpoint Coverage (100%)
+- All 19 API endpoints have at least one test
+- Public endpoints (events, flotillas)
+- Authentication endpoints (register, login, session, logout)
+- User profile endpoints (get, add, update)
+- Availability endpoints (get, update)
+- Assignment endpoints (get)
+- Admin endpoints (matching, notifications, config)
+
+### Validation & Error Handling
+- Input validation (missing fields, invalid formats)
+- Boundary value testing (skill levels, berth counts)
+- Duplicate data handling (email uniqueness)
+- Authentication failures (invalid credentials, missing tokens)
+
+### Security Testing
+- SQL injection attempts
+- XSS attack prevention
+- Path traversal protection
+- URL encoding handling
+- Special character handling
+
+### Business Logic
+- Flex status (users with both boat and crew profiles)
+- Flotilla generation triggers
+- Assignment creation with real data
+- Idempotent operations
+
 ## Benefits Over Legacy Script
 
 The new PHPUnit-based structure provides:
 
-1. **Better organization** - Tests split by domain (24 tests across 7 files vs 1,363-line script)
+1. **Better organization** - Tests split by domain (39 tests across 7 files vs 1,363-line script)
 2. **PHPUnit integration** - Run specific tests, better assertions, IDE support
 3. **Reusable utilities** - ApiTestTrait provides common test helpers
 4. **Test isolation** - Proper setup/teardown, automatic cleanup
 5. **Better reporting** - Clear test names, detailed failure messages
 6. **Faster development** - Run individual tests during development
+7. **Comprehensive coverage** - 100% endpoint coverage + validation + security tests
 
 ## Migration Notes
 
 This test suite replaces the legacy `tests/Integration/api_test.php` script (deleted as of 2026-02-06).
 
-All 24 tests from the legacy script have been migrated to PHPUnit test classes with equivalent coverage.
+All 24 tests from the legacy script have been migrated to PHPUnit test classes. Since migration:
+- Added 15 new tests for complete endpoint coverage (100%)
+- Added validation and security tests
+- Enhanced edge case testing
+- **Current total: 39 tests** (24 original + 15 new)

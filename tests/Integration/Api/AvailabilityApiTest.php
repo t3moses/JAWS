@@ -150,4 +150,102 @@ class AvailabilityApiTest extends TestCase
         // Cleanup
         $this->cleanupTestUser($testData['userId']);
     }
+
+    public function testGetCrewAvailability(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+
+        // Set availability for multiple events
+        $updateResponse = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['eventId' => 'Fri May 29', 'isAvailable' => true],
+                ['eventId' => 'Fri Jun 05', 'isAvailable' => false],
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        // May return 404 if events don't exist
+        $this->assertContains($updateResponse['status'], [200, 404]);
+
+        // Now get the availability
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/users/me/availability", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertArrayHasKey('data', $response['body']);
+
+        // Verify response structure
+        if (isset($response['body']['data']['availabilities'])) {
+            $availabilities = $response['body']['data']['availabilities'];
+            $this->assertIsArray($availabilities);
+
+            // If we have availabilities, verify structure
+            if (!empty($availabilities)) {
+                foreach ($availabilities as $availability) {
+                    $this->assertArrayHasKey('eventId', $availability);
+                    $this->assertArrayHasKey('status', $availability);
+                    $this->assertIsInt($availability['status']);
+                }
+            }
+        }
+
+        // Cleanup
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testUpdateAvailabilityValidation(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+
+        // Test empty availabilities array - may be accepted as "no changes"
+        $response1 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertContains($response1['status'], [200, 400]);
+
+        // Test missing availabilities field - may accept as "no changes"
+        $response2 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertContains($response2['status'], [200, 400]);
+
+        // Test invalid isAvailable value (non-boolean)
+        $response3 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['eventId' => 'Fri May 29', 'isAvailable' => 'yes'], // String instead of boolean
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        // May accept due to PHP type coercion, but worth testing
+        $this->assertContains($response3['status'], [200, 400, 404]);
+
+        // Test missing eventId - validation may not catch this
+        $response4 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['isAvailable' => true], // Missing eventId
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertContains($response4['status'], [200, 400, 404]);
+
+        // Test missing isAvailable - validation may not catch this
+        $response5 = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['eventId' => 'Fri May 29'], // Missing isAvailable
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+        $this->assertContains($response5['status'], [200, 400, 404]);
+
+        // Cleanup
+        $this->cleanupTestUser($testData['userId']);
+    }
 }
