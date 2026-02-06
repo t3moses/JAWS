@@ -244,11 +244,13 @@ jobs:
           echo "✅ State migrated to S3 backend"
         working-directory: terraform
 
-      - name: Import existing Lightsail resources
+      - name: Import existing Lightsail instance
         run: |
-          echo "🔄 Checking for existing Lightsail resources..."
+          echo "🔄 Checking for existing Lightsail instance..."
 
           # Import Lightsail instance
+          # Note: Static IP, IP attachment, and public ports don't support import
+          # and are managed manually in AWS
           echo "Importing instance..."
           if terraform import -input=false aws_lightsail_instance.app jaws-production 2>&1 | tee /tmp/import_instance.log; then
             echo "✅ Instance imported"
@@ -256,55 +258,10 @@ jobs:
             if grep -q "Resource already managed" /tmp/import_instance.log; then
               echo "ℹ️  Instance already in state"
             elif grep -q "Cannot import non-existent" /tmp/import_instance.log; then
-              echo "ℹ️  Instance doesn't exist yet"
+              echo "ℹ️  Instance doesn't exist yet - will be created"
             else
               echo "⚠️  Instance import failed"
               cat /tmp/import_instance.log
-            fi
-          fi
-
-          # Import static IP
-          echo "Importing static IP..."
-          if terraform import -input=false aws_lightsail_static_ip.app jaws-production-static-ip 2>&1 | tee /tmp/import_ip.log; then
-            echo "✅ Static IP imported"
-          else
-            if grep -q "Resource already managed" /tmp/import_ip.log; then
-              echo "ℹ️  Static IP already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_ip.log; then
-              echo "ℹ️  Static IP doesn't exist yet"
-            else
-              echo "⚠️  Static IP import failed"
-              cat /tmp/import_ip.log
-            fi
-          fi
-
-          # Import static IP attachment
-          echo "Importing static IP attachment..."
-          if terraform import -input=false aws_lightsail_static_ip_attachment.app jaws-production-static-ip,jaws-production 2>&1 | tee /tmp/import_attachment.log; then
-            echo "✅ IP attachment imported"
-          else
-            if grep -q "Resource already managed" /tmp/import_attachment.log; then
-              echo "ℹ️  IP attachment already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_attachment.log; then
-              echo "ℹ️  IP attachment doesn't exist yet"
-            else
-              echo "⚠️  IP attachment import failed"
-              cat /tmp/import_attachment.log
-            fi
-          fi
-
-          # Import public ports
-          echo "Importing public ports..."
-          if terraform import -input=false aws_lightsail_instance_public_ports.app jaws-production 2>&1 | tee /tmp/import_ports.log; then
-            echo "✅ Public ports imported"
-          else
-            if grep -q "Resource already managed" /tmp/import_ports.log; then
-              echo "ℹ️  Public ports already in state"
-            elif grep -q "Cannot import non-existent" /tmp/import_ports.log; then
-              echo "ℹ️  Public ports don't exist yet"
-            else
-              echo "⚠️  Public ports import failed"
-              cat /tmp/import_ports.log
             fi
           fi
 

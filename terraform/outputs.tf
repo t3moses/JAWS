@@ -1,6 +1,6 @@
 output "instance_ip" {
   description = "Public IP address for the Lightsail instance."
-  value       = aws_lightsail_static_ip.app.ip_address
+  value       = aws_lightsail_instance.app.public_ip_address
 }
 
 output "key_pair_name" {

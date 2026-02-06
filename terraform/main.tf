@@ -115,37 +115,46 @@ resource "aws_lightsail_instance" "app" {
   }
 }
 
-resource "aws_lightsail_static_ip" "app" {
-  name = "${var.instance_name}-static-ip"
-}
+# NOTE: These resources don't support Terraform import, so they're managed manually in AWS.
+# The static IP (jaws-production-static-ip) is attached to the instance manually.
+# Ports 22, 80, 443 are configured manually in the Lightsail console.
+#
+# If you need to recreate these, you can:
+# 1. Uncomment the resources below
+# 2. Manually delete them from AWS first
+# 3. Let Terraform recreate them
 
-resource "aws_lightsail_static_ip_attachment" "app" {
-  static_ip_name = aws_lightsail_static_ip.app.name
-  instance_name  = aws_lightsail_instance.app.name
-}
-
-resource "aws_lightsail_instance_public_ports" "app" {
-  instance_name = aws_lightsail_instance.app.name
-
-  port_info {
-    from_port = 80
-    to_port   = 80
-    protocol  = "tcp"
-  }
-
-  port_info {
-    from_port = 443
-    to_port   = 443
-    protocol  = "tcp"
-  }
-
-  # SSH access is required for deployment. Remove this only if you use a different access method.
-  port_info {
-    from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
-  }
-}
+# resource "aws_lightsail_static_ip" "app" {
+#   name = "${var.instance_name}-static-ip"
+# }
+#
+# resource "aws_lightsail_static_ip_attachment" "app" {
+#   static_ip_name = aws_lightsail_static_ip.app.name
+#   instance_name  = aws_lightsail_instance.app.name
+# }
+#
+# resource "aws_lightsail_instance_public_ports" "app" {
+#   instance_name = aws_lightsail_instance.app.name
+#
+#   port_info {
+#     from_port = 80
+#     to_port   = 80
+#     protocol  = "tcp"
+#   }
+#
+#   port_info {
+#     from_port = 443
+#     to_port   = 443
+#     protocol  = "tcp"
+#   }
+#
+#   # SSH access is required for deployment. Remove this only if you use a different access method.
+#   port_info {
+#     from_port = 22
+#     to_port   = 22
+#     protocol  = "tcp"
+#   }
+# }
 
 # Route 53 DNS (commented out because the domain is owned by someone else)
 # Uncomment and update the hosted zone lookup when the domain owner is ready.
