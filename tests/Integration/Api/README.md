@@ -133,6 +133,6 @@ The new PHPUnit-based structure provides:
 
 ## Migration Notes
 
-This test suite replaces the legacy `Tests/Integration/api_test.php` script (deleted as of 2026-02-06).
+This test suite replaces the legacy `tests/Integration/api_test.php` script (deleted as of 2026-02-06).
 
 All 24 tests from the legacy script have been migrated to PHPUnit test classes with equivalent coverage.

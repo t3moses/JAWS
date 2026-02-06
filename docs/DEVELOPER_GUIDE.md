@@ -185,7 +185,7 @@ JAWS/
 │           ├── AdminApiTest.php
 │           └── ApiTestTrait.php  # Shared test utilities
 │
-├── Tests/                 # Legacy test directory
+├── tests/                 # Legacy test directory
 │   └── JAWS_API.postman_collection.json
 │
 ├── .env                   # Environment configuration (gitignored)
@@ -294,7 +294,7 @@ JAWS/
    - Integration test for repository
    - API test for endpoint
 
-7. **Update Postman Collection** (`Tests/JAWS_API.postman_collection.json`)
+7. **Update Postman Collection** (`tests/JAWS_API.postman_collection.json`)
 
 #### Add a New Domain Entity
 

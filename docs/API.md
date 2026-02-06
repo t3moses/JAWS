@@ -865,7 +865,7 @@ JAWS includes a Postman collection for easy API testing.
 1. **Import Collection:**
    - Open Postman
    - File → Import
-   - Select `Tests/JAWS_API.postman_collection.json`
+   - Select `tests/JAWS_API.postman_collection.json`
 
 2. **Configure Environment:**
    - Create new environment

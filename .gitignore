@@ -52,7 +52,6 @@ database/assignment_debug.txt
 /database/migrations/archive/*.backup
 
 # Temporary test files
-/Tests/temp/
 /tests/temp/
 
 # Node modules (if frontend ever added to this repo)

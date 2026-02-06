@@ -282,7 +282,7 @@ php -S localhost:8000 -t public &
 ./vendor/bin/phpunit tests/Integration/Api/EventApiTest.php
 
 # Or use Postman collection
-# Import Tests/JAWS_API.postman_collection.json
+# Import tests/JAWS_API.postman_collection.json
 ```
 
 ## Quick Links
