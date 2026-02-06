@@ -57,7 +57,7 @@ class UpdateCrewAvailabilityUseCase
 
             // Validate event exists
             if (!$this->eventRepository->exists($eventId)) {
-                throw new EventNotFoundException($availability['eventId']);
+                throw new EventNotFoundException($eventId);
             }
 
             // Map boolean to AvailabilityStatus enum
