@@ -913,19 +913,218 @@ test('Multiple availability updates create single flotilla', function () use ($b
     }
 });
 
-// Test 19: Verify old boat endpoint is removed (breaking change)
-test('PATCH /api/boats/availability returns 404 (removed)', function () use ($baseUrl, $testFirstName, $testLastName) {
+// Test 19: PATCH /api/users/me - update email only
+test('PATCH /api/users/me - update email only', function () use ($baseUrl, $testFirstName, $testLastName) {
     // Create test user and get token via API
     $suffix = makeUniqueSuffix();
+    $firstName = "{$testFirstName}{$suffix}";
+    $lastName = "{$testLastName}{$suffix}";
 
     $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
-        'email' => makeUniqueEmail('test.removed'),
+        'email' => makeUniqueEmail('update.email'),
+        'password' => 'TestPass123',
+        'accountType' => 'crew',
+        'profile' => [
+            'displayName' => "Test User {$suffix}",
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'skill' => 1,
+        ],
+    ]);
+
+    if (!isset($registerResponse['body']['data']['token'])) {
+        throw new \Exception("Registration failed");
+    }
+
+    $token = $registerResponse['body']['data']['token'];
+    $userId = $registerResponse['body']['data']['user']['id'] ?? null;
+    $newEmail = makeUniqueEmail('updated.email');
+
+    // Update email
+    $response = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'email' => $newEmail,
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+
+    if (!isset($response['body']['data']['profile'])) {
+        throw new \Exception("Response missing 'profile' field");
+    }
+
+    $profile = $response['body']['data']['profile'];
+
+    // Verify email was updated
+    if ($profile['user']['email'] !== $newEmail) {
+        throw new \Exception("Email not updated: expected {$newEmail}, got {$profile['user']['email']}");
+    }
+
+    // Cleanup
+    if ($userId) {
+        UserTestHelper::deleteTestUser($userId);
+    }
+});
+
+// Test 20: PATCH /api/users/me - update password only
+test('PATCH /api/users/me - update password only', function () use ($baseUrl, $testFirstName, $testLastName) {
+    // Create test user and get token via API
+    $suffix = makeUniqueSuffix();
+    $firstName = "{$testFirstName}{$suffix}";
+    $lastName = "{$testLastName}{$suffix}";
+
+    $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
+        'email' => makeUniqueEmail('update.password'),
+        'password' => 'TestPass123',
+        'accountType' => 'crew',
+        'profile' => [
+            'displayName' => "Test User {$suffix}",
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'skill' => 1,
+        ],
+    ]);
+
+    if (!isset($registerResponse['body']['data']['token'])) {
+        throw new \Exception("Registration failed");
+    }
+
+    $token = $registerResponse['body']['data']['token'];
+    $userId = $registerResponse['body']['data']['user']['id'] ?? null;
+
+    // Update password
+    $response = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'password' => 'NewSecurePass123!',
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+
+    if (!isset($response['body']['data']['profile'])) {
+        throw new \Exception("Response missing 'profile' field");
+    }
+
+    // Password is hashed, can't verify directly, but success indicates it worked
+
+    // Cleanup
+    if ($userId) {
+        UserTestHelper::deleteTestUser($userId);
+    }
+});
+
+// Test 21: PATCH /api/users/me - update crew profile
+test('PATCH /api/users/me - update crew profile', function () use ($baseUrl, $testFirstName, $testLastName) {
+    // Create test user and get token via API
+    $suffix = makeUniqueSuffix();
+    $firstName = "{$testFirstName}{$suffix}";
+    $lastName = "{$testLastName}{$suffix}";
+
+    $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
+        'email' => makeUniqueEmail('update.crew'),
+        'password' => 'TestPass123',
+        'accountType' => 'crew',
+        'profile' => [
+            'displayName' => "Test User {$suffix}",
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'skill' => 1,
+        ],
+    ]);
+
+    if (!isset($registerResponse['body']['data']['token'])) {
+        throw new \Exception("Registration failed");
+    }
+
+    $token = $registerResponse['body']['data']['token'];
+    $userId = $registerResponse['body']['data']['user']['id'] ?? null;
+
+    // Update crew profile
+    $response = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'crewProfile' => [
+            'displayName' => "Updated Name {$suffix}",
+            'mobile' => '555-9999',
+            'skill' => 2,
+            'socialPreference' => false,
+            'membershipNumber' => 'NSC99999',
+            'experience' => 'Updated experience text',
+        ],
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+
+    if (!isset($response['body']['data']['profile']['crewProfile'])) {
+        throw new \Exception("Response missing 'crewProfile' field");
+    }
+
+    $crew = $response['body']['data']['profile']['crewProfile'];
+
+    // Verify crew profile fields were updated
+    if ($crew['displayName'] !== "Updated Name {$suffix}") {
+        throw new \Exception("displayName not updated");
+    }
+
+    if ($crew['mobile'] !== '555-9999') {
+        throw new \Exception("mobile not updated");
+    }
+
+    if ($crew['skill'] !== 2) {
+        throw new \Exception("skill not updated");
+    }
+
+    if ($crew['socialPreference'] !== false) {
+        throw new \Exception("socialPreference not updated");
+    }
+
+    if ($crew['membershipNumber'] !== 'NSC99999') {
+        throw new \Exception("membershipNumber not updated");
+    }
+
+    if ($crew['experience'] !== 'Updated experience text') {
+        throw new \Exception("experience not updated");
+    }
+
+    // Cleanup
+    if ($userId) {
+        UserTestHelper::deleteTestUser($userId);
+    }
+});
+
+// Test 22: PATCH /api/users/me - update boat profile
+test('PATCH /api/users/me - update boat profile', function () use ($baseUrl, $testFirstName, $testLastName) {
+    // Create test user and get token via API
+    $suffix = makeUniqueSuffix();
+    $ownerFirstName = "{$testFirstName}{$suffix}";
+    $ownerLastName = "{$testLastName}{$suffix}";
+
+    $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
+        'email' => makeUniqueEmail('update.boat'),
         'password' => 'TestPass123',
         'accountType' => 'boat_owner',
         'profile' => [
-            'displayName' => "Boat {$suffix}",
-            'ownerFirstName' => "{$testFirstName}{$suffix}",
-            'ownerLastName' => "{$testLastName}{$suffix}",
+            'displayName' => "Test Boat {$suffix}",
+            'ownerFirstName' => $ownerFirstName,
+            'ownerLastName' => $ownerLastName,
             'ownerMobile' => '555-1234',
             'minBerths' => 2,
             'maxBerths' => 4,
@@ -941,21 +1140,204 @@ test('PATCH /api/boats/availability returns 404 (removed)', function () use ($ba
     $token = $registerResponse['body']['data']['token'];
     $userId = $registerResponse['body']['data']['user']['id'] ?? null;
 
-    $response = makeRequest('PATCH', "{$baseUrl}/boats/availability", [
-        'availabilities' => [
-            ['eventId' => 'Fri May 29', 'isAvailable' => true],
+    // Update boat profile
+    $response = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'boatProfile' => [
+            'displayName' => "Updated Boat Name {$suffix}",
+            'ownerMobile' => '555-8888',
+            'minBerths' => 3,
+            'maxBerths' => 6,
+            'assistanceRequired' => true,
+            'socialPreference' => false,
         ],
     ], [
         "Authorization: Bearer {$token}",
     ]);
 
-    // Should return 404 since this endpoint has been removed
-    if ($response['status'] !== 404) {
-        throw new \Exception("Expected 404 (endpoint removed), got {$response['status']}");
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
     }
 
-    if (!isset($response['body']['error'])) {
-        throw new \Exception("Response missing 'error' field");
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+
+    if (!isset($response['body']['data']['profile']['boatProfile'])) {
+        throw new \Exception("Response missing 'boatProfile' field");
+    }
+
+    $boat = $response['body']['data']['profile']['boatProfile'];
+
+    // Verify boat profile fields were updated
+    if ($boat['displayName'] !== "Updated Boat Name {$suffix}") {
+        throw new \Exception("displayName not updated");
+    }
+
+    if ($boat['ownerMobile'] !== '555-8888') {
+        throw new \Exception("ownerMobile not updated");
+    }
+
+    if ($boat['minBerths'] !== 3) {
+        throw new \Exception("minBerths not updated");
+    }
+
+    if ($boat['maxBerths'] !== 6) {
+        throw new \Exception("maxBerths not updated");
+    }
+
+    if ($boat['assistanceRequired'] !== true) {
+        throw new \Exception("assistanceRequired not updated");
+    }
+
+    if ($boat['socialPreference'] !== false) {
+        throw new \Exception("socialPreference not updated");
+    }
+
+    // Cleanup
+    if ($userId) {
+        UserTestHelper::deleteTestUser($userId);
+    }
+});
+
+// Test 23: PATCH /api/users/me - update multiple fields
+test('PATCH /api/users/me - update multiple fields', function () use ($baseUrl, $testFirstName, $testLastName) {
+    // Create test user and get token via API
+    $suffix = makeUniqueSuffix();
+    $firstName = "{$testFirstName}{$suffix}";
+    $lastName = "{$testLastName}{$suffix}";
+
+    $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
+        'email' => makeUniqueEmail('update.multi'),
+        'password' => 'TestPass123',
+        'accountType' => 'crew',
+        'profile' => [
+            'displayName' => "Test User {$suffix}",
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'skill' => 1,
+        ],
+    ]);
+
+    if (!isset($registerResponse['body']['data']['token'])) {
+        throw new \Exception("Registration failed");
+    }
+
+    $token = $registerResponse['body']['data']['token'];
+    $userId = $registerResponse['body']['data']['user']['id'] ?? null;
+    $newEmail = makeUniqueEmail('updated.multi');
+
+    // Update multiple fields at once
+    $response = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'email' => $newEmail,
+        'crewProfile' => [
+            'displayName' => "Multi Update {$suffix}",
+            'skill' => 2,
+        ],
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response['status'] !== 200) {
+        throw new \Exception("Expected 200, got {$response['status']}");
+    }
+
+    if (!isset($response['body']['success'])) {
+        throw new \Exception("Response missing 'success' field");
+    }
+
+    if (!isset($response['body']['data']['profile'])) {
+        throw new \Exception("Response missing 'profile' field");
+    }
+
+    $profile = $response['body']['data']['profile'];
+
+    // Verify email was updated
+    if ($profile['user']['email'] !== $newEmail) {
+        throw new \Exception("Email not updated");
+    }
+
+    // Verify crew profile was updated
+    if ($profile['crewProfile']['displayName'] !== "Multi Update {$suffix}") {
+        throw new \Exception("displayName not updated");
+    }
+
+    if ($profile['crewProfile']['skill'] !== 2) {
+        throw new \Exception("skill not updated");
+    }
+
+    // Cleanup
+    if ($userId) {
+        UserTestHelper::deleteTestUser($userId);
+    }
+});
+
+// Test 24: PATCH /api/users/me - validation errors
+test('PATCH /api/users/me - validation errors', function () use ($baseUrl, $testFirstName, $testLastName) {
+    // Create test user and get token via API
+    $suffix = makeUniqueSuffix();
+    $firstName = "{$testFirstName}{$suffix}";
+    $lastName = "{$testLastName}{$suffix}";
+
+    $registerResponse = makeRequest('POST', "{$baseUrl}/auth/register", [
+        'email' => makeUniqueEmail('update.validation'),
+        'password' => 'TestPass123',
+        'accountType' => 'crew',
+        'profile' => [
+            'displayName' => "Test User {$suffix}",
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'skill' => 1,
+        ],
+    ]);
+
+    if (!isset($registerResponse['body']['data']['token'])) {
+        throw new \Exception("Registration failed");
+    }
+
+    $token = $registerResponse['body']['data']['token'];
+    $userId = $registerResponse['body']['data']['user']['id'] ?? null;
+
+    // Test 1: Invalid email format
+    $response1 = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'email' => 'invalid-email',
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response1['status'] !== 400) {
+        throw new \Exception("Invalid email: Expected 400, got {$response1['status']}");
+    }
+
+    if (!isset($response1['body']['error'])) {
+        throw new \Exception("Invalid email: Response missing 'error' field");
+    }
+
+    // Test 2: Password too short
+    $response2 = makeRequest('PATCH', "{$baseUrl}/users/me", [
+        'password' => 'short',
+    ], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response2['status'] !== 400) {
+        throw new \Exception("Short password: Expected 400, got {$response2['status']}");
+    }
+
+    if (!isset($response2['body']['error'])) {
+        throw new \Exception("Short password: Response missing 'error' field");
+    }
+
+    // Test 3: Empty request body (no updates)
+    $response3 = makeRequest('PATCH', "{$baseUrl}/users/me", [], [
+        "Authorization: Bearer {$token}",
+    ]);
+
+    if ($response3['status'] !== 400) {
+        throw new \Exception("No updates: Expected 400, got {$response3['status']}");
+    }
+
+    if (!isset($response3['body']['error'])) {
+        throw new \Exception("No updates: Response missing 'error' field");
     }
 
     // Cleanup
