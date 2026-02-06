@@ -244,6 +244,26 @@ jobs:
           echo "✅ State migrated to S3 backend"
         working-directory: terraform
 
+      - name: Import existing Lightsail resources
+        run: |
+          echo "🔄 Checking for existing Lightsail resources..."
+
+          # Import Lightsail instance
+          terraform import -input=false aws_lightsail_instance.app jaws-production 2>&1 || echo "ℹ️  Instance import skipped"
+
+          # Import static IP
+          terraform import -input=false aws_lightsail_static_ip.app jaws-production-static-ip 2>&1 || echo "ℹ️  Static IP import skipped"
+
+          # Import static IP attachment
+          terraform import -input=false aws_lightsail_static_ip_attachment.app jaws-production-static-ip,jaws-production 2>&1 || echo "ℹ️  IP attachment import skipped"
+
+          # Import public ports configuration
+          terraform import -input=false aws_lightsail_instance_public_ports.app jaws-production 2>&1 || echo "ℹ️  Public ports import skipped"
+
+          echo "✅ Lightsail import check complete"
+        working-directory: terraform
+        continue-on-error: true
+
       - name: Terraform plan
         run: |
           echo "📋 Planning Terraform changes..."
