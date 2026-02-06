@@ -59,7 +59,7 @@ class UpdateBoatAvailabilityUseCase
 
             // Validate event exists
             if (!$this->eventRepository->exists($eventId)) {
-                throw new EventNotFoundException($availability['eventId']);
+                throw new EventNotFoundException($eventId);
             }
 
             // Calculate berths: full capacity if available, 0 if not
