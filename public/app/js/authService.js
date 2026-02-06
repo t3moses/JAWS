@@ -68,20 +68,6 @@ export function isSignedIn() {
 }
 
 /**
- * Map numeric skill level to experience string
- * @param {number} skill - Skill level from API (0, 1, 2)
- * @returns {string} Experience level
- */
-function mapSkillToExperience(skill) {
-    const skillMap = {
-        0: 'none',
-        1: 'competent_crew',
-        2: 'competent_first_mate'
-    };
-    return skillMap[skill] || 'none';
-}
-
-/**
  * Transform availabilities object to eventAvailability object
  * @param {Object} availabilities - Object with display names as keys and status codes as values
  *                                   { "Fri Jun 12": 2, "Fri Jun 19": 0, ... }
@@ -119,7 +105,7 @@ function transformProfile(profileData, accountType) {
             firstName: profileData.firstName || '',
             lastName: profileData.lastName || '',
             membershipNumber: profileData.membershipNumber || '',
-            experience: mapSkillToExperience(profileData.skill),
+            experience: profileData.experience,
             whatsappGroup: profileData.socialPreference || false
         };
     } else {
