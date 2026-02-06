@@ -174,12 +174,18 @@ JAWS/
 ├── tests/                 # Automated tests
 │   ├── Unit/             # Unit tests (Domain layer)
 │   │   └── Domain/       # Test domain logic without dependencies
-│   └── Integration/      # Integration tests (Infrastructure)
-│       └── Infrastructure/ # Test repositories with database
+│   └── Integration/      # Integration tests (Infrastructure + API)
+│       ├── Infrastructure/ # Test repositories with database
+│       └── Api/          # PHPUnit API endpoint tests
+│           ├── EventApiTest.php
+│           ├── AuthApiTest.php
+│           ├── UserProfileApiTest.php
+│           ├── AvailabilityApiTest.php
+│           ├── AssignmentApiTest.php
+│           ├── AdminApiTest.php
+│           └── ApiTestTrait.php  # Shared test utilities
 │
-├── Tests/                 # Legacy test directory
-│   ├── Integration/      # API tests
-│   │   └── api_test.php  # Simple HTTP test suite
+├── tests/                 # Legacy test directory
 │   └── JAWS_API.postman_collection.json
 │
 ├── .env                   # Environment configuration (gitignored)
@@ -288,7 +294,7 @@ JAWS/
    - Integration test for repository
    - API test for endpoint
 
-7. **Update Postman Collection** (`Tests/JAWS_API.postman_collection.json`)
+7. **Update Postman Collection** (`tests/JAWS_API.postman_collection.json`)
 
 #### Add a New Domain Entity
 

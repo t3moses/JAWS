@@ -243,7 +243,7 @@ JWT_EXPIRATION_MINUTES=60
 
 For local development and testing:
 
-1. **For API tests**: The `Tests/Integration/api_test.php` script may need to be updated to generate or use JWT tokens
+1. **For API tests**: The `tests/Integration/api_test.php` script may need to be updated to generate or use JWT tokens
 2. **For manual testing**: You'll need to generate a valid JWT token using the secret from your `.env` file
 3. **For Postman**: Update the Postman collection to include the `Authorization: Bearer <token>` header
 
@@ -589,7 +589,7 @@ docker-compose -f LocalStack/docker-compose.yml up -d
 php LocalStack/verify_email.php
 
 # Run all tests
-php Tests/Integration/api_test.php
+php tests/Integration/api_test.php
 ```
 
 Expected output:

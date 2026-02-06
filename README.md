@@ -272,11 +272,17 @@ php -S localhost:3000 -t public
 
 ### API Testing
 ```bash
-# Run simple API test script
-php Tests/Integration/api_test.php
+# Start dev server (required for API tests)
+php -S localhost:8000 -t public &
+
+# Run all API tests
+./vendor/bin/phpunit --testsuite=API
+
+# Run specific API test file
+./vendor/bin/phpunit tests/Integration/Api/EventApiTest.php
 
 # Or use Postman collection
-# Import Tests/JAWS_API.postman_collection.json
+# Import tests/JAWS_API.postman_collection.json
 ```
 
 ## Quick Links

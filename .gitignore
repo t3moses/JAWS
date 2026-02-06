@@ -32,9 +32,7 @@ Thumbs.db
 
 # PHPUnit
 .phpunit.result.cache
-/phpunit.xml
 /.phpunit.cache
-.phpunit.result.cache
 
 # Logs
 *.log
@@ -54,7 +52,6 @@ database/assignment_debug.txt
 /database/migrations/archive/*.backup
 
 # Temporary test files
-/Tests/temp/
 /tests/temp/
 
 # Node modules (if frontend ever added to this repo)

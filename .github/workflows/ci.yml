@@ -164,7 +164,7 @@ jobs:
       # Step 4: Run unit tests
       # These run immediately - no waiting for database!
       - name: Run unit tests
-        run: php vendor/bin/phpunit Tests/Unit
+        run: php vendor/bin/phpunit --testsuite=Unit
 
   # ============================================================================
   # Job 4: Integration Tests
@@ -206,22 +206,23 @@ jobs:
           name: database-artifacts
           path: database/
 
-      # Run integration tests
+      # Run integration tests (excludes API tests via phpunit.xml)
       - name: Run integration tests
-        run: php vendor/bin/phpunit Tests/Integration
+        run: php vendor/bin/phpunit --testsuite=Integration
 
   # ============================================================================
   # Job 5: API Tests
   # This job runs tests that verify the REST API endpoints work correctly
   # API tests need dependencies, database, AND a running web server
+  # Only runs if integration tests pass
   # ============================================================================
   api-tests:
     name: Run API Tests
 
     runs-on: ubuntu-latest
 
-    # Must wait for BOTH build and database setup to complete
-    needs: [build, setup-database]
+    # Must wait for build, database setup, AND integration tests to pass
+    needs: [build, setup-database, integration-tests]
 
     steps:
       # Get the code
@@ -260,8 +261,8 @@ jobs:
           # Wait for server to start
           sleep 2
 
-          # Run the API tests
-          php Tests/Integration/api_test.php -v
+          # Run the API tests (PHPUnit test suite)
+          php vendor/bin/phpunit --testsuite=API
 
           # Cleanup
           kill $SERVER_PID
