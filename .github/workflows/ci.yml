@@ -164,7 +164,7 @@ jobs:
       # Step 4: Run unit tests
       # These run immediately - no waiting for database!
       - name: Run unit tests
-        run: php vendor/bin/phpunit Tests/Unit
+        run: php vendor/bin/phpunit --testsuite=Unit
 
   # ============================================================================
   # Job 4: Integration Tests
@@ -206,9 +206,9 @@ jobs:
           name: database-artifacts
           path: database/
 
-      # Run integration tests
+      # Run integration tests (excludes API tests via phpunit.xml)
       - name: Run integration tests
-        run: php vendor/bin/phpunit Tests/Integration
+        run: php vendor/bin/phpunit --testsuite=Integration
 
   # ============================================================================
   # Job 5: API Tests
