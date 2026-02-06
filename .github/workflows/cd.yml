@@ -363,6 +363,8 @@ jobs:
             echo "📥 Checking repository status..."
             if [ ! -d ".git" ]; then
               echo "📦 Initializing repository..."
+              # Remove any existing files (like default Apache index.html)
+              sudo rm -rf ./*
               git clone https://github.com/RobJohnston/JAWS.git .
             else
               echo "📥 Pulling latest code..."
