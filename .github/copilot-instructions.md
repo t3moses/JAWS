@@ -12,12 +12,17 @@
 
 ### 1. Install Dependencies
 
-**CRITICAL**: If `composer install` fails with lock file errors, run `composer update` first:
+```bash
+composer install --prefer-dist --no-progress --no-interaction
+```
+
+**If using PHP < 8.4**: The lock file requires PHP 8.4+ (matching CI). Use `--ignore-platform-reqs` if needed:
 
 ```bash
-composer update --no-interaction  # If lock file mismatch (PHP 8.4+ packages)
-composer install --prefer-dist --no-progress --no-interaction  # Takes 2-3 min
+composer install --prefer-dist --no-progress --no-interaction --ignore-platform-reqs
 ```
+
+**NEVER run `composer update`** - it will break CI by downgrading packages to match your local PHP version.
 
 ### 2. Initialize Database
 
@@ -42,12 +47,12 @@ curl http://localhost:8000/api/events  # Test
 ### 5. Run Tests
 
 ```bash
-vendor/bin/phpunit Tests/Unit         # 346 tests, ~8s, no DB needed
-vendor/bin/phpunit Tests/Integration  # 10 tests, needs DB
+vendor/bin/phpunit tests/Unit         # 346 tests, ~8s, no DB needed
+vendor/bin/phpunit tests/Integration  # 10 tests, needs DB
 
 # API tests (start server first)
 php -S localhost:8000 -t public > /dev/null 2>&1 & SERVER_PID=$!; sleep 2
-php Tests/Integration/api_test.php -v
+php tests/Integration/api_test.php -v
 kill $SERVER_PID
 ```
 
@@ -78,7 +83,7 @@ src/
 
 config/                  # DI container, routes, config
 database/migrations/     # Phinx migration files (do NOT edit archive/)
-Tests/{Unit,Integration}/  # PHPUnit test suites
+tests/{Unit,Integration}/  # PHPUnit test suites
 public/                  # Web root (index.php, frontend app/)
 ```
 
@@ -91,7 +96,7 @@ public/                  # Web root (index.php, frontend app/)
 
 `.github/workflows/ci.yml` runs 5 parallel jobs: build, setup-database, unit-tests, integration-tests, api-tests. Uses PHP 8.5 (local: 8.1+).
 
-**Common failures**: Composer lock out of sync (run `composer update`), missing DB migrations, server not started.
+**Common failures**: Missing DB migrations, server not started. DO NOT modify composer.lock unless using PHP 8.4+.
 
 ## Environment Requirements
 
@@ -100,7 +105,7 @@ public/                  # Web root (index.php, frontend app/)
 
 ## Common Issues & Solutions
 
-**Composer lock mismatch**: Run `composer update` then `composer install`  
+**Composer install fails (PHP < 8.4)**: Use `composer install --ignore-platform-reqs` - lock file requires PHP 8.4+  
 **DB permission errors**: `chmod 775 database && chmod 664 database/jaws.db`  
 **JWT 401 errors**: Verify `.env` has JWT_SECRET (min 32 chars)  
 **Migration "already exists"**: Check `vendor/bin/phinx status`, rollback if needed  
@@ -112,7 +117,7 @@ public/                  # Web root (index.php, frontend app/)
 **Layer boundaries**: Domain (no imports) ← Application ← Infrastructure, Presentation → Application only  
 **Wrong**: Domain importing PDO/repositories. **Right**: Application ports, Infrastructure implements.
 
-**Critical algorithms**: DO NOT modify core logic in Selection/AssignmentService. Add features around them. ALWAYS run `Tests/Unit/Domain/SelectionServiceTest.php` after changes. Verify deterministic output.
+**Critical algorithms**: DO NOT modify core logic in Selection/AssignmentService. Add features around them. ALWAYS run `tests/Unit/Domain/SelectionServiceTest.php` after changes. Verify deterministic output.
 
 ## Pre-PR Checklist
 
@@ -128,13 +133,13 @@ Update docs if needed: `README.md`, `CLAUDE.md`, `docs/{DEVELOPER_GUIDE,API,CONT
 
 ```bash
 # Setup from scratch
-composer update && composer install
+composer install --prefer-dist --no-progress --no-interaction
 vendor/bin/phinx migrate
 cp .env.example .env && nano .env  # Set JWT_SECRET
 
 # Development workflow
 php -S localhost:8000 -t public &           # Start server
-vendor/bin/phpunit Tests/Unit               # Quick test
+vendor/bin/phpunit tests/Unit               # Quick test
 vendor/bin/phinx create MyMigrationName     # New migration
 vendor/bin/phinx migrate                    # Apply migrations
 
