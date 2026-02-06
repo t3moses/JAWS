@@ -351,12 +351,12 @@ jobs:
           ssh -i ~/.ssh/lightsail.pem ubuntu@${{ steps.terraform-outputs.outputs.instance_ip }} << 'EOF'
             set -e
 
-            echo "📂 Ensuring web directory exists..."
-            if [ ! -d "/var/www/html" ]; then
-              echo "⚠️  Web directory not found, creating it..."
-              sudo mkdir -p /var/www/html
-              sudo chown -R ubuntu:www-data /var/www/html
-            fi
+            echo "📂 Ensuring web directory exists and has correct permissions..."
+            sudo mkdir -p /var/www/html
+
+            # Always ensure ubuntu user has ownership for git operations
+            sudo chown -R ubuntu:www-data /var/www/html
+            sudo chmod -R 775 /var/www/html
 
             cd /var/www/html
 
