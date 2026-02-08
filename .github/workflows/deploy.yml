@@ -1,0 +1,286 @@
+name: Deploy to AWS Lightsail
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 'Run database migrations after deployment'
+        required: false
+        type: boolean
+        default: false
+      skip_backup:
+        description: 'Skip database backup (NOT RECOMMENDED)'
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: production
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-Deployment Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo, pdo_sqlite, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run tests
+        run: ./vendor/bin/phpunit --testsuite=Unit
+
+      - name: Validate configuration files
+        run: |
+          php -l config/config.php
+          php -l config/container.php
+          php -l config/routes.php
+          php -l phinx.php
+
+      - name: Check migration files
+        if: inputs.run_migrations
+        run: |
+          if [ ! -d "database/migrations" ]; then
+            echo "Error: database/migrations directory not found"
+            exit 1
+          fi
+          echo "Migration files found:"
+          ls -la database/migrations/
+
+  backup-database:
+    name: Backup Production Database
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    if: inputs.skip_backup == false
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create database backup
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "cd /opt/bitnami/jaws/database && \
+             sudo cp jaws.db jaws.backup.${TIMESTAMP}.db && \
+             echo 'Backup created: jaws.backup.${TIMESTAMP}.db' && \
+             ls -lh jaws.backup.${TIMESTAMP}.db"
+
+      - name: Verify backup
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "ls -lh /opt/bitnami/jaws/database/jaws.backup.*.db | tail -5"
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, backup-database]
+    if: always() && (needs.backup-database.result == 'success' || needs.backup-database.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment package
+        run: |
+          # Create a clean deployment directory
+          mkdir -p deploy_package
+
+          # Copy necessary files and directories
+          cp -r public deploy_package/
+          cp -r src deploy_package/
+          cp -r config deploy_package/
+          cp -r database/migrations deploy_package/migrations
+          cp composer.json deploy_package/
+          cp composer.lock deploy_package/
+          cp phinx.php deploy_package/
+
+          # Create tarball
+          tar -czf deploy.tar.gz -C deploy_package .
+
+          echo "Deployment package contents:"
+          tar -tzf deploy.tar.gz | head -20
+
+      - name: Upload deployment package
+        run: |
+          # Upload tarball to server
+          scp -i ~/.ssh/lightsail_key deploy.tar.gz \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/tmp/
+
+      - name: Extract and deploy files
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "Extracting deployment package..."
+            cd /tmp
+            tar -xzf deploy.tar.gz -C /opt/bitnami/jaws/
+
+            echo "Setting initial permissions..."
+            sudo chown -R bitnami:daemon /opt/bitnami/jaws
+            sudo chmod -R g+w /opt/bitnami/jaws
+
+            echo "Deployment files extracted successfully"
+          ENDSSH
+
+      - name: Install dependencies
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+            cd /opt/bitnami/jaws
+
+            echo "Installing Composer dependencies..."
+            composer install --optimize-autoloader --no-dev
+
+            echo "Dependencies installed successfully"
+          ENDSSH
+
+      - name: Run database migrations
+        if: inputs.run_migrations
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+            cd /opt/bitnami/jaws
+
+            echo "Checking migration status..."
+            vendor/bin/phinx status --environment=production
+
+            echo "Running database migrations..."
+            vendor/bin/phinx migrate --environment=production
+
+            echo "Verifying migrations..."
+            vendor/bin/phinx status --environment=production
+          ENDSSH
+
+      - name: Set final permissions
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+            cd /opt/bitnami/jaws
+
+            echo "Setting final file permissions..."
+
+            # Ensure proper ownership
+            sudo chown -R bitnami:daemon /opt/bitnami/jaws
+
+            # Application code - standard permissions
+            sudo find /opt/bitnami/jaws/src -type d -exec chmod 755 {} \;
+            sudo find /opt/bitnami/jaws/src -type f -exec chmod 644 {} \;
+            sudo find /opt/bitnami/jaws/config -type d -exec chmod 755 {} \;
+            sudo find /opt/bitnami/jaws/config -type f -exec chmod 644 {} \;
+
+            # Public files - readable by web server
+            sudo find /opt/bitnami/jaws/public -type d -exec chmod 755 {} \;
+            sudo find /opt/bitnami/jaws/public -type f -exec chmod 644 {} \;
+
+            # Database - read/write for Apache (daemon group)
+            sudo chmod 775 /opt/bitnami/jaws/database
+            sudo chmod 664 /opt/bitnami/jaws/database/jaws.db
+
+            echo "Permissions set successfully"
+          ENDSSH
+
+      - name: Restart Apache
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "sudo /opt/bitnami/ctlscript.sh restart apache"
+
+      - name: Cleanup temporary files
+        if: always()
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "rm -f /tmp/deploy.tar.gz"
+
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Wait for server to stabilize
+        run: sleep 10
+
+      - name: Test API health
+        run: |
+          echo "Testing API endpoint..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://${{ secrets.LIGHTSAIL_HOST }}/api/events)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Error: API returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          # Check if response contains success field
+          if echo "$BODY" | grep -q '"success":true'; then
+            echo "✅ API health check passed"
+          else
+            echo "❌ API health check failed"
+            exit 1
+          fi
+
+      - name: Check Apache logs for errors
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "sudo tail -50 /opt/bitnami/apache/logs/jaws-error.log"
+
+  post-deployment-notification:
+    name: Post-Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy, verify-deployment]
+    if: always()
+
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Migrations Run:** ${{ inputs.run_migrations }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup Created:** ${{ !inputs.skip_backup }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed By:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.verify-deployment.result }}" == "success" ]; then
+            echo "✅ **Deployment Status:** SUCCESS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment Status:** FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Verify critical functionality (login, availability, assignments)" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Check debug page: https://${{ secrets.LIGHTSAIL_HOST }}/app/debug.html" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Monitor Apache logs for errors" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Test email notifications (if applicable)" >> $GITHUB_STEP_SUMMARY
