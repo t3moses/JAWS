@@ -28,7 +28,8 @@ return [
         ],
         'production' => [
             'adapter' => 'sqlite',
-            'name' => getenv('DB_PATH') ?: './database/jaws.db'
+            'name' => getenv('DB_PATH') ?: './database/jaws',
+            'suffix' => '.db'
         ]
     ],
     'version_order' => 'creation'
