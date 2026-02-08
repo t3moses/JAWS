@@ -6,6 +6,7 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateUser } from '../userService.js';
 import { hashPassword } from '../authService.js';
+import { validatePassword, getPasswordRequirementsHTML } from '../passwordValidator.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -83,6 +84,7 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
+            <small>Password must contain:${getPasswordRequirementsHTML()}</small>
         </div>
 
         <div class="form-group">
@@ -174,6 +176,7 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
+            <small>Password must contain:${getPasswordRequirementsHTML()}</small>
         </div>
 
         <div class="form-group">
@@ -221,8 +224,10 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
             return;
         }
 
-        if (newPassword.length < 8) {
-            errorMessage.textContent = 'New password must be at least 8 characters long.';
+        // Validate password requirements
+        const validation = validatePassword(newPassword);
+        if (!validation.isValid) {
+            errorMessage.textContent = validation.error;
             errorMessage.style.display = 'block';
             return;
         }
