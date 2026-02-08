@@ -4,6 +4,7 @@
  */
 
 import { isSignedIn, register } from '../authService.js';
+import { validatePassword } from '../passwordValidator.js';
 
 // Check if already signed in
 if (await isSignedIn()) {
@@ -23,25 +24,10 @@ document.querySelector('form').addEventListener('submit', async function(e) {
         return;
     }
 
-    // Validate password length
-    if (password.length < 8) {
-        alert('Password must be at least 8 characters long.');
-        return;
-    }
-
     // Validate password requirements
-    if (!/[A-Z]/.test(password)) {
-        alert('Password must contain at least one uppercase letter (A-Z).');
-        return;
-    }
-
-    if (!/[a-z]/.test(password)) {
-        alert('Password must contain at least one lowercase letter (a-z).');
-        return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-        alert('Password must contain at least one number (0-9).');
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+        alert(validation.error);
         return;
     }
 

@@ -6,6 +6,7 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateUser } from '../userService.js';
 import { hashPassword } from '../authService.js';
+import { validatePassword } from '../passwordValidator.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -84,7 +85,7 @@ if (user.accountType === 'crew') {
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
             <small>Password must contain:
-                <ul style="margin-top: 0.5rem; margin-left: 1.5rem; line-height: 1.8;">
+                <ul class="password-requirements-list">
                     <li>At least 8 characters</li>
                     <li>One uppercase letter (A-Z)</li>
                     <li>One lowercase letter (a-z)</li>
@@ -183,7 +184,7 @@ if (user.accountType === 'crew') {
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
             <small>Password must contain:
-                <ul style="margin-top: 0.5rem; margin-left: 1.5rem; line-height: 1.8;">
+                <ul class="password-requirements-list">
                     <li>At least 8 characters</li>
                     <li>One uppercase letter (A-Z)</li>
                     <li>One lowercase letter (a-z)</li>
@@ -237,27 +238,10 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
             return;
         }
 
-        if (newPassword.length < 8) {
-            errorMessage.textContent = 'New password must be at least 8 characters long.';
-            errorMessage.style.display = 'block';
-            return;
-        }
-
         // Validate password requirements
-        if (!/[A-Z]/.test(newPassword)) {
-            errorMessage.textContent = 'New password must contain at least one uppercase letter (A-Z).';
-            errorMessage.style.display = 'block';
-            return;
-        }
-
-        if (!/[a-z]/.test(newPassword)) {
-            errorMessage.textContent = 'New password must contain at least one lowercase letter (a-z).';
-            errorMessage.style.display = 'block';
-            return;
-        }
-
-        if (!/[0-9]/.test(newPassword)) {
-            errorMessage.textContent = 'New password must contain at least one number (0-9).';
+        const validation = validatePassword(newPassword);
+        if (!validation.isValid) {
+            errorMessage.textContent = validation.error;
             errorMessage.style.display = 'block';
             return;
         }

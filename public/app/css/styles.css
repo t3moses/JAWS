@@ -578,6 +578,12 @@ main {
   line-height: 1.6;
 }
 
+.password-requirements-list {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+  line-height: 1.8;
+}
+
 /* Radio Options */
 .radio-group {
   display: flex;
