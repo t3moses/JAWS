@@ -228,7 +228,7 @@ jobs:
       - name: Test API health
         run: |
           echo "Testing API endpoint..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" https://${{ secrets.LIGHTSAIL_HOST }}/api/events)
+          RESPONSE=$(curl -s -w "\n%{http_code}" http://${{ secrets.LIGHTSAIL_HOST }}/api/events)
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | head -n-1)
 
