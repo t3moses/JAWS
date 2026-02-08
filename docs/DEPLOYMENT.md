@@ -31,59 +31,71 @@ Before deploying to production, verify the following:
 
 ## AWS Lightsail Deployment
 
-JAWS is deployed on AWS Lightsail with a Bitnami LAMP stack.
+JAWS is deployed on AWS Lightsail with a Bitnami LAMP stack. This guide follows [Bitnami's best practices for custom PHP applications](https://docs.bitnami.com/general/infrastructure/lamp/administration/create-custom-application-php/).
 
 ### Prerequisites
 
-- **AWS Lightsail instance running** (current: `16.52.222.15`)
-- **SSH key file**: `LightsailDefaultKey-ca-central-1.pem`
+- **AWS Lightsail instance running**
+- **SSH key file**: e.g., `LightsailDefaultKey-ca-central-1.pem`
 - **SSH access** to the server
 - **SFTP client** for file uploads
-- **Apache/Bitnami stack** installed on Lightsail
+- **Bitnami LAMP stack** installed on Lightsail
 
 ### Initial Setup (One-Time Configuration)
 
 These steps are only needed when setting up a new server.
 
-#### 1. Configure Apache
+#### 1. Create Application Directory
 
-Ensure Apache is configured to route requests to `public/index.php`.
+Following Bitnami conventions, create the application directory at `/opt/bitnami/jaws`:
 
-**File:** `/opt/bitnami/apache/conf/vhosts/myapp-vhost.conf`
+```bash
+sudo mkdir -p /opt/bitnami/jaws
+sudo chown -R bitnami:daemon /opt/bitnami/jaws
+sudo chmod -R g+w /opt/bitnami/jaws
+```
+
+#### 2. Configure Apache Virtual Host
+
+Create Apache virtual host configuration to route requests to the JAWS application.
+
+**File:** `/opt/bitnami/apache/conf/vhosts/jaws-vhost.conf`
 
 ```apache
-<VirtualHost *:80>
+<VirtualHost 127.0.0.1:80 _default_:80>
     ServerName your-domain.com
-    DocumentRoot /var/www/html/public
+    ServerAlias *
+    DocumentRoot /opt/bitnami/jaws/public
 
-    <Directory /var/www/html/public>
+    <Directory /opt/bitnami/jaws/public>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
     </Directory>
 
-    ErrorLog /opt/bitnami/apache/logs/error_log
-    CustomLog /opt/bitnami/apache/logs/access_log combined
+    ErrorLog /opt/bitnami/apache/logs/jaws-error.log
+    CustomLog /opt/bitnami/apache/logs/jaws-access.log combined
 </VirtualHost>
 ```
 
-**Create .htaccess file:**
+**Important Configuration Notes:**
 
-**File:** `/var/www/html/public/.htaccess`
+- `AllowOverride All` is **required** for `.htaccess` support. See [Bitnami's .htaccess documentation](https://docs.bitnami.com/general/infrastructure/lamp/administration/use-htaccess/) for details.
+- The `.htaccess` file in the `public/` directory contains **critical Authorization header forwarding** for JWT authentication:
+  ```apache
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  ```
+  Without this directive, JWT authentication will fail in production.
 
-```apache
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
-```
+> **Best Practice:** Bitnami recommends consolidating `.htaccess` directives into the virtual host configuration for better security and performance. However, JAWS uses `.htaccess` for deployment flexibility. For stable production environments, consider migrating rules to `/opt/bitnami/apache/conf/vhosts/jaws-htaccess.conf` and setting `AllowOverride None`.
 
 Restart Apache:
 ```bash
 sudo /opt/bitnami/ctlscript.sh restart apache
 ```
 
-#### 2. Install Composer
+#### 3. Install Composer (if not already installed)
 
 ```bash
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
@@ -92,19 +104,16 @@ php -r "unlink('composer-setup.php');"
 sudo mv composer.phar /usr/local/bin/composer
 ```
 
-#### 3. Create Database Directory
-
+Verify installation:
 ```bash
-sudo mkdir -p /var/www/html/database
-sudo chown bitnami:www-data /var/www/html/database
-sudo chmod 775 /var/www/html/database
+composer --version
 ```
 
 ### Deployment Steps
 
 Follow these steps for each deployment.
 
-#### 1. Add SSH Key to Agent
+#### Step 1: Add SSH Key to Agent
 
 ```bash
 ssh-add LightsailDefaultKey-ca-central-1.pem
@@ -112,28 +121,30 @@ ssh-add LightsailDefaultKey-ca-central-1.pem
 
 On Windows, use PuTTY Pageant or Windows SSH Agent.
 
-#### 2. Backup Production Database
+#### Step 2: Backup Production Database
 
 **Always backup before deploying:**
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html/database
+cd /opt/bitnami/jaws/database
 sudo cp jaws.db jaws.backup.$(date +%Y%m%d_%H%M%S).db
 ls -lh jaws.backup.*
 exit
 ```
 
-Verify the backup was created successfully.
+Verify the backup was created successfully before proceeding.
 
-#### 3. Upload Files via SFTP
+#### Step 3: Upload Files via SFTP
+
+Upload the following files and directories to `/opt/bitnami/jaws`:
 
 ```bash
 sftp bitnami@16.52.222.15
-cd /./var/www/html
+cd /./opt/bitnami/jaws
 
-# Upload main entry point
-put public/index.php
+# Upload public folder (all files)
+put -r public
 
 # Upload source code
 put -r src
@@ -141,41 +152,78 @@ put -r src
 # Upload configuration
 put -r config
 
-# Upload dependencies (if changed)
+# Upload dependency manifests
 put composer.json
 put composer.lock
 
-# Upload database migrations (if new migrations)
+# Upload migration configuration
+put phinx.php
+
+# Upload database migrations (required for Phinx)
+mkdir -p database/migrations
 put -r database/migrations
+
+# Optional: Upload database seeds (only needed for test environments)
+# mkdir -p database/seeds
+# put -r database/seeds
 
 bye
 ```
 
-**Tip:** To upload specific files only:
+**Files/Folders Uploaded:**
+
+| Path | Contents | Required? |
+|------|----------|-----------|
+| `public/` | index.php, .htaccess, debug_jwt.php, app/, debug.html | Yes |
+| `src/` | Application source code (Domain, Application, Infrastructure, Presentation) | Yes |
+| `config/` | config.php, container.php, routes.php | Yes |
+| `composer.json` | Dependency manifest | Yes |
+| `composer.lock` | Locked dependency versions | Yes |
+| `phinx.php` | Migration configuration | Yes |
+| `database/migrations/` | Phinx migration files | Yes |
+| `database/seeds/` | Test data seeders | Optional (test only) |
+
+**Tip:** To upload specific files only (for hotfixes):
 ```bash
-put -r src/Domain/Service/SelectionService.php src/Domain/Service/
+put src/Domain/Service/SelectionService.php src/Domain/Service/SelectionService.php
 ```
 
-#### 4. Install/Update Dependencies
+#### Step 4: Set Initial File Permissions
 
-SSH into the server and install Composer dependencies:
+SSH into the server and set ownership **before** running Composer:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 
-# Install dependencies (production mode)
-composer install --no-dev --optimize-autoloader
-
-# If composer.lock changed, this will update dependencies
-# If not, it will verify existing dependencies
+# Set ownership following Bitnami conventions
+sudo chown -R bitnami:daemon /opt/bitnami/jaws
+sudo chmod -R g+w /opt/bitnami/jaws
 ```
 
-**Flags explained:**
-- `--no-dev`: Excludes development dependencies (PHPUnit, Phinx, etc.)
-- `--optimize-autoloader`: Generates optimized autoloader for production
+This ensures Composer can write to the `vendor/` directory.
 
-#### 5. Run Database Migrations (if applicable)
+#### Step 5: Install Dependencies
+
+**Critical:** Do **NOT** use the `--no-dev` flag:
+
+```bash
+cd /opt/bitnami/jaws
+composer install --optimize-autoloader
+```
+
+**Why no `--no-dev` flag?**
+
+The `--no-dev` flag excludes development dependencies, but **Phinx** (the database migration tool) is listed in `require-dev`. Without Phinx, database migrations cannot be run in production. While this increases deployment size slightly, it's necessary for database management.
+
+**Alternative for maximum security:** Run migrations, then remove development dependencies:
+```bash
+composer install --optimize-autoloader
+vendor/bin/phinx migrate --environment=production
+composer install --no-dev --optimize-autoloader
+```
+
+#### Step 6: Run Database Migrations (if applicable)
 
 If you have new migrations:
 
@@ -186,50 +234,68 @@ vendor/bin/phinx status --environment=production
 # Run pending migrations
 vendor/bin/phinx migrate --environment=production
 
-# Verify migrations applied
+# Verify migrations applied successfully
 vendor/bin/phinx status --environment=production
 ```
 
-**Important:** Test migrations locally first!
+**Important:** Always test migrations locally first!
 
-#### 6. Set File Permissions
+#### Step 7: Set Final File Permissions
+
+After Composer and migrations complete, set final permissions:
 
 ```bash
-# Set ownership for PHP files
-sudo chgrp -R www-data src config public
-sudo chmod -R 750 src config
-sudo chmod 644 public/index.php
-sudo chmod 644 public/.htaccess
+# Ensure proper ownership (bitnami:daemon per Bitnami convention)
+sudo chown -R bitnami:daemon /opt/bitnami/jaws
 
-# Set database permissions (if database uploaded)
-sudo chgrp www-data database/jaws.db
-sudo chmod 664 database/jaws.db
-sudo chmod 775 database
+# Application code - standard permissions
+sudo find /opt/bitnami/jaws/src -type d -exec chmod 755 {} \;
+sudo find /opt/bitnami/jaws/src -type f -exec chmod 644 {} \;
+sudo find /opt/bitnami/jaws/config -type d -exec chmod 755 {} \;
+sudo find /opt/bitnami/jaws/config -type f -exec chmod 644 {} \;
+
+# Public files - readable by web server
+sudo find /opt/bitnami/jaws/public -type d -exec chmod 755 {} \;
+sudo find /opt/bitnami/jaws/public -type f -exec chmod 644 {} \;
+
+# Database - read/write for Apache (daemon group)
+sudo chmod 775 /opt/bitnami/jaws/database
+sudo chmod 664 /opt/bitnami/jaws/database/jaws.db
 ```
 
-**Why these permissions:**
-- `750` for directories: Owner can read/write/execute, group can read/execute
-- `644` for PHP files: Owner can read/write, group/others can read
-- `664` for database: Owner and group can read/write (Apache needs write access)
-- `775` for database directory: Apache needs to create journal files
+**Permission Reference:**
 
-#### 7. Verify Environment Configuration
+| Item | Permission | Octal | Reason |
+|------|------------|-------|--------|
+| Database directory | `drwxrwxr-x` | 775 | Apache daemon needs to create WAL/SHM journal files |
+| Database file | `-rw-rw-r--` | 664 | Apache daemon needs write access for SQLite |
+| Standard directories | `drwxr-xr-x` | 755 | Owner full access, group/world read/execute |
+| Standard files | `-rw-r--r--` | 644 | Owner read/write, group/world read |
+
+**Ownership:** `bitnami:daemon` follows Bitnami conventions, where `daemon` is the group Apache runs under.
+
+#### Step 8: Verify Environment Configuration
 
 Ensure `.env` file exists with production configuration:
 
 ```bash
-cat /var/www/html/.env
+cat /opt/bitnami/jaws/.env
 ```
 
 If `.env` doesn't exist or needs updates, see [Environment Configuration](#environment-configuration) section.
 
-#### 8. Restart Apache
+**Critical environment variables:**
+- `DB_PATH=/opt/bitnami/jaws/database/jaws.db`
+- `JWT_SECRET` (must be at least 32 characters)
+- `APP_DEBUG=false` (never true in production)
+
+#### Step 9: Restart Apache
 
 ```bash
 sudo /opt/bitnami/ctlscript.sh restart apache
 ```
 
-#### 9. Verify Deployment
+#### Step 10: Verify Deployment
 
 Test the API endpoint:
 
@@ -247,18 +313,29 @@ Expected response:
 }
 ```
 
-If you get an error, check logs:
+**Use the Debug Page for System Diagnostics:**
+
+Visit `https://your-domain.com/app/debug.html` to check:
+- Authentication token status
+- Current environment name
+- API base URL
+- Live connection status test
+
+This page is especially useful for troubleshooting authentication issues after deployment.
+
+If you get an error, check Apache logs:
 ```bash
-sudo tail -f /opt/bitnami/apache/logs/error_log
+sudo tail -f /opt/bitnami/apache/logs/jaws-error.log
 ```
 
-#### 10. Test Critical Functionality
+#### Step 11: Test Critical Functionality
 
-- [ ] Login works
+- [ ] Login works (test at `/app/account.html`)
 - [ ] Availability updates work
 - [ ] Assignments retrieved correctly
 - [ ] Email notifications send (test with admin account)
 - [ ] Frontend loads correctly
+- [ ] Debug page shows correct system status
 
 ---
 
@@ -272,7 +349,7 @@ SSH into server:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 nano .env
 ```
 
@@ -280,7 +357,7 @@ Add the following configuration:
 
 ```bash
 # Database
-DB_PATH=/var/www/html/database/jaws.db
+DB_PATH=/opt/bitnami/jaws/database/jaws.db
 
 # JWT Authentication (REQUIRED - CHANGE THIS!)
 JWT_SECRET=your-production-secret-key-at-least-32-characters-long-must-be-different-from-dev
@@ -323,16 +400,28 @@ Save and exit (Ctrl+X, Y, Enter).
 3. **Database Permissions**:
    - Database file must not be world-readable
    - Use `chmod 664` (owner + group only)
+   - Ownership must be `bitnami:daemon` for Apache access
 
 4. **File Permissions**:
    - PHP files should be `644` (not executable)
-   - Directories should be `750` (not world-readable)
+   - Directories should be `755` (standard permissions)
+   - Database directory requires `775` for SQLite WAL mode
    - Never use `777` permissions
 
 5. **Environment File**:
    - `.env` should not be in version control
-   - Should be readable only by `bitnami` user and `www-data` group
+   - Should be readable only by `bitnami` user and `daemon` group
    - Use `chmod 640 .env`
+
+6. **Development Dependencies in Production**:
+   - JAWS includes Phinx (dev dependency) in production for database migrations
+   - This is a trade-off: migration capability vs. minimal attack surface
+   - **Alternative for maximum security:**
+     - Deploy with full dependencies
+     - Run migrations
+     - Remove dev dependencies: `composer install --no-dev --optimize-autoloader`
+     - Note: Future migrations will require re-installing dev dependencies
+   - **Future consideration:** Use a dedicated migration deployment pipeline that doesn't require Phinx in production
 
 ---
 
@@ -344,7 +433,7 @@ Always backup before running migrations:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 
 # 1. Backup database
 sudo cp database/jaws.db database/jaws.backup.$(date +%Y%m%d_%H%M%S).db
@@ -375,13 +464,13 @@ Add the following line:
 
 ```bash
 # Daily backup at 2 AM
-0 2 * * * /usr/bin/cp /var/www/html/database/jaws.db /var/www/html/database/backups/jaws.backup.$(date +\%Y\%m\%d).db
+0 2 * * * /usr/bin/cp /opt/bitnami/jaws/database/jaws.db /opt/bitnami/jaws/database/backups/jaws.backup.$(date +\%Y\%m\%d).db
 ```
 
 Create backups directory:
 
 ```bash
-mkdir -p /var/www/html/database/backups
+mkdir -p /opt/bitnami/jaws/database/backups
 ```
 
 #### Manual Backups
@@ -389,7 +478,7 @@ mkdir -p /var/www/html/database/backups
 **Before deployment:**
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html/database
+cd /opt/bitnami/jaws/database
 sudo cp jaws.db jaws.backup.$(date +%Y%m%d_%H%M%S).db
 ```
 
@@ -413,7 +502,7 @@ bye
 **Cleanup old backups:**
 ```bash
 # Delete backups older than 7 days
-find /var/www/html/database/backups -name "jaws.backup.*.db" -mtime +7 -delete
+find /opt/bitnami/jaws/database/backups -name "jaws.backup.*.db" -mtime +7 -delete
 ```
 
 ### Restore Procedures
@@ -422,7 +511,7 @@ If you need to restore from a backup:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html/database
+cd /opt/bitnami/jaws/database
 
 # List available backups
 ls -lh jaws.backup.*
@@ -431,7 +520,7 @@ ls -lh jaws.backup.*
 sudo cp jaws.backup.YYYYMMDD_HHMMSS.db jaws.db
 
 # Set permissions
-sudo chgrp www-data jaws.db
+sudo chown bitnami:daemon jaws.db
 sudo chmod 664 jaws.db
 
 # Restart Apache
@@ -444,7 +533,7 @@ sudo /opt/bitnami/ctlscript.sh restart apache
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html/database
+cd /opt/bitnami/jaws/database
 
 # Query database
 sqlite3 jaws.db "SELECT * FROM boats LIMIT 5;"
@@ -478,7 +567,7 @@ sudo grep -i error /opt/bitnami/apache/logs/error_log | tail -20
 ### Check Database Size
 
 ```bash
-ls -lh /var/www/html/database/jaws.db
+ls -lh /opt/bitnami/jaws/database/jaws.db
 ```
 
 Monitor database growth over time to identify potential issues.
@@ -511,7 +600,7 @@ free -h
 
 **Check Disk Space:**
 ```bash
-df -h /var/www/html
+df -h /opt/bitnami/jaws
 ```
 
 ### Setting Up Alerts
@@ -531,7 +620,7 @@ if [ "$API_STATUS" != "200" ]; then
 fi
 
 # Check disk space
-DISK_USAGE=$(df -h /var/www/html | awk 'NR==2 {print $5}' | sed 's/%//')
+DISK_USAGE=$(df -h /opt/bitnami/jaws | awk 'NR==2 {print $5}' | sed 's/%//')
 
 if [ "$DISK_USAGE" -gt 80 ]; then
     echo "Disk usage is at ${DISK_USAGE}%!" | mail -s "JAWS Disk Alert" admin@example.com
@@ -564,7 +653,7 @@ If the issue is in the code (not database):
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 
 # Option 1: Checkout previous git commit (if using git on server)
 git checkout <previous-commit-hash>
@@ -585,7 +674,7 @@ If a migration caused issues:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 
 # Option 1: Rollback last migration via Phinx
 vendor/bin/phinx rollback --environment=production
@@ -593,7 +682,7 @@ vendor/bin/phinx rollback --environment=production
 # Option 2: Restore from backup
 cd database
 sudo cp jaws.backup.YYYYMMDD_HHMMSS.db jaws.db
-sudo chgrp www-data jaws.db
+sudo chown bitnami:daemon jaws.db
 sudo chmod 664 jaws.db
 
 # Restart Apache
@@ -606,11 +695,11 @@ If both code and database need to be rolled back:
 
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
+cd /opt/bitnami/jaws
 
 # 1. Restore database
 sudo cp database/jaws.backup.YYYYMMDD_HHMMSS.db database/jaws.db
-sudo chgrp www-data database/jaws.db
+sudo chown bitnami:daemon database/jaws.db
 sudo chmod 664 database/jaws.db
 
 # 2. Restore code (via git or SFTP)
@@ -662,8 +751,8 @@ After rolling back:
 
 3. Verify file permissions:
    ```bash
-   ls -la /var/www/html/src
-   ls -la /var/www/html/database
+   ls -la /opt/bitnami/jaws/src
+   ls -la /opt/bitnami/jaws/database
    ```
 
 4. Verify dependencies installed:
@@ -679,7 +768,7 @@ After rolling back:
 
 1. Check for open connections:
    ```bash
-   fuser /var/www/html/database/jaws.db
+   fuser /opt/bitnami/jaws/database/jaws.db
    ```
 
 2. Restart Apache to clear connections:
@@ -689,7 +778,7 @@ After rolling back:
 
 3. If problem persists, verify WAL mode is enabled:
    ```bash
-   sqlite3 /var/www/html/database/jaws.db "PRAGMA journal_mode;"
+   sqlite3 /opt/bitnami/jaws/database/jaws.db "PRAGMA journal_mode;"
    ```
    Should return: `wal`
 
@@ -700,10 +789,10 @@ After rolling back:
 **Solution:**
 
 ```bash
-sudo chgrp www-data /var/www/html/database/jaws.db
-sudo chmod 664 /var/www/html/database/jaws.db
-sudo chgrp www-data /var/www/html/database
-sudo chmod 775 /var/www/html/database
+sudo chown bitnami:daemon /opt/bitnami/jaws/database/jaws.db
+sudo chmod 664 /opt/bitnami/jaws/database/jaws.db
+sudo chown bitnami:daemon /opt/bitnami/jaws/database
+sudo chmod 775 /opt/bitnami/jaws/database
 ```
 
 #### Issue: "JWT token invalid" after deployment
@@ -716,6 +805,27 @@ sudo chmod 775 /var/www/html/database
 2. If it changed, all users need to login again to get new tokens
 3. Clear any cached tokens on frontend
 
+#### Issue: "Authentication not working after deployment"
+
+**Cause:** Authorization header not being forwarded to PHP, or JWT configuration issues
+
+**Solution:**
+
+1. Visit `https://your-domain.com/app/debug.html` to diagnose the issue
+2. Check **"Token Present"** status - should show if authentication token exists
+3. Check **"API Connection"** status - tests live connectivity to the API
+4. Verify Authorization header forwarding in `.htaccess`:
+   ```apache
+   RewriteCond %{HTTP:Authorization} .
+   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+   ```
+5. If the header forwarding rule is missing, JWT authentication will fail silently
+6. Ensure `AllowOverride All` is set in the Apache virtual host configuration
+7. Restart Apache after any `.htaccess` changes:
+   ```bash
+   sudo /opt/bitnami/ctlscript.sh restart apache
+   ```
+
 #### Issue: Email notifications not sending
 
 **Possible Causes:**
@@ -727,7 +837,7 @@ sudo chmod 775 /var/www/html/database
 
 1. Check SES credentials in `.env`:
    ```bash
-   cat /var/www/html/.env | grep SES
+   cat /opt/bitnami/jaws/.env | grep SES
    ```
 
 2. Test sending email via AWS CLI:
@@ -750,12 +860,12 @@ sudo chmod 775 /var/www/html/database
 
 1. Verify Apache virtual host configuration:
    ```bash
-   sudo cat /opt/bitnami/apache/conf/vhosts/myapp-vhost.conf
+   sudo cat /opt/bitnami/apache/conf/vhosts/jaws-vhost.conf
    ```
 
 2. Verify .htaccess exists:
    ```bash
-   cat /var/www/html/public/.htaccess
+   cat /opt/bitnami/jaws/public/.htaccess
    ```
 
 3. Test Apache rewrite module:

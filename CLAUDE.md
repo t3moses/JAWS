@@ -98,26 +98,32 @@ php -S localhost:8000 -t public &
 ```
 
 ### Deploy to AWS Lightsail
+
+**Note:** See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment guide.
+
 Upload files via SFTP:
 ```bash
 ssh-add LightsailDefaultKey-ca-central-1.pem
 sftp bitnami@16.52.222.15
-cd /./var/www/html
-put public/index.php
+cd /./opt/bitnami/jaws
+put -r public
 put -r src
 put -r config
-put database/jaws.db
+put composer.json
+put composer.lock
+put phinx.php
+put -r database/migrations
 bye
 ```
 
 Then set permissions:
 ```bash
 ssh bitnami@16.52.222.15
-cd /var/www/html
-sudo chgrp -R www-data src config database
-sudo chmod -R 750 src config
-sudo chmod 664 database/jaws.db
+cd /opt/bitnami/jaws
+sudo chown -R bitnami:daemon /opt/bitnami/jaws
+composer install --optimize-autoloader
 sudo chmod 775 database
+sudo chmod 664 database/jaws.db
 sudo /opt/bitnami/ctlscript.sh restart apache
 ```
 
@@ -146,7 +152,7 @@ sqlite3 database/jaws.db "SELECT * FROM boats LIMIT 5;"
 ```bash
 ssh-add LightsailDefaultKey-ca-central-1.pem
 sftp bitnami@16.52.222.15
-cd var/www/html/database
+cd opt/bitnami/jaws/database
 get jaws.db
 get jaws.db.backup.*
 bye
