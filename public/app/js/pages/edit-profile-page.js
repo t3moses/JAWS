@@ -83,6 +83,14 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
+            <small>Password must contain:
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem; line-height: 1.8;">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase letter (A-Z)</li>
+                    <li>One lowercase letter (a-z)</li>
+                    <li>One number (0-9)</li>
+                </ul>
+            </small>
         </div>
 
         <div class="form-group">
@@ -174,6 +182,14 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
+            <small>Password must contain:
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem; line-height: 1.8;">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase letter (A-Z)</li>
+                    <li>One lowercase letter (a-z)</li>
+                    <li>One number (0-9)</li>
+                </ul>
+            </small>
         </div>
 
         <div class="form-group">
@@ -223,6 +239,25 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
 
         if (newPassword.length < 8) {
             errorMessage.textContent = 'New password must be at least 8 characters long.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        // Validate password requirements
+        if (!/[A-Z]/.test(newPassword)) {
+            errorMessage.textContent = 'New password must contain at least one uppercase letter (A-Z).';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        if (!/[a-z]/.test(newPassword)) {
+            errorMessage.textContent = 'New password must contain at least one lowercase letter (a-z).';
+            errorMessage.style.display = 'block';
+            return;
+        }
+
+        if (!/[0-9]/.test(newPassword)) {
+            errorMessage.textContent = 'New password must contain at least one number (0-9).';
             errorMessage.style.display = 'block';
             return;
         }

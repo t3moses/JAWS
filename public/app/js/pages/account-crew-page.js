@@ -29,6 +29,22 @@ document.querySelector('form').addEventListener('submit', async function(e) {
         return;
     }
 
+    // Validate password requirements
+    if (!/[A-Z]/.test(password)) {
+        alert('Password must contain at least one uppercase letter (A-Z).');
+        return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+        alert('Password must contain at least one lowercase letter (a-z).');
+        return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+        alert('Password must contain at least one number (0-9).');
+        return;
+    }
+
     // Create user data object
     const userData = {
         accountType: 'crew',
