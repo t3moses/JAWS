@@ -6,7 +6,7 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateUser } from '../userService.js';
 import { hashPassword } from '../authService.js';
-import { validatePassword } from '../passwordValidator.js';
+import { validatePassword, getPasswordRequirementsHTML } from '../passwordValidator.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -84,14 +84,7 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
-            <small>Password must contain:
-                <ul class="password-requirements-list">
-                    <li>At least 8 characters</li>
-                    <li>One uppercase letter (A-Z)</li>
-                    <li>One lowercase letter (a-z)</li>
-                    <li>One number (0-9)</li>
-                </ul>
-            </small>
+            <small>Password must contain:${getPasswordRequirementsHTML()}</small>
         </div>
 
         <div class="form-group">
@@ -183,14 +176,7 @@ if (user.accountType === 'crew') {
         <div class="form-group">
             <label for="new_password">New Password</label>
             <input type="password" id="new_password" name="new_password" minlength="8" placeholder="At least 8 characters">
-            <small>Password must contain:
-                <ul class="password-requirements-list">
-                    <li>At least 8 characters</li>
-                    <li>One uppercase letter (A-Z)</li>
-                    <li>One lowercase letter (a-z)</li>
-                    <li>One number (0-9)</li>
-                </ul>
-            </small>
+            <small>Password must contain:${getPasswordRequirementsHTML()}</small>
         </div>
 
         <div class="form-group">
