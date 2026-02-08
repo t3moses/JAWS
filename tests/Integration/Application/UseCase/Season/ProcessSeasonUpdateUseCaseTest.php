@@ -16,8 +16,7 @@ use App\Domain\Service\RankingService;
 use App\Domain\Service\FlexService;
 use App\Domain\ValueObject\EventId;
 use App\Domain\Enum\AvailabilityStatus;
-use PHPUnit\Framework\TestCase;
-use PDO;
+use Tests\Integration\IntegrationTestCase;
 
 /**
  * Integration tests for ProcessSeasonUpdateUseCase
@@ -25,9 +24,8 @@ use PDO;
  * Tests the complete end-to-end pipeline from availability changes to flotilla generation:
  * - Load → Selection → Consolidation → Assignment → Serialize → Save
  */
-class ProcessSeasonUpdateUseCaseTest extends TestCase
+class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
 {
-    private PDO $pdo;
     private ProcessSeasonUpdateUseCase $useCase;
     private BoatRepository $boatRepository;
     private CrewRepository $crewRepository;
@@ -36,52 +34,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
 
     protected function setUp(): void
     {
-        // Create in-memory database
-        $this->pdo = new PDO('sqlite::memory:');
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Load complete schema from SQL file
-        $schemaFile = __DIR__ . '/../../../../fixtures/001_initial_schema.sql';
-        $schema = file_get_contents($schemaFile);
-
-        // Remove comments and parse SQL statements
-        $lines = explode("\n", $schema);
-        $cleanedSql = '';
-        foreach ($lines as $line) {
-            $line = trim($line);
-            // Skip empty lines and comment-only lines
-            if (empty($line) || str_starts_with($line, '--')) {
-                continue;
-            }
-            // Remove inline comments
-            $commentPos = strpos($line, '--');
-            if ($commentPos !== false) {
-                $line = substr($line, 0, $commentPos);
-            }
-            $cleanedSql .= $line . "\n";
-        }
-
-        // Execute each SQL statement
-        $statements = explode(';', $cleanedSql);
-        foreach ($statements as $statement) {
-            $statement = trim($statement);
-            if (!empty($statement)) {
-                try {
-                    $this->pdo->exec($statement);
-                } catch (\PDOException $e) {
-                    // Ignore errors for statements that might not work in test environment
-                }
-            }
-        }
-
-        Connection::setTestConnection($this->pdo);
-
-        // Initialize season config with simulated date (use INSERT OR REPLACE in case schema includes default)
-        // Use 2026 dates to ensure events are in the future relative to system time
-        $this->pdo->exec("
-            INSERT OR REPLACE INTO season_config (id, year, source, simulated_date, start_time, finish_time, blackout_from, blackout_to)
-            VALUES (1, 2026, 'simulated', '2026-05-01', '12:45:00', '17:00:00', '10:00:00', '18:00:00')
-        ");
+        parent::setUp();  // Runs migrations, initializes season config, sets test connection
 
         // Initialize repositories
         $this->boatRepository = new BoatRepository();
@@ -106,15 +59,10 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         );
     }
 
-    protected function tearDown(): void
-    {
-        Connection::resetTestConnection();
-    }
-
     /**
      * Helper: Create test boat
      */
-    private function createTestBoat(string $key, int $minBerths, int $maxBerths): int
+    protected function createTestBoat(string $key, int $minBerths, int $maxBerths): int
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name, owner_email,
@@ -128,7 +76,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     /**
      * Helper: Create test crew
      */
-    private function createTestCrew(string $key): int
+    protected function createTestCrew(string $key): int
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO crews (key, display_name, first_name, last_name, email, skill, membership_number, social_preference)
@@ -141,7 +89,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     /**
      * Helper: Create test event
      */
-    private function createTestEvent(string $eventId, string $date): void
+    protected function createTestEvent(string $eventId, string $date): void
     {
         $this->pdo->prepare("
             INSERT INTO events (event_id, event_date, start_time, finish_time, status)
@@ -152,7 +100,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     /**
      * Helper: Set boat availability
      */
-    private function setBoatAvailability(int $boatId, string $eventId, int $berths): void
+    protected function setBoatAvailability(int $boatId, string $eventId, int $berths): void
     {
         $this->pdo->prepare("
             INSERT INTO boat_availability (boat_id, event_id, berths)
@@ -163,7 +111,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     /**
      * Helper: Set crew availability
      */
-    private function setCrewAvailability(int $crewId, string $eventId, int $status): void
+    protected function setCrewAvailability(int $crewId, string $eventId, int $status): void
     {
         $this->pdo->prepare("
             INSERT INTO crew_availability (crew_id, event_id, status)
@@ -174,7 +122,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
     /**
      * Helper: Get crew availability status
      */
-    private function getCrewAvailabilityStatus(int $crewId, string $eventId): int
+    protected function getCrewAvailabilityStatus(int $crewId, string $eventId): int
     {
         $stmt = $this->pdo->prepare("
             SELECT status FROM crew_availability WHERE crew_id = ? AND event_id = ?

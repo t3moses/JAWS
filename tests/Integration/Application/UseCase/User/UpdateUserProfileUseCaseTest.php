@@ -15,12 +15,7 @@ use App\Infrastructure\Persistence\SQLite\BoatRepository;
 use App\Infrastructure\Persistence\SQLite\CrewRepository;
 use App\Infrastructure\Persistence\SQLite\UserRepository;
 use App\Infrastructure\Persistence\SQLite\Connection;
-use PDO;
-use PHPUnit\Framework\TestCase;
-use Phinx\Config\Config;
-use Phinx\Migration\Manager;
-use Symfony\Component\Console\Input\StringInput;
-use Symfony\Component\Console\Output\NullOutput;
+use Tests\Integration\IntegrationTestCase;
 
 /**
  * Integration tests for UpdateUserProfileUseCase
@@ -32,9 +27,8 @@ use Symfony\Component\Console\Output\NullOutput;
  * - Validation scenarios
  * - Edge cases and error conditions
  */
-class UpdateUserProfileUseCaseTest extends TestCase
+class UpdateUserProfileUseCaseTest extends IntegrationTestCase
 {
-    private PDO $pdo;
     private UpdateUserProfileUseCase $useCase;
     private GetUserProfileUseCase $getUserProfileUseCase;
     private UserRepository $userRepository;
@@ -44,18 +38,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
 
     protected function setUp(): void
     {
-        // Create in-memory database
-        $this->pdo = new PDO('sqlite::memory:');
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // Run Phinx migrations
-        $this->runPhinxMigrations();
-
-        // Initialize season config for compatibility
-        $this->initializeSeasonConfig();
-
-        // Set test connection
-        Connection::setTestConnection($this->pdo);
+        parent::setUp();  // Runs migrations, initializes season config, sets test connection
 
         // Initialize repositories
         $this->userRepository = new UserRepository();
@@ -81,89 +64,12 @@ class UpdateUserProfileUseCaseTest extends TestCase
         );
     }
 
-    protected function tearDown(): void
-    {
-        Connection::resetTestConnection();
-    }
-
     // ==================== HELPER METHODS ====================
-
-    /**
-     * Run Phinx migrations programmatically
-     */
-    private function runPhinxMigrations(): void
-    {
-        // Load schema from archived SQL files
-        // Note: Phinx programmatic usage proved complex for in-memory testing
-        // Using direct SQL execution as proven approach
-        $schemaFile = __DIR__ . '/../../../../fixtures/001_initial_schema.sql';
-        $userSchemaFile = __DIR__ . '/../../../../fixtures/002_add_users_authentication.sql';
-
-        foreach ([$schemaFile, $userSchemaFile] as $file) {
-            if (file_exists($file)) {
-                $schema = file_get_contents($file);
-                $this->executeSqlStatements($schema);
-            }
-        }
-    }
-
-    /**
-     * Execute SQL statements from a schema file
-     */
-    private function executeSqlStatements(string $sql): void
-    {
-        $lines = explode("\n", $sql);
-        $cleanedSql = '';
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || str_starts_with($line, '--')) {
-                continue;
-            }
-            $commentPos = strpos($line, '--');
-            if ($commentPos !== false) {
-                $line = substr($line, 0, $commentPos);
-            }
-            $cleanedSql .= $line . "\n";
-        }
-
-        $statements = explode(';', $cleanedSql);
-        foreach ($statements as $statement) {
-            $statement = trim($statement);
-            if (!empty($statement)) {
-                try {
-                    $this->pdo->exec($statement);
-                } catch (\PDOException $e) {
-                    // Ignore errors for test compatibility
-                }
-            }
-        }
-    }
-
-    /**
-     * Initialize season config
-     */
-    private function initializeSeasonConfig(): void
-    {
-        // Add last_logout column if it doesn't exist (from later migration)
-        try {
-            $this->pdo->exec("ALTER TABLE users ADD COLUMN last_logout DATETIME");
-        } catch (\PDOException $e) {
-            // Column already exists or other error - ignore
-        }
-
-        // Make display_name nullable for crews (from later migration)
-        // SQLite doesn't support ALTER COLUMN, so we skip this for tests
-
-        $this->pdo->exec("
-            INSERT OR REPLACE INTO season_config (id, year, source, simulated_date, start_time, finish_time, blackout_from, blackout_to)
-            VALUES (1, 2026, 'simulated', '2026-05-01', '12:45:00', '17:00:00', '10:00:00', '18:00:00')
-        ");
-    }
 
     /**
      * Create password service mock with default behavior
      */
-    private function createPasswordServiceMock(): PasswordServiceInterface
+    protected function createPasswordServiceMock(): PasswordServiceInterface
     {
         $mock = $this->createMock(PasswordServiceInterface::class);
 
@@ -184,26 +90,17 @@ class UpdateUserProfileUseCaseTest extends TestCase
     }
 
     /**
-     * Create test user with optional crew/boat profile
+     * Create test user with optional crew/boat profile (extends base class method)
      */
-    private function createTestUser(
+    protected function createTestUser(
         string $email = 'test@example.com',
         string $accountType = 'crew',
+        bool $isAdmin = false,  // Match base class signature
         bool $createCrewProfile = false,
         bool $createBoatProfile = false
     ): int {
-        // Insert user
-        $stmt = $this->pdo->prepare('
-            INSERT INTO users (email, password_hash, account_type, is_admin, created_at, updated_at)
-            VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ');
-        $stmt->execute([
-            $email,
-            password_hash('TestPass123', PASSWORD_BCRYPT),
-            $accountType
-        ]);
-
-        $userId = (int)$this->pdo->lastInsertId();
+        // Use base class to create user
+        $userId = parent::createTestUser($email, $accountType, $isAdmin);
 
         // Create crew profile if requested
         if ($createCrewProfile) {
@@ -221,7 +118,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     /**
      * Create crew profile for user
      */
-    private function createCrewProfileForUser(int $userId, array $overrides = []): int
+    protected function createCrewProfileForUser(int $userId, array $overrides = []): int
     {
         $key = $overrides['key'] ?? 'crew_' . $userId;
 
@@ -253,7 +150,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     /**
      * Create boat profile for user
      */
-    private function createBoatProfileForUser(int $userId, array $overrides = []): int
+    protected function createBoatProfileForUser(int $userId, array $overrides = []): int
     {
         $key = $overrides['key'] ?? 'boat_' . $userId;
 
@@ -285,7 +182,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     /**
      * Get user email from database
      */
-    private function getUserEmail(int $userId): string
+    protected function getUserEmail(int $userId): string
     {
         $stmt = $this->pdo->prepare('SELECT email FROM users WHERE id = ?');
         $stmt->execute([$userId]);
@@ -295,7 +192,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     /**
      * Get crew display name from database
      */
-    private function getCrewDisplayName(int $userId): ?string
+    protected function getCrewDisplayName(int $userId): ?string
     {
         $stmt = $this->pdo->prepare('SELECT display_name FROM crews WHERE user_id = ?');
         $stmt->execute([$userId]);
@@ -306,7 +203,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     /**
      * Get boat display name from database
      */
-    private function getBoatDisplayName(int $userId): ?string
+    protected function getBoatDisplayName(int $userId): ?string
     {
         $stmt = $this->pdo->prepare('SELECT display_name FROM boats WHERE owner_user_id = ?');
         $stmt->execute([$userId]);

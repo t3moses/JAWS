@@ -610,6 +610,8 @@ Test cases are documented in `/tests/Test cases.numbers` (Apple Numbers spreadsh
 **Test Structure:**
 - `tests/Unit/` - Unit tests (Domain layer, no external dependencies)
 - `tests/Integration/` - Integration tests (Infrastructure layer, in-memory SQLite)
+  - **Base Class:** `IntegrationTestCase` - Extends PHPUnit TestCase with Phinx migration support
+  - All integration tests extend this base class for automatic schema setup
 - `tests/Integration/Api/` - API tests (PHPUnit test suite)
   - `EventApiTest.php` - Event endpoint tests
   - `AuthApiTest.php` - Authentication endpoint tests
@@ -647,19 +649,35 @@ $this->assertEquals($expected, $result);
 
 **Integration Test Example (Infrastructure):**
 ```php
-// Test repository with in-memory database
-$pdo = new PDO('sqlite::memory:');
-$schema = file_get_contents(__DIR__ . '/../../database/migrations/001_initial_schema.sql');
-$pdo->exec($schema);
+use Tests\Integration\IntegrationTestCase;
 
-Connection::setTestConnection($pdo);
-$repository = new BoatRepository();
-$repository->save($boat);
-$found = $repository->findByKey($boat->getKey());
-$this->assertEquals($boat, $found);
+class MyIntegrationTest extends IntegrationTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();  // Runs all Phinx migrations + initializes season config
 
-Connection::resetTestConnection();
+        // Your test-specific setup
+        $this->repository = new BoatRepository();
+    }
+
+    public function testRepositorySave(): void
+    {
+        // $this->pdo is available (in-memory SQLite)
+        // All tables exist with latest schema from Phinx migrations
+        $boat = new Boat(...);
+        $this->repository->save($boat);
+        $found = $this->repository->findByKey($boat->getKey());
+        $this->assertEquals($boat, $found);
+    }
+}
 ```
+
+**Database Setup:**
+- Integration tests use Phinx migrations (NOT SQL fixtures)
+- Schema is always up-to-date with `database/migrations/*.php`
+- `tests/fixtures/*.sql` are archived (deprecated, see `tests/fixtures/ARCHIVED_README.md`)
+- Base class provides utilities: `createTestEvent()`, `createTestUser()`
 
 ## Dependencies
 

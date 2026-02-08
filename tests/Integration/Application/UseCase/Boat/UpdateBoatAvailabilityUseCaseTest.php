@@ -12,8 +12,7 @@ use App\Application\UseCase\Boat\UpdateBoatAvailabilityUseCase;
 use App\Infrastructure\Persistence\SQLite\BoatRepository;
 use App\Infrastructure\Persistence\SQLite\EventRepository;
 use App\Infrastructure\Persistence\SQLite\Connection;
-use PDO;
-use PHPUnit\Framework\TestCase;
+use Tests\Integration\IntegrationTestCase;
 
 /**
  * Integration tests for UpdateBoatAvailabilityUseCase
@@ -24,28 +23,18 @@ use PHPUnit\Framework\TestCase;
  * - Validation scenarios
  * - Edge cases and error conditions
  */
-class UpdateBoatAvailabilityUseCaseTest extends TestCase
+class UpdateBoatAvailabilityUseCaseTest extends IntegrationTestCase
 {
-    private PDO $pdo;
     private UpdateBoatAvailabilityUseCase $useCase;
     private BoatRepository $boatRepository;
     private EventRepository $eventRepository;
 
     protected function setUp(): void
     {
-        // Create in-memory database
-        $this->pdo = new PDO('sqlite::memory:');
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        parent::setUp();  // Runs migrations, initializes season config, sets test connection
 
-        // Run migrations
-        $this->runMigrations();
-
-        // Initialize season config and test data
-        $this->initializeSeasonConfig();
+        // Initialize test data (events)
         $this->initializeTestData();
-
-        // Set test connection
-        Connection::setTestConnection($this->pdo);
 
         // Initialize repositories
         $this->boatRepository = new BoatRepository();
@@ -58,76 +47,12 @@ class UpdateBoatAvailabilityUseCaseTest extends TestCase
         );
     }
 
-    protected function tearDown(): void
-    {
-        Connection::resetTestConnection();
-    }
-
     // ==================== HELPER METHODS ====================
-
-    /**
-     * Run database migrations
-     */
-    private function runMigrations(): void
-    {
-        $schemaFile = __DIR__ . '/../../../../fixtures/001_initial_schema.sql';
-        $userSchemaFile = __DIR__ . '/../../../../fixtures/002_add_users_authentication.sql';
-
-        foreach ([$schemaFile, $userSchemaFile] as $file) {
-            if (file_exists($file)) {
-                $schema = file_get_contents($file);
-                $this->executeSqlStatements($schema);
-            }
-        }
-    }
-
-    /**
-     * Execute SQL statements from a schema file
-     */
-    private function executeSqlStatements(string $sql): void
-    {
-        $lines = explode("\n", $sql);
-        $cleanedSql = '';
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line) || str_starts_with($line, '--')) {
-                continue;
-            }
-            $commentPos = strpos($line, '--');
-            if ($commentPos !== false) {
-                $line = substr($line, 0, $commentPos);
-            }
-            $cleanedSql .= $line . "\n";
-        }
-
-        $statements = explode(';', $cleanedSql);
-        foreach ($statements as $statement) {
-            $statement = trim($statement);
-            if (!empty($statement)) {
-                try {
-                    $this->pdo->exec($statement);
-                } catch (\PDOException $e) {
-                    // Ignore errors for test compatibility
-                }
-            }
-        }
-    }
-
-    /**
-     * Initialize season config
-     */
-    private function initializeSeasonConfig(): void
-    {
-        $this->pdo->exec("
-            INSERT OR REPLACE INTO season_config (id, year, source, simulated_date, start_time, finish_time, blackout_from, blackout_to)
-            VALUES (1, 2026, 'simulated', '2026-05-01', '12:45:00', '17:00:00', '10:00:00', '18:00:00')
-        ");
-    }
 
     /**
      * Initialize test data (events)
      */
-    private function initializeTestData(): void
+    protected function initializeTestData(): void
     {
         // Insert test events
         $events = [
@@ -146,27 +71,20 @@ class UpdateBoatAvailabilityUseCaseTest extends TestCase
     }
 
     /**
-     * Create test user
+     * Create test user with boat_owner account type (convenience wrapper)
      */
-    private function createTestUser(string $email = 'test@example.com'): int
-    {
-        $stmt = $this->pdo->prepare('
-            INSERT INTO users (email, password_hash, account_type, is_admin, created_at, updated_at)
-            VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ');
-        $stmt->execute([
-            $email,
-            password_hash('TestPass123', PASSWORD_BCRYPT),
-            'boat_owner'
-        ]);
-
-        return (int)$this->pdo->lastInsertId();
+    protected function createTestUser(
+        string $email = 'test@example.com',
+        string $accountType = 'boat_owner',  // Override default to boat_owner for boat tests
+        bool $isAdmin = false
+    ): int {
+        return parent::createTestUser($email, $accountType, $isAdmin);
     }
 
     /**
      * Create boat profile for user
      */
-    private function createBoatProfileForUser(int $userId, array $overrides = []): string
+    protected function createBoatProfileForUser(int $userId, array $overrides = []): string
     {
         $key = $overrides['key'] ?? 'boat_' . $userId;
 
@@ -198,7 +116,7 @@ class UpdateBoatAvailabilityUseCaseTest extends TestCase
     /**
      * Get boat availability from database
      */
-    private function getBoatAvailability(string $boatKey, string $eventId): ?int
+    protected function getBoatAvailability(string $boatKey, string $eventId): ?int
     {
         $stmt = $this->pdo->prepare('
             SELECT ba.berths FROM boat_availability ba
