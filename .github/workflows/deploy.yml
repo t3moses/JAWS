@@ -252,7 +252,7 @@ jobs:
         if: failure()
         run: |
           ssh -i ~/.ssh/lightsail_key ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
-            "sudo tail -50 /opt/bitnami/apache/logs/jaws-error.log"
+            "sudo tail -50 /opt/bitnami/apache/logs/error_log"
 
   post-deployment-notification:
     name: Post-Deployment Notification
