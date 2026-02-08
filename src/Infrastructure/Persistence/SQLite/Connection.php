@@ -94,7 +94,7 @@ class Connection
         }
 
         // Try environment variable first
-        $envPath = getenv('JAWS_DB_PATH');
+        $envPath = getenv('DB_PATH');
         if ($envPath !== false) {
             return $envPath;
         }
