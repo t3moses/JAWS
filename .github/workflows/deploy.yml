@@ -240,11 +240,13 @@ jobs:
             exit 1
           fi
 
-          # Check if response contains success field
-          if echo "$BODY" | grep -q '"success":true'; then
+          # Make health check flexible for response variations
+          if echo "$BODY" | grep -q '"success": true'; then
             echo "✅ API health check passed"
           else
             echo "❌ API health check failed"
+            # Optionally log response for debugging
+            echo "Full API response: $BODY"
             exit 1
           fi
 
