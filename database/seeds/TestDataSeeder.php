@@ -11,7 +11,7 @@ use Phinx\Seed\AbstractSeed;
  * This seeder runs non-interactively and is designed for CI/CD pipelines.
  *
  * Seeds:
- * - Events (5 upcoming events)
+ * - Events (18 events from the full 2026 season schedule)
  * - Users (4 test accounts: 2 boat owners, 2 crew members)
  * - Boats (2 boats linked to user accounts)
  * - Crews (2 crew members linked to user accounts)
@@ -49,8 +49,9 @@ class TestDataSeeder extends AbstractSeed
         $this->execute('DELETE FROM events');
 
         // ====================================================================
-        // Seed events
+        // Seed events - Full 2026 Season (18 events)
         // ====================================================================
+        // Based on: https://github.com/t3moses/JAWS/blob/5a739b53c4e9f7280bbab36b4d6841f6930c1c4b/Libraries/Season/data/config.json
         $events = [
             [
                 'event_id' => 'Fri May 29',
@@ -60,7 +61,7 @@ class TestDataSeeder extends AbstractSeed
                 'status' => 'upcoming'
             ],
             [
-                'event_id' => 'Fri Jun 05',
+                'event_id' => 'Fri Jun 5',
                 'event_date' => '2026-06-05',
                 'start_time' => '12:45:00',
                 'finish_time' => '17:00:00',
@@ -81,8 +82,99 @@ class TestDataSeeder extends AbstractSeed
                 'status' => 'upcoming'
             ],
             [
-                'event_id' => 'Fri Jun 26',
-                'event_date' => '2026-06-26',
+                'event_id' => 'Sat Jun 27',
+                'event_date' => '2026-06-27',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Jul 3',
+                'event_date' => '2026-07-03',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Jul 10',
+                'event_date' => '2026-07-10',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Sat Jul 18',
+                'event_date' => '2026-07-18',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Jul 24',
+                'event_date' => '2026-07-24',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Jul 31',
+                'event_date' => '2026-07-31',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Sat Aug 8',
+                'event_date' => '2026-08-08',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Aug 14',
+                'event_date' => '2026-08-14',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Aug 21',
+                'event_date' => '2026-08-21',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Sat Aug 29',
+                'event_date' => '2026-08-29',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Sep 4',
+                'event_date' => '2026-09-04',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Sep 11',
+                'event_date' => '2026-09-11',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Sep 18',
+                'event_date' => '2026-09-18',
+                'start_time' => '12:45:00',
+                'finish_time' => '17:00:00',
+                'status' => 'upcoming'
+            ],
+            [
+                'event_id' => 'Fri Sep 25',
+                'event_date' => '2026-09-25',
                 'start_time' => '12:45:00',
                 'finish_time' => '17:00:00',
                 'status' => 'upcoming'
