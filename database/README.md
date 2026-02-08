@@ -28,7 +28,7 @@ This will:
 3. Apply all pending migrations in order
 4. Set up the complete database schema
 
-**Note:** The legacy `init_database.php` script has been moved to `database/legacy/` for reference only. All new migrations use Phinx.
+**Note:** The legacy `init_database.php` script is maintained for backward compatibility. All new migrations should use Phinx.
 
 ## Database Structure
 
@@ -83,13 +83,6 @@ vendor/bin/phinx seed:run
 - `20260130000000_add_users_authentication.php` - User authentication system
 - `20260131000000_add_last_logout_column.php` - Last logout tracking
 - `20260201000000_make_display_name_nullable.php` - Allow nullable display names
-
-### Archive
-
-Legacy SQL migrations have been moved to `database/migrations/archive/` for reference. These are no longer used but preserved for historical context:
-
-- `archive/001_initial_schema.sql` - Original SQL schema
-- `archive/002_add_users_authentication.sql` - Original authentication SQL
 
 ### Writing Migrations
 
@@ -171,19 +164,6 @@ See [Phinx Seeding documentation](https://book.cakephp.org/phinx/0/en/seeding.ht
 ## Legacy CSV Migration
 
 **Note:** This script is for historical reference only. The project has been fully migrated to SQLite.
-
-To migrate data from legacy CSV files (if needed):
-
-```bash
-php database/migrate_from_csv.php
-```
-
-**Important:** Backup CSV files before migration:
-
-```bash
-cp Libraries/Fleet/data/fleet_data.csv Libraries/Fleet/data/fleet_data.backup.csv
-cp Libraries/Squad/data/squad_data.csv Libraries/Squad/data/squad_data.backup.csv
-```
 
 ## Development vs Production
 

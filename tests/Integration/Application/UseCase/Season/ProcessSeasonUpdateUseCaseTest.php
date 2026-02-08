@@ -41,7 +41,7 @@ class ProcessSeasonUpdateUseCaseTest extends TestCase
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Load complete schema from SQL file
-        $schemaFile = __DIR__ . '/../../../../../database/migrations/archive/001_initial_schema.sql';
+        $schemaFile = __DIR__ . '/../../../../fixtures/001_initial_schema.sql';
         $schema = file_get_contents($schemaFile);
 
         // Remove comments and parse SQL statements

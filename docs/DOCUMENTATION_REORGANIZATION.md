@@ -117,13 +117,6 @@ The JAWS documentation has been reorganized from a single 1968-line README.md in
 - Maintains technical specifications for AI consumption
 - Clarifies this is the "source of truth" for technical details but not primary docs for humans
 
-### Archived Documents
-
-#### **docs/archive/REFACTOR_HISTORY.md**
-- Formerly `docs/REFACTOR_CLEAN_ARCHITECTURE.md`
-- Preserved for historical reference
-- Still referenced from README.md in "Project History" section
-
 ## Navigation Flows
 
 ### For New Users

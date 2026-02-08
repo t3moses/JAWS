@@ -364,4 +364,4 @@ Refactored to Clean Architecture in 2026, preserving all original business logic
 
 ---
 
-**Project History:** The original codebase has been preserved in the `legacy/` folder. The refactoring to Clean Architecture maintained identical behavior for all critical algorithms (Selection, Assignment, Ranking) while modernizing the codebase structure. See `docs/archive/REFACTOR_HISTORY.md` for details.
+**Project History:** The original codebase has been preserved in the `legacy/` folder. The refactoring to Clean Architecture maintained identical behavior for all critical algorithms (Selection, Assignment, Ranking) while modernizing the codebase structure.

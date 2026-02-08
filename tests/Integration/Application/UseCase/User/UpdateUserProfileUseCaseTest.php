@@ -96,8 +96,8 @@ class UpdateUserProfileUseCaseTest extends TestCase
         // Load schema from archived SQL files
         // Note: Phinx programmatic usage proved complex for in-memory testing
         // Using direct SQL execution as proven approach
-        $schemaFile = __DIR__ . '/../../../../../database/migrations/archive/001_initial_schema.sql';
-        $userSchemaFile = __DIR__ . '/../../../../../database/migrations/archive/002_add_users_authentication.sql';
+        $schemaFile = __DIR__ . '/../../../../fixtures/001_initial_schema.sql';
+        $userSchemaFile = __DIR__ . '/../../../../fixtures/002_add_users_authentication.sql';
 
         foreach ([$schemaFile, $userSchemaFile] as $file) {
             if (file_exists($file)) {

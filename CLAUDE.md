@@ -131,11 +131,7 @@ sudo /opt/bitnami/ctlscript.sh restart apache
 
 **Apply Migration:**
 ```bash
-# Modern method (recommended)
 vendor/bin/phinx migrate
-
-# Legacy method (deprecated - for reference only)
-# sqlite3 database/jaws.db < database/migrations/archive/002_new_migration.sql
 ```
 
 **Backup Database:**
@@ -320,9 +316,6 @@ Presentation → Infrastructure → Application → Domain
   - `CrewRepository.php` - Implements `CrewRepositoryInterface` (full CRUD with whitelist management)
   - `EventRepository.php` - Implements `EventRepositoryInterface` (time-based event queries)
   - `SeasonRepository.php` - Implements `SeasonRepositoryInterface` (config & flotilla JSON storage)
-
-- **CSV Migration** (`Persistence/CSV/`)
-  - `CsvMigration.php` - Legacy CSV to SQLite migration (~370 lines)
 
 - **Service Adapters** (`Service/`)
   - `AwsSesEmailService.php` - Implements `EmailServiceInterface` using AWS SES via PHPMailer
@@ -909,9 +902,8 @@ Implementation in `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 
 **Database:**
 - `database/jaws.db` - SQLite database
-- `database/migrations/001_initial_schema.sql` - Initial schema
+- `database/migrations/` - Phinx migration files
 - `database/init_database.php` - Database initialization script
-- `database/migrate_from_csv.php` - CSV to SQLite migration
 
 **Tests:**
 - `tests/Unit/Domain/` - Domain layer unit tests
@@ -940,7 +932,6 @@ Implementation in `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 
 **From Legacy Architecture:**
 - Original codebase in `legacy/` folder (preserved for reference)
-- CSV files migrated to SQLite via `database/migrate_from_csv.php`
 - Selection/Assignment algorithms preserved character-for-character in Domain layer
 - `season_update.php` replaced by `ProcessSeasonUpdateUseCase`
 - PHP forms replaced by REST API endpoints

@@ -48,9 +48,6 @@ database/assignment_debug.txt
 /LocalStack/.env.localstack
 /LocalStack/localstack-data/
 
-# Phinx migration backups
-/database/migrations/archive/*.backup
-
 # Temporary test files
 /tests/temp/
 
