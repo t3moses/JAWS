@@ -47,8 +47,17 @@ curl http://localhost:8000/api/events  # Test
 ### 5. Run Tests
 
 ```bash
-vendor/bin/phpunit tests/Unit         # 346 tests, ~8s, no DB needed
-vendor/bin/phpunit tests/Integration  # 10 tests, needs DB
+# Unit tests (fast, no DB needed)
+vendor/bin/phpunit tests/Unit         # 346 tests, ~8s
+
+# Integration tests (require DB)
+vendor/bin/phpunit tests/Integration  # 10 tests
+
+# All tests
+vendor/bin/phpunit                    # Runs all test suites
+
+# Specific test file
+vendor/bin/phpunit tests/Unit/Domain/SelectionServiceTest.php
 
 # API tests (start server first)
 php -S localhost:8000 -t public > /dev/null 2>&1 & SERVER_PID=$!; sleep 2
@@ -119,6 +128,17 @@ public/                  # Web root (index.php, frontend app/)
 
 **Critical algorithms**: DO NOT modify core logic in Selection/AssignmentService. Add features around them. ALWAYS run `tests/Unit/Domain/SelectionServiceTest.php` after changes. Verify deterministic output.
 
+## Code Quality
+
+**Style**: Follow PSR-12 (4 spaces, strict types, type hints)
+
+**Testing**: Write tests for new features. Maintain existing test coverage.
+- Unit tests for Domain layer (pure business logic)
+- Integration tests for Infrastructure layer (database interactions)
+- API tests for Presentation layer (HTTP endpoints)
+
+**Safety**: Preserve existing functionality. If unsure, ask before modifying critical code.
+
 ## Pre-PR Checklist
 
 1. `vendor/bin/phpunit` passes
@@ -152,6 +172,40 @@ sqlite3 database/jaws.db "SELECT * FROM boats LIMIT 5"  # Query DB
 rm database/jaws.db && vendor/bin/phinx migrate  # Reset DB
 rm -rf vendor && composer install           # Reinstall deps
 ```
+
+## Commit Message Format
+
+This project uses **Conventional Commits** specification. Always follow this format:
+
+```
+<type>[optional scope]: <description>
+```
+
+**Types**: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+
+**Examples**:
+```bash
+feat: add crew notes field to database schema
+fix: prevent duplicate crew assignments on same boat
+docs: update API documentation for availability endpoint
+test: add integration tests for AssignmentService
+```
+
+**Rules**:
+- Use lowercase for type and description
+- No period at end of description
+- Use imperative mood ("add" not "added")
+- Keep description under 72 characters
+
+## Documentation
+
+For detailed information, see:
+- **README.md** - Project overview and quick start
+- **docs/SETUP.md** - Installation guide for new developers
+- **docs/DEVELOPER_GUIDE.md** - Architecture and development workflow
+- **docs/API.md** - Complete API endpoint documentation
+- **docs/CONTRIBUTING.md** - Code style and Git workflow
+- **CLAUDE.md** - Extended technical specifications for AI assistants
 
 ## Trust These Instructions
 
