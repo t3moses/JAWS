@@ -28,11 +28,11 @@ class LoginUseCaseTest extends IntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->userRepository = new UserRepository();
         $this->passwordService = new PhpPasswordService();
         $tokenService = new JwtTokenService();
-        
+
         $this->useCase = new LoginUseCase(
             $this->userRepository,
             $this->passwordService,

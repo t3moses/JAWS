@@ -53,7 +53,7 @@ class AdminUseCaseTest extends IntegrationTestCase
         // Create mock email and calendar services
         $mockEmailService = new class implements \App\Application\Port\Service\EmailServiceInterface {
             public int $emailsSent = 0;
-            
+
             public function send(
                 string $to,
                 string $subject,
@@ -138,7 +138,7 @@ class AdminUseCaseTest extends IntegrationTestCase
         // Create users
         $boatOwner1 = new User('boatowner1@example.com', 'hash', 'boat_owner', false);
         $this->userRepository->save($boatOwner1);
-        
+
         $boatOwner2 = new User('boatowner2@example.com', 'hash', 'boat_owner', false);
         $this->userRepository->save($boatOwner2);
 
@@ -293,12 +293,12 @@ class AdminUseCaseTest extends IntegrationTestCase
     {
         // Add more crews to create "too many crews" scenario
         $eventId = EventId::fromString('Fri May 15');
-        
+
         // Create 10 additional crews
         for ($i = 4; $i <= 13; $i++) {
             $user = new User("crew{$i}@example.com", 'hash', 'crew', false);
             $this->userRepository->save($user);
-            
+
             $crew = new Crew(
                 key: CrewKey::fromName("Crew{$i}", "Test"),
                 displayName: "Crew{$i} Test",
@@ -327,12 +327,12 @@ class AdminUseCaseTest extends IntegrationTestCase
     {
         // Remove excess capacity by updating boat berths
         $eventId = EventId::fromString('Fri May 15');
-        
+
         // Update berths to match crew count (2 + 1 = 3)
         $boat1 = $this->boatRepository->findByKey(BoatKey::fromString('Boat One'));
         $boat1->setBerths($eventId, 2);
         $this->boatRepository->save($boat1);
-        
+
         $boat2 = $this->boatRepository->findByKey(BoatKey::fromString('Boat Two'));
         $boat2->setBerths($eventId, 1);
         $this->boatRepository->save($boat2);
@@ -358,10 +358,10 @@ class AdminUseCaseTest extends IntegrationTestCase
         $eventId = EventId::fromString('Fri May 15');
         $boat1 = $this->boatRepository->findByKey(BoatKey::fromString('Boat One'));
         $boat2 = $this->boatRepository->findByKey(BoatKey::fromString('Boat Two'));
-        
+
         $boat1->setBerths($eventId, 0);
         $boat2->setBerths($eventId, 0);
-        
+
         $this->boatRepository->save($boat1);
         $this->boatRepository->save($boat2);
 
@@ -378,11 +378,11 @@ class AdminUseCaseTest extends IntegrationTestCase
         $crew1 = $this->crewRepository->findByKey(CrewKey::fromName('Alice', 'Smith'));
         $crew2 = $this->crewRepository->findByKey(CrewKey::fromName('Bob', 'Jones'));
         $crew3 = $this->crewRepository->findByKey(CrewKey::fromName('Charlie', 'Brown'));
-        
+
         $crew1->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
         $crew2->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
         $crew3->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
-        
+
         $this->crewRepository->save($crew1);
         $this->crewRepository->save($crew2);
         $this->crewRepository->save($crew3);
@@ -414,7 +414,7 @@ class AdminUseCaseTest extends IntegrationTestCase
     public function testSendNotificationsReturnsSuccessWithFlotilla(): void
     {
         $eventId = EventId::fromString('Fri May 15');
-        
+
         // Create a simple flotilla
         $flotilla = [
             'event_id' => 'Fri May 15',
@@ -459,7 +459,7 @@ class AdminUseCaseTest extends IntegrationTestCase
     public function testSendNotificationsWithCalendarAttachment(): void
     {
         $eventId = EventId::fromString('Fri May 15');
-        
+
         // Create flotilla
         $flotilla = [
             'event_id' => 'Fri May 15',

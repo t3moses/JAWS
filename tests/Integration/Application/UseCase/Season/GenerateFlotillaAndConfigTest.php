@@ -210,7 +210,7 @@ class GenerateFlotillaAndConfigTest extends IntegrationTestCase
 
         $this->pdo->exec("
             INSERT INTO flotillas (event_id, flotilla_data, generated_at)
-            VALUES 
+            VALUES
                 ('Fri May 15', '" . json_encode($flotilla1) . "', CURRENT_TIMESTAMP),
                 ('Fri May 22', '" . json_encode($flotilla2) . "', CURRENT_TIMESTAMP)
         ");

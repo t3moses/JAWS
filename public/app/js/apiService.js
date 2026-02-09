@@ -36,7 +36,14 @@ async function makeRequest(url, options = {}) {
         // Handle 401 Unauthorized - session expired
         if (response.status === 401) {
             clearToken();
-            window.location.href = 'signin.html?message=session_expired';
+
+            // Only redirect if not already on signin page
+            // If on signin page, let the login form handle the error display
+            const currentPage = window.location.pathname.split('/').pop();
+            if (currentPage !== 'signin.html') {
+                window.location.href = 'signin.html?message=session_expired';
+            }
+
             throw new Error('Session expired. Please sign in again.');
         }
 

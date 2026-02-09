@@ -8,6 +8,7 @@ import { getAllEvents, isDeadlinePassed } from '../eventService.js';
 import { updateEventAvailability } from '../userService.js';
 import { get } from '../apiService.js';
 import { API_CONFIG } from '../config.js';
+import { showSuccess, showError, showInfo } from '../toastService.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -245,13 +246,6 @@ populateAssignments();
 
 // Handle save availability button
 document.getElementById('save-availability').addEventListener('click', async function() {
-    const successMessage = document.getElementById('success-message');
-    const errorMessage = document.getElementById('error-message');
-
-    // Hide messages
-    successMessage.style.display = 'none';
-    errorMessage.style.display = 'none';
-
     // Get all checkboxes
     const checkboxes = document.querySelectorAll('.availability-item input[type="checkbox"]');
     let hasError = false;
@@ -282,8 +276,7 @@ document.getElementById('save-availability').addEventListener('click', async fun
         const result = await updateEventAvailability(user.userId, eventDate, isAvailable);
 
         if (!result.success) {
-            errorMessage.textContent = result.error || 'Failed to update availability';
-            errorMessage.style.display = 'block';
+            showError(result.error || 'Failed to update availability');
             hasError = true;
             failedEvents.push(eventDate);
             checkbox.checked = originalValue; // Revert checkbox on error
@@ -297,29 +290,27 @@ document.getElementById('save-availability').addEventListener('click', async fun
     saveButton.textContent = originalLabel;
 
     if (!hasChanges) {
-        successMessage.textContent = 'No changes to save.';
-        successMessage.style.display = 'block';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 2000);
+        showInfo('No changes to save.', 2000);
         return;
     }
 
     if (hasError) {
         if (failedEvents.length > 1) {
-            errorMessage.textContent = 'Some availability updates failed. Please try again.';
+            showError('Some availability updates failed. Please try again.');
         }
         return;
     }
 
-    successMessage.textContent = 'Availability updated successfully!';
-    successMessage.style.display = 'block';
+    showSuccess('Availability updated successfully! Your assignments have been refreshed.');
 
     // Reload assignments in case they changed
-    populateAssignments();
+    await populateAssignments();
 
-    // Hide success message after 3 seconds
+    // Smoothly scroll to assignments section so user can see updates
     setTimeout(() => {
-        successMessage.style.display = 'none';
-    }, 3000);
+        const assignmentsSection = document.getElementById('assignments-container');
+        if (assignmentsSection) {
+            assignmentsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 300); // Small delay to let assignments load
 });

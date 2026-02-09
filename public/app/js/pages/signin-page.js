@@ -4,6 +4,7 @@
  */
 
 import { isSignedIn, signIn } from '../authService.js';
+import { showError } from '../toastService.js';
 
 // Check if already signed in
 if (await isSignedIn()) {
@@ -11,13 +12,9 @@ if (await isSignedIn()) {
 }
 
 const form = document.getElementById('signin-form');
-const errorMessage = document.getElementById('error-message');
 
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
-
-    // Hide previous errors
-    errorMessage.style.display = 'none';
 
     // Get form values
     const email = document.getElementById('email').value;
@@ -27,12 +24,11 @@ form.addEventListener('submit', async function(e) {
     const result = await signIn(email, password);
 
     if (result.success) {
-        // Redirect to dashboard
+        // Redirect immediately to dashboard on success
         window.location.href = 'dashboard.html';
     } else {
-        // Show error message
-        errorMessage.textContent = result.error;
-        errorMessage.style.display = 'block';
+        // Show error message as toast (stays visible for 4 seconds)
+        showError(result.error, 4000);
 
         // Clear password field
         document.getElementById('password').value = '';
