@@ -7,6 +7,7 @@ import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateUser } from '../userService.js';
 import { hashPassword } from '../authService.js';
 import { validatePassword, getPasswordRequirementsHTML } from '../passwordValidator.js';
+import { showSuccess, showError } from '../toastService.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -192,13 +193,6 @@ formContent.innerHTML = formHTML;
 document.getElementById('edit-profile-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const successMessage = document.getElementById('success-message');
-    const errorMessage = document.getElementById('error-message');
-
-    // Hide messages
-    successMessage.style.display = 'none';
-    errorMessage.style.display = 'none';
-
     // Handle password change if provided
     const currentPassword = document.getElementById('current_password').value;
     const newPassword = document.getElementById('new_password').value;
@@ -207,28 +201,24 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
     // If any password field is filled, validate all password fields
     if (currentPassword || newPassword || confirmNewPassword) {
         if (!currentPassword) {
-            errorMessage.textContent = 'Please enter your current password to change it.';
-            errorMessage.style.display = 'block';
+            showError('Please enter your current password to change it.');
             return;
         }
 
         if (!newPassword) {
-            errorMessage.textContent = 'Please enter a new password.';
-            errorMessage.style.display = 'block';
+            showError('Please enter a new password.');
             return;
         }
 
         if (newPassword !== confirmNewPassword) {
-            errorMessage.textContent = 'New passwords do not match!';
-            errorMessage.style.display = 'block';
+            showError('New passwords do not match!');
             return;
         }
 
         // Validate password requirements
         const validation = validatePassword(newPassword);
         if (!validation.isValid) {
-            errorMessage.textContent = validation.error;
-            errorMessage.style.display = 'block';
+            showError(validation.error);
             return;
         }
 
@@ -279,12 +269,11 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
     const result = await updateUser(user.userId, updates);
 
     if (result.success) {
-        successMessage.style.display = 'block';
+        showSuccess('Profile updated successfully! Redirecting to dashboard...', 2000);
         setTimeout(() => {
             window.location.href = 'dashboard.html';
         }, 1500);
     } else {
-        errorMessage.textContent = result.error || 'Failed to update profile';
-        errorMessage.style.display = 'block';
+        showError(result.error || 'Failed to update profile');
     }
 });
