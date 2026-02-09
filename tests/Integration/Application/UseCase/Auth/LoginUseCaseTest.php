@@ -28,11 +28,11 @@ class LoginUseCaseTest extends IntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->userRepository = new UserRepository();
         $this->passwordService = new PhpPasswordService();
         $tokenService = new JwtTokenService();
-        
+
         $this->useCase = new LoginUseCase(
             $this->userRepository,
             $this->passwordService,
@@ -91,7 +91,8 @@ class LoginUseCaseTest extends IntegrationTestCase
         // Verify last login was updated
         $updatedUser = $this->userRepository->findById($userId);
         $this->assertNotNull($updatedUser->getLastLogin());
-        $this->assertEquals('2026-02-08', $updatedUser->getLastLogin()->format('Y-m-d'));
+        $expectedDate = (new \DateTimeImmutable('now'))->format('Y-m-d');
+        $this->assertEquals($expectedDate, $updatedUser->getLastLogin()->format('Y-m-d'));
     }
 
     public function testLoginWithNonExistentEmailThrowsException(): void
