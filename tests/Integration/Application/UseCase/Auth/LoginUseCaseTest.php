@@ -91,7 +91,8 @@ class LoginUseCaseTest extends IntegrationTestCase
         // Verify last login was updated
         $updatedUser = $this->userRepository->findById($userId);
         $this->assertNotNull($updatedUser->getLastLogin());
-        $this->assertEquals('2026-02-08', $updatedUser->getLastLogin()->format('Y-m-d'));
+        $expectedDate = (new \DateTimeImmutable('now'))->format('Y-m-d');
+        $this->assertEquals($expectedDate, $updatedUser->getLastLogin()->format('Y-m-d'));
     }
 
     public function testLoginWithNonExistentEmailThrowsException(): void
