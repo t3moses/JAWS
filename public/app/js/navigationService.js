@@ -58,3 +58,46 @@ export function updateAuthenticatedNavigation(user, signOut) {
 
     return true;
 }
+
+/**
+ * Adds admin link to navigation if user is an administrator
+ *
+ * This conditionally shows the "Admin" navigation link only to admin users.
+ * Should be called after updateAuthenticatedNavigation().
+ *
+ * @param {Object} user - User object from AuthService.getCurrentUser()
+ * @returns {boolean} true if admin link was added, false otherwise
+ *
+ * @example
+ * import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
+ *
+ * updateAuthenticatedNavigation(user, signOut);
+ * addAdminLink(user);
+ */
+export function addAdminLink(user) {
+    if (!user || !user.isAdmin) {
+        return false;
+    }
+
+    const navAccount = document.getElementById('nav-account');
+    if (!navAccount) {
+        console.warn('NavigationService: nav-account element not found');
+        return false;
+    }
+
+    // Insert Admin link after Dashboard link
+    const adminLi = document.createElement('li');
+    adminLi.id = 'nav-admin';
+    adminLi.innerHTML = '<a href="admin.html">Admin</a>';
+
+    // Find the parent ul and insert after nav-account
+    const parentUl = navAccount.parentElement;
+    const nextSibling = navAccount.nextElementSibling;
+    if (nextSibling) {
+        parentUl.insertBefore(adminLi, nextSibling);
+    } else {
+        parentUl.appendChild(adminLi);
+    }
+
+    return true;
+}

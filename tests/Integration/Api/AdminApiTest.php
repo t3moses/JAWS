@@ -17,7 +17,7 @@ class AdminApiTest extends TestCase
 
     public function testGetMatchingData(): void
     {
-        $testData = $this->createTestCrew($this->baseUrl);
+        $testData = $this->createTestAdmin($this->baseUrl);
 
         $eventId = urlencode('Fri May 29');
         $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/matching/{$eventId}", null, [
@@ -34,7 +34,7 @@ class AdminApiTest extends TestCase
 
     public function testSendNotifications(): void
     {
-        $testData = $this->createTestCrew($this->baseUrl);
+        $testData = $this->createTestAdmin($this->baseUrl);
 
         $eventId = urlencode('Fri May 29');
         $response = $this->makeRequest('POST', "{$this->baseUrl}/admin/notifications/{$eventId}", null, [
@@ -55,7 +55,7 @@ class AdminApiTest extends TestCase
 
     public function testUpdateConfig(): void
     {
-        $testData = $this->createTestCrew($this->baseUrl);
+        $testData = $this->createTestAdmin($this->baseUrl);
 
         $response = $this->makeRequest('PATCH', "{$this->baseUrl}/admin/config", [
             'startTime' => '10:00:00',
@@ -73,7 +73,7 @@ class AdminApiTest extends TestCase
 
     public function testUpdateConfigValidation(): void
     {
-        $testData = $this->createTestCrew($this->baseUrl);
+        $testData = $this->createTestAdmin($this->baseUrl);
 
         // Test invalid time format - may be accepted or rejected depending on implementation
         $response1 = $this->makeRequest('PATCH', "{$this->baseUrl}/admin/config", [

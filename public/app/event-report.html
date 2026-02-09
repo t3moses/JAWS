@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Report - Admin - NSC Social Day Cruising</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li id="nav-account"><a href="signin.html">Sign In</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Event Report<span class="admin-badge">Admin</span></h1>
+            <p>Printable crew assignments and flotilla report</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+            <!-- Event Selection Section (Hidden on Print) -->
+            <section class="section no-print">
+                <h2>Select Event</h2>
+                <div class="form-group">
+                    <label for="event-select">Event</label>
+                    <select id="event-select" class="form-input">
+                        <option value="">-- Select an event --</option>
+                    </select>
+                </div>
+                <button id="load-btn" class="btn btn-primary" disabled>Generate Report</button>
+                <button id="print-btn" class="btn btn-secondary" disabled>Print Report</button>
+            </section>
+
+            <!-- Report Content (Print-friendly) -->
+            <div id="report-container" style="display: none;">
+                <!-- Event Header -->
+                <div class="report-header">
+                    <h2 id="event-title">Event Name</h2>
+                    <p id="event-details">Date & Time</p>
+                </div>
+
+                <!-- Crew Assignments Table -->
+                <section class="report-section">
+                    <h3>Crew Assignments</h3>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Boat</th>
+                                <th>Crew Members</th>
+                                <th style="text-align: center;">Crew Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignments-tbody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Waitlist Section -->
+                <section id="waitlist-section" class="report-section" style="display: none;">
+                    <h3>Waitlist</h3>
+                    <div id="waitlist-boats-container"></div>
+                    <div id="waitlist-crews-container"></div>
+                </section>
+
+                <!-- Summary Statistics -->
+                <section class="report-section">
+                    <h3>Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span id="total-boats" class="summary-value">0</span>
+                            <span class="summary-label">Boats Sailing</span>
+                        </div>
+                        <div class="summary-item">
+                            <span id="total-crews" class="summary-value">0</span>
+                            <span class="summary-label">Crew Assigned</span>
+                        </div>
+                        <div class="summary-item">
+                            <span id="waitlist-count" class="summary-value">0</span>
+                            <span class="summary-label">Waitlisted</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p>Select an event and click "Generate Report" to view printable crew assignments</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2025 Nepean Sailing Club. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/pages/event-report-page.js"></script>
+</body>
+</html>

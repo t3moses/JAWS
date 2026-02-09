@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Notifications - Admin - NSC Social Day Cruising</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li id="nav-account"><a href="signin.html">Sign In</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Send Notifications<span class="admin-badge">Admin</span></h1>
+            <p>Send email notifications and calendar invites to participants</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+            <section class="section">
+                <h2>Select Event</h2>
+                <div class="form-group">
+                    <label for="event-select">Event</label>
+                    <select id="event-select" class="form-input">
+                        <option value="">-- Select an event --</option>
+                    </select>
+                </div>
+                <button id="preview-btn" class="btn btn-secondary" disabled>Load Preview</button>
+            </section>
+
+            <!-- Preview Section (hidden until loaded) -->
+            <section id="preview-section" class="preview-section hidden">
+                <h3>Preview</h3>
+                <div class="form-group">
+                    <h4>Event Details</h4>
+                    <p id="event-details"></p>
+                </div>
+
+                <div class="form-group">
+                    <h4>Email Recipients</h4>
+                    <p><strong id="participant-count">0</strong> people will receive notifications (boat owners + crew)</p>
+                </div>
+
+                <div class="form-group">
+                    <h4>Breakdown by Boat</h4>
+                    <div class="participant-list">
+                        <ul id="participant-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification Options (hidden until preview loaded) -->
+            <section id="options-section" class="section" style="display: none;">
+                <h2>Notification Options</h2>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="include-calendar" checked>
+                        Include calendar invites (.ics files)
+                    </label>
+                    <p class="help-text">Calendar invites allow participants to add the event directly to their calendar apps.</p>
+                </div>
+
+                <button id="send-btn" class="btn btn-primary">Send Notifications</button>
+            </section>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state">
+                <div class="empty-state-icon">✉️</div>
+                <p>Select an event and click "Load Preview" to view email recipients</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2025 Nepean Sailing Club. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3>Confirm Send Notifications</h3>
+            <p id="confirm-message">Are you sure you want to send notifications?</p>
+            <div class="modal-actions">
+                <button id="cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-btn" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/pages/admin-notifications-page.js"></script>
+</body>
+</html>

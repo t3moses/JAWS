@@ -247,6 +247,12 @@ $container->set(\App\Application\UseCase\Admin\SendNotificationsUseCase::class, 
     );
 });
 
+$container->set(\App\Application\UseCase\Admin\GetConfigUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\GetConfigUseCase(
+        $c->get(SeasonRepositoryInterface::class)
+    );
+});
+
 // Auth Use Cases
 $container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function ($c) {
     return new \App\Application\UseCase\Auth\RegisterUseCase(
@@ -339,6 +345,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
     return new \App\Presentation\Controller\AdminController(
         $c->get(\App\Application\UseCase\Admin\GetMatchingDataUseCase::class),
         $c->get(\App\Application\UseCase\Admin\SendNotificationsUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\GetConfigUseCase::class),
         $c->get(\App\Application\UseCase\Season\UpdateConfigUseCase::class)
     );
 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - NSC Social Day Cruising</title>
+    <title>Admin Dashboard - NSC Social Day Cruising</title>
     <!-- Auth init MUST run before page renders to prevent navigation jump -->
     <script src="js/auth-init.js"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -29,7 +29,7 @@
 
                     <!-- Authenticated nav -->
                     <li class="nav-authenticated" id="nav-account">
-                        <a href="dashboard.html" class="active">Dashboard</a>
+                        <a href="dashboard.html">Dashboard</a>
                     </li>
                     <li class="nav-authenticated user-greeting">
                         <span>Hi, <span class="user-name">...</span>!</span>
@@ -47,40 +47,47 @@
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Edit Your Profile</h1>
-            <p>Update your information below</p>
+            <h1>Admin Dashboard<span class="admin-badge">Admin</span></h1>
+            <p>Manage season configuration, events, and notifications</p>
         </div>
     </section>
 
     <main>
         <div class="form-container">
-            <section class="section">
-                <!-- Form will be dynamically populated based on account type -->
-                <form id="edit-profile-form" action="#">
-                    <div id="form-content">
-                        <!-- Dynamically populated -->
-                    </div>
+            <div class="admin-actions">
+                <a href="admin-matching.html" class="admin-card">
+                    <span class="card-icon">📊</span>
+                    <h3>Event Matching Analysis</h3>
+                    <p>View capacity analysis, available boats and crews for each event. Analyze matching scenarios and identify capacity issues.</p>
+                </a>
 
-                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
-                        <a href="dashboard.html" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
-            </section>
+                <a href="admin-notifications.html" class="admin-card">
+                    <span class="card-icon">✉️</span>
+                    <h3>Send Notifications</h3>
+                    <p>Send email notifications and calendar invites to participants for upcoming events. Preview participant lists before sending.</p>
+                </a>
+
+                <a href="admin-config.html" class="admin-card">
+                    <span class="card-icon">⚙️</span>
+                    <h3>Season Configuration</h3>
+                    <p>Manage season-wide settings including year, event times, blackout windows, and time source configuration.</p>
+                </a>
+
+                <a href="event-report.html" class="admin-card">
+                    <span class="card-icon">📋</span>
+                    <h3>Event Reports</h3>
+                    <p>Generate printable crew assignment reports for any event. View detailed flotilla assignments and waitlists in a print-friendly format.</p>
+                </a>
+            </div>
         </div>
     </main>
 
     <footer>
-        <div class="footer-content">
-            <p><strong>Nepean Sailing Club — Social Day Cruising</strong></p>
-            <p><a href="https://nsc.ca">NSC Website</a> | <a href="faq.html">FAQ</a> | <a href="dashboard.html">Dashboard</a></p>
-            <p style="margin-top: 1rem; opacity: 0.7;">&copy; 2026 All Rights Reserved</p>
+        <div class="footer-container">
+            <p>&copy; 2025 Nepean Sailing Club. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- Application modules -->
-    <script type="module" src="js/app.js"></script>
-    <script type="module" src="js/mobile-menu.js"></script>
-    <script type="module" src="js/pages/edit-profile-page.js"></script>
+    <script type="module" src="js/pages/admin-page.js"></script>
 </body>
 </html>

@@ -1,0 +1,200 @@
+/* Print-specific styles for event reports */
+
+@media print {
+    /* Hide non-printable elements */
+    header,
+    footer,
+    .hamburger,
+    .menu-overlay,
+    .hero,
+    .no-print,
+    #toast-container,
+    #empty-state,
+    .btn {
+        display: none !important;
+    }
+
+    /* Reset page margins */
+    @page {
+        margin: 1.5cm;
+        size: letter portrait;
+    }
+
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+        line-height: 1.4;
+        margin: 0;
+        padding: 0;
+    }
+
+    main {
+        padding: 0;
+        margin: 0;
+    }
+
+    .form-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Report Header */
+    .report-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #333;
+        background: none !important;
+        text-align: left;
+    }
+
+    .report-header h2 {
+        font-size: 18pt;
+        margin: 0 0 0.5rem 0;
+        color: #000;
+        background: none !important;
+        -webkit-text-fill-color: initial;
+    }
+
+    .report-header p {
+        font-size: 11pt;
+        margin: 0;
+        color: #333;
+    }
+
+    /* Report Sections */
+    .report-section {
+        margin-bottom: 2rem;
+        page-break-inside: avoid;
+        background: white !important;
+        box-shadow: none !important;
+        padding: 0;
+        border-radius: 0;
+    }
+
+    .report-section h3 {
+        font-size: 14pt;
+        margin: 0 0 1rem 0;
+        color: #000;
+        border-bottom: 1px solid #666;
+        padding-bottom: 0.5rem;
+        background: none !important;
+        -webkit-text-fill-color: initial;
+    }
+
+    /* Report Table */
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border-radius: 0;
+    }
+
+    .report-table thead {
+        background: #f0f0f0 !important;
+        border-bottom: 2px solid #333;
+    }
+
+    .report-table th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: bold;
+        font-size: 11pt;
+        color: #000 !important;
+    }
+
+    .report-table tbody tr {
+        border-bottom: 1px solid #ddd;
+        page-break-inside: avoid;
+        background: white !important;
+    }
+
+    /* Zebra striping for readability */
+    .report-table tbody tr:nth-child(even) {
+        background: #f9f9f9 !important;
+    }
+
+    .report-table tbody td {
+        padding: 0.75rem;
+        font-size: 10pt;
+        color: #000;
+    }
+
+    /* Waitlist */
+    .waitlist-group {
+        margin-bottom: 1.5rem;
+        page-break-inside: avoid;
+        background: white !important;
+        padding: 1rem;
+        border-left: 3px solid #333;
+        border-radius: 0;
+    }
+
+    .waitlist-group h4 {
+        font-size: 12pt;
+        margin: 0 0 0.5rem 0;
+        color: #000;
+    }
+
+    .waitlist-group ul {
+        margin: 0;
+        padding-left: 1.5rem;
+        list-style: disc;
+    }
+
+    .waitlist-group li {
+        font-size: 10pt;
+        margin-bottom: 0.25rem;
+        color: #000;
+    }
+
+    /* Summary Grid */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+        border: 1px solid #333;
+        background: #f0f0f0 !important;
+        border-radius: 0;
+    }
+
+    .summary-value {
+        display: block;
+        font-size: 18pt;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color: #000 !important;
+    }
+
+    .summary-label {
+        display: block;
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #333;
+    }
+
+    /* Force page breaks before major sections if needed */
+    .report-section.page-break-before {
+        page-break-before: always;
+    }
+
+    /* Avoid orphaned headers */
+    h2, h3, h4 {
+        page-break-after: avoid;
+    }
+
+    /* Remove any gradients or backgrounds */
+    * {
+        box-shadow: none !important;
+    }
+}

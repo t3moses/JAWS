@@ -6,6 +6,7 @@ namespace App\Presentation\Controller;
 
 use App\Application\UseCase\Admin\GetMatchingDataUseCase;
 use App\Application\UseCase\Admin\SendNotificationsUseCase;
+use App\Application\UseCase\Admin\GetConfigUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\DTO\Request\UpdateConfigRequest;
 use App\Application\Exception\EventNotFoundException;
@@ -24,8 +25,20 @@ class AdminController
     public function __construct(
         private GetMatchingDataUseCase $getMatchingDataUseCase,
         private SendNotificationsUseCase $sendNotificationsUseCase,
+        private GetConfigUseCase $getConfigUseCase,
         private UpdateConfigUseCase $updateConfigUseCase,
     ) {
+    }
+
+    /**
+     * Check if the current user is an admin
+     *
+     * @param array $auth Authentication context from JWT middleware
+     * @return bool
+     */
+    private function isAdmin(array $auth): bool
+    {
+        return isset($auth['is_admin']) && $auth['is_admin'] === true;
     }
 
     /**
@@ -34,9 +47,14 @@ class AdminController
      * Returns matching data for an event (capacity analysis).
      *
      * @param array $params Route parameters
+     * @param array $auth Authentication context
      */
-    public function getMatchingData(array $params): JsonResponse
+    public function getMatchingData(array $params, array $auth): JsonResponse
     {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
         try {
             $eventId = EventId::fromString($params['eventId']);
             $result = $this->getMatchingDataUseCase->execute($eventId);
@@ -56,9 +74,14 @@ class AdminController
      *
      * @param array $params Route parameters
      * @param array $body Request body
+     * @param array $auth Authentication context
      */
-    public function sendNotifications(array $params, array $body): JsonResponse
+    public function sendNotifications(array $params, array $body, array $auth): JsonResponse
     {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
         try {
             $eventId = EventId::fromString($params['eventId']);
             $includeCalendar = $body['include_calendar'] ?? true;
@@ -74,14 +97,41 @@ class AdminController
     }
 
     /**
+     * GET /api/admin/config
+     *
+     * Returns current season configuration.
+     *
+     * @param array $auth Authentication context
+     */
+    public function getConfig(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getConfigUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
      * PATCH /api/admin/config
      *
      * Updates season configuration.
      *
      * @param array $body Request body
+     * @param array $auth Authentication context
      */
-    public function updateConfig(array $body): JsonResponse
+    public function updateConfig(array $body, array $auth): JsonResponse
     {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
         try {
             $request = new UpdateConfigRequest(
                 source: $body['source'] ?? null,
