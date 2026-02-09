@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSC Social Day Cruising - Sail Together!</title>
+    <!-- Auth init MUST run before page renders to prevent navigation jump -->
+    <script src="js/auth-init.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+
+                    <!-- Unauthenticated nav -->
+                    <li class="nav-unauthenticated">
+                        <a href="account.html">Join Now</a>
+                    </li>
+
+                    <!-- Authenticated nav -->
+                    <li class="nav-authenticated">
+                        <a href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-authenticated user-greeting">
+                        <span>Hi, <span class="user-name">...</span>!</span>
+                    </li>
+                    <li class="nav-authenticated">
+                        <a href="#" class="sign-out-btn">Sign Out</a>
+                    </li>
+
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Sail. Connect. Thrive.</h1>
+            <p id="hero-message">Join a vibrant community of sailors on Lac Deschênes! Whether you're eager to learn or ready to share your expertise, there's a place for you on the water.</p>
+            <a href="account.html" id="hero-cta" class="btn btn-primary">Start Your Adventure</a>
+        </div>
+    </section>
+
+    <main>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Crew Members</h3>
+                <p>Ready to hit the water? Join experienced skippers for unforgettable sailing adventures every week!</p>
+                <ul>
+                    <li>FREE to start—no catch!</li>
+                    <li>All experience levels welcome</li>
+                    <li>Weekly 3-4 hour sails</li>
+                    <li>Learn from the pros</li>
+                    <li>Make lifelong friends</li>
+                    <li>Epic after-sail hangouts</li>
+                </ul>
+                <a href="account.html" class="btn btn-secondary">Sign Up as Crew</a>
+            </div>
+
+            <div class="card">
+                <h3>Boat Owners</h3>
+                <p>Love sailing? Love teaching? Share your boat and passion with enthusiastic crew members!</p>
+                <ul>
+                    <li>Share your love of sailing</li>
+                    <li>Meet awesome people</li>
+                    <li>Flexible schedule</li>
+                    <li>Auto crew matching</li>
+                    <li>Build community</li>
+                    <li>Give back to sailing</li>
+                </ul>
+                <a href="account.html" class="btn btn-secondary">Register Your Boat</a>
+            </div>
+
+            <div class="card">
+                <h3>How It Works</h3>
+                <p>Simple, fun, and designed to get you on the water ASAP!</p>
+                <ul>
+                    <li>Sign up online in minutes</li>
+                    <li>Pick your available dates</li>
+                    <li>Get auto-matched with boats/crew</li>
+                    <li>Meet at 12:45 PM</li>
+                    <li>Sail for 3-4 hours</li>
+                    <li>Chill on the deck after</li>
+                </ul>
+            </div>
+        </div>
+
+        <section class="section">
+            <h2>What Makes Us Special</h2>
+            <p>Social Day Cruising isn't just about sailing—it's about building a community. We bring together sailors of all skill levels for weekly adventures on beautiful Lac Deschênes. From complete beginners to salty sea dogs, everyone's welcome!</p>
+
+            <h3>The Season</h3>
+            <p>We sail from late May through September, with weekly cruises that last 3-4 hours. After each sail, we gather on the club deck to swap stories, share laughs, and plan the next adventure. Saturdays are extra special with raft-ups and potluck gatherings—bring your favorite dish and meet the whole crew!</p>
+
+            <h3>What to Bring</h3>
+            <ul>
+                <li>Your best smile and positive attitude</li>
+                <li>Closed-toe, non-slip shoes (safety first!)</li>
+                <li>Hat, sunscreen, and shades</li>
+                <li>Water bottle to stay hydrated</li>
+                <li>Clothes for the weather</li>
+                <li>PFD if you have one (we'll provide if not)</li>
+            </ul>
+
+            <h3>Meeting Up</h3>
+            <p><strong>When:</strong> 12:45 PM sharp at the blue tent on the west lawn</p>
+            <p><strong>Pro Tip:</strong> Be on time! Late arrivals might miss the boat (literally). Grab your ticket when you arrive—no ticket, no sail!</p>
+        </section>
+
+        <section class="section">
+            <h2>The Rules of the Water</h2>
+
+            <div class="alert alert-info">
+                <strong>⏰ Deadline Alert!</strong> Update your availability by 10:00 AM on event day. Miss it and you'll get a no-show mark.
+            </div>
+
+            <h3>Fair Play Priority</h3>
+            <p>To keep things fair for everyone, we use a smart priority system:</p>
+            <ul>
+                <li>NSC members get first dibs</li>
+                <li>New faces get priority when it's crowded</li>
+                <li>Show up consistently = better standing</li>
+                <li>No-shows = lower priority next time</li>
+            </ul>
+
+            <h3>Waitlist? No Problem!</h3>
+            <p>Event full? Join the waitlist! We update spots in real-time until 10:00 AM on event day. You can also show up as standby—we often have last-minute openings!</p>
+
+            <h3>Weather Check</h3>
+            <p>We sail rain or shine... well, mostly! We only cancel for unsafe stuff like lightning, crazy winds, or bad air quality. Our coordinator checks in with skippers every morning, and you'll get an email ASAP if plans change.</p>
+        </section>
+
+        <section class="section">
+            <h2>Membership Perks</h2>
+            <p>Starting is <strong>100% FREE</strong>—seriously! Try it out, see if you love it (spoiler: you will). Once you're hooked, consider becoming an NSC Crewing Member for priority access and sweet club benefits.</p>
+            <div class="text-center mt-2">
+                <a href="https://nsc.ca/an/membership/become-a-member/" class="btn btn-accent">Learn About Membership</a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Ready to Get Sailing?</h2>
+            <p>Whether you want to crew or captain, there's a spot for you in our sailing family. Join us on Lac Deschênes for epic sails, great people, and unforgettable memories!</p>
+            <div class="text-center mt-2" id="bottom-cta">
+                <a href="account.html" class="btn btn-primary">Create Your Account</a>
+                <a href="events.html" class="btn btn-secondary" style="margin-left: 1rem;">Check the Schedule</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Nepean Sailing Club — Social Day Cruising</strong></p>
+            <p><a href="https://nsc.ca">NSC Website</a> | <a href="faq.html">FAQ</a> | <a href="account.html">Join Now</a></p>
+            <p style="margin-top: 1rem; opacity: 0.7;">&copy; 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- Application modules -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/mobile-menu.js"></script>
+    <script type="module" src="js/pages/index-page.js"></script>
+</body>
+</html>

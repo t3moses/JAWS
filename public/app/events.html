@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events Schedule - NSC Social Day Cruising</title>
+    <!-- Auth init MUST run before page renders to prevent navigation jump -->
+    <script src="js/auth-init.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html" class="active">Events</a></li>
+
+                    <!-- Unauthenticated nav -->
+                    <li class="nav-unauthenticated">
+                        <a href="account.html">Join Now</a>
+                    </li>
+
+                    <!-- Authenticated nav -->
+                    <li class="nav-authenticated">
+                        <a href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-authenticated user-greeting">
+                        <span>Hi, <span class="user-name">...</span>!</span>
+                    </li>
+                    <li class="nav-authenticated">
+                        <a href="#" class="sign-out-btn">Sign Out</a>
+                    </li>
+
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>2026 Sailing Schedule</h1>
+            <p>See what's coming up and who's sailing when!</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="alert alert-info">
+            <strong>⏰ Heads up!</strong> Registration closes at 10:00 AM on event day. Crew assignments update automatically when anyone changes their availability.
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>⚓ Be punctual!</strong> Meet at the blue tent by 12:45 PM. Late = no sail. Standby folks will grab your spot!
+        </div>
+
+        <section class="section">
+            <h2>Sailing Season 2026</h2>
+
+            <div id="events-container">
+                <div class="loading-state">Loading events...</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Update Your Availability</h2>
+            <p>Plans change—we get it! Here's how to update:</p>
+            <ol>
+                <li>Head to your <a href="account.html">account page</a></li>
+                <li>Find your registered events</li>
+                <li>Update before 10:00 AM on event day</li>
+            </ol>
+            <div class="alert alert-warning">
+                <strong>Heads up:</strong> Your boat assignment might change as people update—that's totally normal! The system auto-balances to make sure everyone's happy.
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Nepean Sailing Club — Social Day Cruising</strong></p>
+            <p><a href="https://nsc.ca">NSC Website</a> | <a href="faq.html">FAQ</a> | <a href="account.html">Join Now</a></p>
+            <p style="margin-top: 1rem; opacity: 0.7;">&copy; 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- Application modules -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/mobile-menu.js"></script>
+    <script type="module" src="js/pages/events-page.js"></script>
+</body>
+</html>

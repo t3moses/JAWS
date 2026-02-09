@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - NSC Social Day Cruising</title>
+    <!-- Auth init MUST run before page renders to prevent navigation jump -->
+    <script src="js/auth-init.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+
+                    <!-- Unauthenticated nav -->
+                    <li class="nav-unauthenticated">
+                        <a href="account.html">Join Now</a>
+                    </li>
+
+                    <!-- Authenticated nav -->
+                    <li class="nav-authenticated">
+                        <a href="dashboard.html" class="active">Dashboard</a>
+                    </li>
+                    <li class="nav-authenticated user-greeting">
+                        <span>Hi, <span class="user-name">...</span>!</span>
+                    </li>
+                    <li class="nav-authenticated">
+                        <a href="#" class="sign-out-btn">Sign Out</a>
+                    </li>
+
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome Back, <span id="hero-username"></span>!</h1>
+            <p>Manage your profile and event availability</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+            <!-- Profile Summary Section -->
+            <section class="section profile-section">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>Your Profile</h2>
+                        <span id="account-badge" class="user-badge"></span>
+                    </div>
+                    <a href="edit_profile.html" class="btn btn-secondary">Edit Profile</a>
+                </div>
+
+                <div id="profile-details"></div>
+            </section>
+
+            <!-- Event Availability Section -->
+            <section class="section">
+                <h2>My Event Availability</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-gray);">Check the events you're available for. Updates must be made before 10:00 AM on event day.</p>
+
+                <div class="alert alert-warning" style="margin-bottom: 2rem;">
+                    <strong>Remember:</strong> Your boat assignment might change as people update their availability—that's normal! Assignments finalize at 10:00 AM on event day.
+                </div>
+
+                <div class="availability-list" id="availability-list">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="save-availability" class="btn btn-primary">Save Changes</button>
+                </div>
+            </section>
+
+            <!-- My Assignments Section -->
+            <section class="section">
+                <h2>My Boat Assignments</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-gray);">View your boat assignments for upcoming events.</p>
+
+                <div id="assignments-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⛵</div>
+                        <p><strong>No assignments yet</strong></p>
+                        <p>Mark your availability above to get matched with a boat and crew!</p>
+                        <p style="margin-top: 1rem;"><em>(In the live system, assignments will appear here automatically)</em></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions Section -->
+            <section class="section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <h2>Quick Actions</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                    <a href="events.html" class="btn btn-secondary" style="text-align: center;">View Full Schedule</a>
+                    <a href="edit_profile.html" class="btn btn-secondary" style="text-align: center;">Edit My Profile</a>
+                    <a href="faq.html" class="btn btn-secondary" style="text-align: center;">Get Help (FAQ)</a>
+                    <a href="#" onclick="signOut(); return false;" class="btn btn-secondary" style="text-align: center;">Sign Out</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Nepean Sailing Club — Social Day Cruising</strong></p>
+            <p><a href="https://nsc.ca">NSC Website</a> | <a href="faq.html">FAQ</a> | <a href="dashboard.html">Dashboard</a></p>
+            <p style="margin-top: 1rem; opacity: 0.7;">&copy; 2026 All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- Application modules -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/mobile-menu.js"></script>
+    <script type="module" src="js/pages/dashboard-page.js"></script>
+</body>
+</html>

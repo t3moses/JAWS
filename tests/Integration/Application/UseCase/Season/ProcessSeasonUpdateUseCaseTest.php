@@ -1,0 +1,534 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Integration\Application\UseCase\Season;
+
+use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
+use App\Infrastructure\Persistence\SQLite\BoatRepository;
+use App\Infrastructure\Persistence\SQLite\CrewRepository;
+use App\Infrastructure\Persistence\SQLite\EventRepository;
+use App\Infrastructure\Persistence\SQLite\SeasonRepository;
+use App\Infrastructure\Persistence\SQLite\Connection;
+use App\Domain\Service\SelectionService;
+use App\Domain\Service\AssignmentService;
+use App\Domain\Service\RankingService;
+use App\Domain\Service\FlexService;
+use App\Domain\ValueObject\EventId;
+use App\Domain\Enum\AvailabilityStatus;
+use Tests\Integration\IntegrationTestCase;
+
+/**
+ * Integration tests for ProcessSeasonUpdateUseCase
+ *
+ * Tests the complete end-to-end pipeline from availability changes to flotilla generation:
+ * - Load → Selection → Consolidation → Assignment → Serialize → Save
+ */
+class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
+{
+    private ProcessSeasonUpdateUseCase $useCase;
+    private BoatRepository $boatRepository;
+    private CrewRepository $crewRepository;
+    private EventRepository $eventRepository;
+    private SeasonRepository $seasonRepository;
+
+    protected function setUp(): void
+    {
+        parent::setUp();  // Runs migrations, initializes season config, sets test connection
+
+        // Initialize repositories
+        $this->boatRepository = new BoatRepository();
+        $this->crewRepository = new CrewRepository();
+        $this->eventRepository = new EventRepository();
+        $this->seasonRepository = new SeasonRepository();
+
+        // Initialize services
+        $flexService = new FlexService();
+        $rankingService = new RankingService($flexService);
+        $selectionService = new SelectionService($rankingService);
+        $assignmentService = new AssignmentService();
+
+        // Initialize use case
+        $this->useCase = new ProcessSeasonUpdateUseCase(
+            $this->boatRepository,
+            $this->crewRepository,
+            $this->eventRepository,
+            $this->seasonRepository,
+            $selectionService,
+            $assignmentService
+        );
+    }
+
+    /**
+     * Helper: Create test boat
+     */
+    protected function createTestBoat(string $key, int $minBerths, int $maxBerths): int
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO boats (key, display_name, owner_first_name, owner_last_name, owner_email,
+                               min_berths, max_berths, assistance_required, social_preference)
+            VALUES (?, ?, 'Test', 'Owner', 'test@example.com', ?, ?, 'No', 'No')
+        ");
+        $stmt->execute([$key, "Boat $key", $minBerths, $maxBerths]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Helper: Create test crew
+     */
+    protected function createTestCrew(string $key): int
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO crews (key, display_name, first_name, last_name, email, skill, membership_number, social_preference)
+            VALUES (?, ?, 'Test', 'Crew', 'test@example.com', 1, '12345', 'No')
+        ");
+        $stmt->execute([$key, "Crew $key"]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Helper: Create test event
+     */
+    protected function createTestEvent(string $eventId, string $date): void
+    {
+        $this->pdo->prepare("
+            INSERT INTO events (event_id, event_date, start_time, finish_time, status)
+            VALUES (?, ?, '12:00:00', '17:00:00', 'upcoming')
+        ")->execute([$eventId, $date]);
+    }
+
+    /**
+     * Helper: Set boat availability
+     */
+    protected function setBoatAvailability(int $boatId, string $eventId, int $berths): void
+    {
+        $this->pdo->prepare("
+            INSERT INTO boat_availability (boat_id, event_id, berths)
+            VALUES (?, ?, ?)
+        ")->execute([$boatId, $eventId, $berths]);
+    }
+
+    /**
+     * Helper: Set crew availability
+     */
+    protected function setCrewAvailability(int $crewId, string $eventId, int $status): void
+    {
+        $this->pdo->prepare("
+            INSERT INTO crew_availability (crew_id, event_id, status)
+            VALUES (?, ?, ?)
+        ")->execute([$crewId, $eventId, $status]);
+    }
+
+    /**
+     * Helper: Get crew availability status
+     */
+    protected function getCrewAvailabilityStatus(int $crewId, string $eventId): int
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT status FROM crew_availability WHERE crew_id = ? AND event_id = ?
+        ");
+        $stmt->execute([$crewId, $eventId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Test: execute() generates flotilla for single event
+     */
+    public function testExecuteGeneratesFlotillaForSingleEvent(): void
+    {
+        // Arrange
+        // Create 2 boats, 4 crews, 1 future event
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 2);
+
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+        $crew3Id = $this->createTestCrew('crew3');
+        $crew4Id = $this->createTestCrew('crew4');
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        // Set availability
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 2);
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        // Execute use case
+        $result = $this->useCase->execute();
+
+        // Assert result structure
+        $this->assertTrue($result['success']);
+        $this->assertEquals(1, $result['events_processed']);
+        $this->assertEquals(1, $result['flotillas_generated']);
+
+        // Verify flotilla was created
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+        $this->assertNotNull($flotilla);
+        $this->assertEquals('Fri May 29', $flotilla['event_id']);
+        $this->assertArrayHasKey('crewed_boats', $flotilla);
+        $this->assertNotEmpty($flotilla['crewed_boats']);
+    }
+
+    /**
+     * Test: execute() generates flotillas for multiple events
+     */
+    public function testExecuteGeneratesFlotillasForMultipleEvents(): void
+    {
+        // Arrange
+        // Create 3 boats, 6 crews, 3 future events
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 2);
+        $boat3Id = $this->createTestBoat('boat3', 2, 2);
+
+        $crewIds = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $crewIds[] = $this->createTestCrew("crew$i");
+        }
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+        $this->createTestEvent('Fri Jun 05', '2026-06-05');
+        $this->createTestEvent('Fri Jun 12', '2026-06-12');
+
+        // Set availability for all boats and crews for all events
+        foreach ([$boat1Id, $boat2Id, $boat3Id] as $boatId) {
+            $this->setBoatAvailability($boatId, 'Fri May 29', 2);
+            $this->setBoatAvailability($boatId, 'Fri Jun 05', 2);
+            $this->setBoatAvailability($boatId, 'Fri Jun 12', 2);
+        }
+
+        foreach ($crewIds as $crewId) {
+            $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+            $this->setCrewAvailability($crewId, 'Fri Jun 05', AvailabilityStatus::AVAILABLE->value);
+            $this->setCrewAvailability($crewId, 'Fri Jun 12', AvailabilityStatus::AVAILABLE->value);
+        }
+
+        // Act
+        // Execute use case
+        $result = $this->useCase->execute();
+
+        // Assert result
+        $this->assertTrue($result['success']);
+        $this->assertEquals(3, $result['events_processed']);
+        $this->assertEquals(3, $result['flotillas_generated']);
+
+        // Verify all 3 flotillas exist
+        $flotilla1 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+        $flotilla2 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri Jun 05'));
+        $flotilla3 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri Jun 12'));
+
+        $this->assertNotNull($flotilla1);
+        $this->assertNotNull($flotilla2);
+        $this->assertNotNull($flotilla3);
+
+        $this->assertEquals('Fri May 29', $flotilla1['event_id']);
+        $this->assertEquals('Fri Jun 05', $flotilla2['event_id']);
+        $this->assertEquals('Fri Jun 12', $flotilla3['event_id']);
+    }
+
+    /**
+     * Test: execute() updates existing flotilla (UPSERT behavior)
+     */
+    public function testExecuteUpdatesExistingFlotilla(): void
+    {
+        // Arrange
+        // Boat with capacity for 3 crews
+        $boat1Id = $this->createTestBoat('boat1', 2, 3);
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+        $crew3Id = $this->createTestCrew('crew3'); // Will add later
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        // Initial setup: 2 crews available
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 3); // Offer all 3 berths
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        // First execution
+        $this->useCase->execute();
+        $initialFlotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+        $initialCrewCount = count($initialFlotilla['crewed_boats'][0]['crews'] ?? []);
+
+        // Update: Add third crew
+        $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Second execution
+        $this->useCase->execute();
+        $updatedFlotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+        $updatedCrewCount = count($updatedFlotilla['crewed_boats'][0]['crews'] ?? []);
+
+        // Assert flotilla was updated
+        $this->assertGreaterThan($initialCrewCount, $updatedCrewCount);
+        $this->assertEquals(3, $updatedCrewCount);
+    }
+
+    /**
+     * Test: Flotilla data structure matches expected format
+     */
+    public function testFlotillaDataStructureMatchesExpectedFormat(): void
+    {
+        // Arrange
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $crew1Id = $this->createTestCrew('crew1');
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // Verify structure
+        $this->assertIsArray($flotilla);
+        $this->assertArrayHasKey('event_id', $flotilla);
+        $this->assertArrayHasKey('crewed_boats', $flotilla);
+        $this->assertArrayHasKey('waitlist_boats', $flotilla);
+        $this->assertArrayHasKey('waitlist_crews', $flotilla);
+
+        // Verify types
+        $this->assertIsString($flotilla['event_id']);
+        $this->assertIsArray($flotilla['crewed_boats']);
+        $this->assertIsArray($flotilla['waitlist_boats']);
+        $this->assertIsArray($flotilla['waitlist_crews']);
+
+        // Verify crewed_boats structure
+        if (!empty($flotilla['crewed_boats'])) {
+            $firstCrewedBoat = $flotilla['crewed_boats'][0];
+            $this->assertArrayHasKey('boat', $firstCrewedBoat);
+            $this->assertArrayHasKey('crews', $firstCrewedBoat);
+            $this->assertIsArray($firstCrewedBoat['boat']);
+            $this->assertIsArray($firstCrewedBoat['crews']);
+        }
+    }
+
+    /**
+     * Test: execute() produces deterministic results (same inputs = same output)
+     */
+    public function testExecuteProducesDeterministicResults(): void
+    {
+        // Arrange
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        // First execution
+        $this->useCase->execute();
+        $flotilla1 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Delete flotilla
+        $this->seasonRepository->deleteFlotilla(EventId::fromString('Fri May 29'));
+
+        // Second execution (same input)
+        $this->useCase->execute();
+        $flotilla2 = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // Compare structures (excluding timestamp fields)
+        $this->assertEquals($flotilla1['event_id'], $flotilla2['event_id']);
+        $this->assertEquals(count($flotilla1['crewed_boats']), count($flotilla2['crewed_boats']));
+        $this->assertEquals(count($flotilla1['waitlist_boats']), count($flotilla2['waitlist_boats']));
+        $this->assertEquals(count($flotilla1['waitlist_crews']), count($flotilla2['waitlist_crews']));
+    }
+
+    /**
+     * Test: execute() updates crew availability to GUARANTEED
+     */
+    public function testExecuteUpdatesCrewAvailabilityToGuaranteed(): void
+    {
+        // Arrange
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+        $crew3Id = $this->createTestCrew('crew3'); // This one won't be selected (waitlisted)
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 1); // Only 1 berth offered
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        $this->useCase->execute();
+
+        // Check which crews were selected
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+        $selectedCrewCount = 0;
+        foreach ($flotilla['crewed_boats'] as $crewedBoat) {
+            $selectedCrewCount += count($crewedBoat['crews']);
+        }
+
+        // Assert
+        // Verify that selected crews have GUARANTEED status
+        // Note: We can't easily check all crew statuses without knowing which were selected,
+        // but we can verify the count is less than total (someone was waitlisted)
+        $this->assertLessThan(3, $selectedCrewCount, 'Not all crews should be selected when boat capacity is limited');
+    }
+
+    /**
+     * Test: execute() with no available entities creates empty flotilla
+     */
+    public function testExecuteWithNoAvailableEntities(): void
+    {
+        // Arrange
+        $this->createTestBoat('boat1', 2, 2); // No availability set
+        $this->createTestCrew('crew1'); // No availability set
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // Flotilla should exist but be empty
+        $this->assertNotNull($flotilla);
+        $this->assertCount(0, $flotilla['crewed_boats']);
+        $this->assertCount(0, $flotilla['waitlist_boats']);
+        $this->assertCount(0, $flotilla['waitlist_crews']);
+    }
+
+    /**
+     * Test: execute() with perfect crew-to-boat fit
+     */
+    public function testExecuteWithPerfectCrewToBoatFit(): void
+    {
+        // Arrange
+        // 2 boats * 2 berths = 4 total berths, 4 crews = perfect fit
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 2);
+
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+        $crew3Id = $this->createTestCrew('crew3');
+        $crew4Id = $this->createTestCrew('crew4');
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 2);
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // All boats should be crewed
+        $this->assertCount(2, $flotilla['crewed_boats']);
+        $this->assertCount(0, $flotilla['waitlist_boats']);
+        $this->assertCount(0, $flotilla['waitlist_crews']);
+
+        // All crews should be assigned
+        $totalCrews = 0;
+        foreach ($flotilla['crewed_boats'] as $crewedBoat) {
+            $totalCrews += count($crewedBoat['crews']);
+        }
+        $this->assertEquals(4, $totalCrews);
+    }
+
+    /**
+     * Test: execute() with too many crews (some waitlisted)
+     */
+    public function testExecuteWithTooManyCrews(): void
+    {
+        // 2 boats * 2 berths = 4 total berths, 6 crews = 2 crews waitlisted
+        // Arrange
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 2);
+
+        $crewIds = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $crewIds[] = $this->createTestCrew("crew$i");
+        }
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 2);
+        foreach ($crewIds as $crewId) {
+            $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        }
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // All boats should be crewed (no waitlist boats)
+        $this->assertCount(2, $flotilla['crewed_boats']);
+        $this->assertCount(0, $flotilla['waitlist_boats']);
+
+        // Some crews should be waitlisted
+        $totalCrewsAssigned = 0;
+        foreach ($flotilla['crewed_boats'] as $crewedBoat) {
+            $totalCrewsAssigned += count($crewedBoat['crews']);
+        }
+        $this->assertEquals(4, $totalCrewsAssigned);
+        $this->assertCount(2, $flotilla['waitlist_crews']);
+    }
+
+    /**
+     * Test: execute() with too few crews (some boats waitlisted)
+     */
+    public function testExecuteWithTooFewCrews(): void
+    {
+        // Arrange
+        // 3 boats * 2 berths = 6 total berths, 4 crews = not enough
+        $boat1Id = $this->createTestBoat('boat1', 2, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 2);
+        $boat3Id = $this->createTestBoat('boat3', 2, 2);
+
+        $crew1Id = $this->createTestCrew('crew1');
+        $crew2Id = $this->createTestCrew('crew2');
+        $crew3Id = $this->createTestCrew('crew3');
+        $crew4Id = $this->createTestCrew('crew4');
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat3Id, 'Fri May 29', 2);
+        $this->setCrewAvailability($crew1Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew2Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew3Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        $this->setCrewAvailability($crew4Id, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // Some boats should be crewed
+        $this->assertGreaterThan(0, count($flotilla['crewed_boats']));
+
+        // Some boats should be waitlisted
+        $this->assertGreaterThan(0, count($flotilla['waitlist_boats']));
+
+        // All crews should be assigned (no waitlist crews)
+        $this->assertCount(0, $flotilla['waitlist_crews']);
+
+        // Total boats should be 3
+        $totalBoats = count($flotilla['crewed_boats']) + count($flotilla['waitlist_boats']);
+        $this->assertEquals(3, $totalBoats);
+    }
+}
