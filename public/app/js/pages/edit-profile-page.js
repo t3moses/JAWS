@@ -269,10 +269,13 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
     const result = await updateUser(user.userId, updates);
 
     if (result.success) {
-        showSuccess('Profile updated successfully! Redirecting to dashboard...', 2000);
+        // Show success toast for 3 seconds
+        showSuccess('Profile updated successfully! Redirecting to dashboard...', 3000);
+
+        // Redirect after toast has been visible (3.2 seconds to ensure user sees it)
         setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 1500);
+        }, 3200);
     } else {
         showError(result.error || 'Failed to update profile');
     }
