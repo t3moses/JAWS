@@ -118,6 +118,21 @@ nav a:hover {
   color: var(--teal);
 }
 
+/* ===================================
+   Authentication-based Navigation Visibility
+   Prevents flash of unauthenticated content (FOUC)
+   =================================== */
+
+/* Hide authenticated-only nav items when user is not authenticated */
+html.unauthenticated .nav-authenticated {
+  display: none !important;
+}
+
+/* Hide unauthenticated-only nav items when user is authenticated */
+html.authenticated .nav-unauthenticated {
+  display: none !important;
+}
+
 /* Hamburger Menu Button */
 .hamburger {
   display: none;
@@ -1089,6 +1104,7 @@ nav .user-greeting {
   font-weight: 500;
   padding: 0 1rem;
   font-size: 0.95rem;
+  white-space: nowrap; /* Prevent wrapping "Hi, Name!" across multiple lines */
 }
 
 /* Responsive adjustments for dashboard */

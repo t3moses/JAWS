@@ -9,10 +9,14 @@
 /**
  * Updates navigation UI when user is authenticated
  *
- * This handles:
- * - Changing nav-account to show Dashboard link
- * - Adding user greeting with first name
- * - Adding sign out button to navigation
+ * NOTE: As of the anti-FOUC refactor, the navigation structure is pre-rendered
+ * in HTML with both authenticated and unauthenticated items. CSS classes
+ * (.nav-authenticated, .nav-unauthenticated) control visibility based on the
+ * auth state set by auth-init.js.
+ *
+ * This function now ONLY:
+ * - Fills in the user's first name (replaces "..." placeholder)
+ * - Attaches the sign-out event handler
  *
  * @param {Object} user - User object from AuthService.getCurrentUser()
  * @param {Function} signOut - Sign out function from AuthService
@@ -33,30 +37,24 @@ export function updateAuthenticatedNavigation(user, signOut) {
         return false;
     }
 
-    const navAccount = document.getElementById('nav-account');
-    const mainNav = document.getElementById('main-nav');
-
-    if (!navAccount || !mainNav) {
-        console.warn('NavigationService: Required DOM elements not found (nav-account, main-nav)');
-        return false;
+    // Update user's first name in the greeting (nav structure already exists in HTML)
+    const userNameSpan = document.querySelector('.user-name');
+    if (userNameSpan) {
+        userNameSpan.textContent = user.profile.firstName;
+    } else {
+        console.warn('NavigationService: .user-name element not found');
     }
 
-    // Update nav-account to show Dashboard link
-    navAccount.innerHTML = '<a href="dashboard.html">Dashboard</a>';
-
-    // Add user greeting
-    const userGreeting = document.createElement('li');
-    userGreeting.innerHTML = '<span class="user-greeting">Hi, <span id="nav-username">' + user.profile.firstName; + '</span>!</span>';
-    mainNav.appendChild(userGreeting);
-
-    // Add sign out button
-    const signOutLi = document.createElement('li');
-    signOutLi.innerHTML = '<a href="#" class="sign-out-btn">Sign Out</a>';
-    signOutLi.querySelector('a').addEventListener('click', (e) => {
-        e.preventDefault();
-        signOut();
-    });
-    mainNav.appendChild(signOutLi);
+    // Attach sign-out event handler
+    const signOutBtn = document.querySelector('.sign-out-btn');
+    if (signOutBtn) {
+        signOutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut();
+        });
+    } else {
+        console.warn('NavigationService: .sign-out-btn element not found');
+    }
 
     return true;
 }

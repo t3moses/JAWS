@@ -4,14 +4,12 @@
  */
 
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
+import { updateAuthenticatedNavigation } from '../navigationService.js';
 import { getAllEvents, isDeadlinePassed } from '../eventService.js';
 import { updateEventAvailability } from '../userService.js';
 import { get } from '../apiService.js';
 import { API_CONFIG } from '../config.js';
 import { showSuccess, showError, showInfo } from '../toastService.js';
-
-// Make signOut available globally for onclick handlers
-window.signOut = signOut;
 
 // Require authentication
 if (!requireAuth()) {
@@ -29,9 +27,11 @@ if (!user) {
 
 console.log('User loaded successfully:', user.email);
 
-// Populate username in hero and nav
+// Update navigation with user's name and attach sign-out handler
+updateAuthenticatedNavigation(user, signOut);
+
+// Populate username in hero
 document.getElementById('hero-username').textContent = user.profile.firstName;
-document.getElementById('nav-username').textContent = user.profile.firstName;
 
 // Populate account badge
 const badge = document.getElementById('account-badge');
