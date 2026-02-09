@@ -24,11 +24,11 @@ form.addEventListener('submit', async function(e) {
     const result = await signIn(email, password);
 
     if (result.success) {
-        // Redirect to dashboard
+        // Redirect immediately to dashboard on success
         window.location.href = 'dashboard.html';
     } else {
-        // Show error message as toast
-        showError(result.error);
+        // Show error message as toast (stays visible for 4 seconds)
+        showError(result.error, 4000);
 
         // Clear password field
         document.getElementById('password').value = '';
