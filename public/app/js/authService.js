@@ -69,20 +69,26 @@ export function isSignedIn() {
 
 /**
  * Transform availabilities object to eventAvailability object
- * @param {Object} availabilities - Object with display names as keys and status codes as values
- *                                   { "Fri Jun 12": 2, "Fri Jun 19": 0, ... }
- *                                   Status codes: 0 & 4 = unavailable, 1 & 2 = available
+ * @param {Object} availabilities - Object with display names as keys and values
+ *                                   For crew: status codes (0=unavailable, 1=available, 2=guaranteed, 3=withdrawn)
+ *                                   For boats: berth counts (0, 1, 2, 3, 4)
+ * @param {string} accountType - 'crew' or 'boat_owner'
  * @returns {Object} eventAvailability object { "Fri Jun 12": true, "Fri Jun 19": false, ... }
  */
-function transformAvailabilities(availabilities) {
+function transformAvailabilities(availabilities, accountType) {
     if (!availabilities || typeof availabilities !== 'object') {
         return {};
     }
 
     const eventAvailability = {};
-    Object.entries(availabilities).forEach(([eventId, statusCode]) => {
-        // Status codes 1 & 2 mean available (true), 0 & 4 mean unavailable (false)
-        eventAvailability[eventId] = (statusCode === 1 || statusCode === 2);
+    Object.entries(availabilities).forEach(([eventId, value]) => {
+        if (accountType === 'crew') {
+            // For crew: Status codes 1 & 2 mean available (true), 0 & 3 mean unavailable (false)
+            eventAvailability[eventId] = (value === 1 || value === 2);
+        } else {
+            // For boat owners: Any berth count > 0 means available (true)
+            eventAvailability[eventId] = value > 0;
+        }
     });
 
     return eventAvailability;
@@ -153,7 +159,7 @@ function transformUserMeResponse(apiResponse) {
         profile: transformProfile(profileData, user.accountType),
 
         // Transform availabilities array to eventAvailability object
-        eventAvailability: transformAvailabilities(profileData?.availabilities),
+        eventAvailability: transformAvailabilities(profileData?.availabilities, user.accountType),
 
         // Map timestamp field names
         createdAt: user.createdAt,

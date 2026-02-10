@@ -177,6 +177,7 @@ $container->set(\App\Application\UseCase\Crew\GetCrewAvailabilityUseCase::class,
 $container->set(\App\Application\UseCase\Crew\GetUserAssignmentsUseCase::class, function ($c) {
     return new \App\Application\UseCase\Crew\GetUserAssignmentsUseCase(
         $c->get(CrewRepositoryInterface::class),
+        $c->get(BoatRepositoryInterface::class),
         $c->get(EventRepositoryInterface::class),
         $c->get(SeasonRepositoryInterface::class)
     );
