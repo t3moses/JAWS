@@ -255,14 +255,16 @@ $container->set(\App\Application\UseCase\Admin\GetConfigUseCase::class, function
 });
 
 // Auth Use Cases
-$container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function ($c) {
+$container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function ($c) use ($config) {
     return new \App\Application\UseCase\Auth\RegisterUseCase(
         $c->get(UserRepositoryInterface::class),
         $c->get(CrewRepositoryInterface::class),
         $c->get(BoatRepositoryInterface::class),
         $c->get(PasswordServiceInterface::class),
         $c->get(TokenServiceInterface::class),
-        $c->get(RankingService::class)
+        $c->get(RankingService::class),
+        $c->get(EmailServiceInterface::class),
+        $config
     );
 });
 

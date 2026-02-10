@@ -22,6 +22,7 @@ return [
         'smtp_password' => getenv('SES_SMTP_PASSWORD') ?: '',
         'from_address' => getenv('EMAIL_FROM') ?: 'noreply@nsc-sdc.ca',
         'from_name' => getenv('EMAIL_FROM_NAME') ?: 'Nepean Sailing Club - Social Day Cruising',
+        'admin_notification_email' => getenv('ADMIN_NOTIFICATION_EMAIL') ?: 'nsc-sdc@nsc.ca',
     ],
 
     // Application
