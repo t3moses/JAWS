@@ -37,14 +37,14 @@ document.querySelector('form').addEventListener('submit', async function(e) {
         email: document.getElementById('email').value,
         password: password,
         profile: {
-            firstName: document.getElementById('first_name').value,
-            lastName: document.getElementById('last_name').value,
-            phone: document.getElementById('phone').value,
-            boatName: document.getElementById('boat_name').value,
-            minCrew: document.getElementById('min_crew').value,
-            maxCrew: document.getElementById('max_crew').value,
-            requestFirstMate: document.getElementById('request_first_mate').checked,
-            whatsappGroup: document.getElementById('whatsapp_group').checked
+            ownerFirstName: document.getElementById('first_name').value,
+            ownerLastName: document.getElementById('last_name').value,
+            ownerMobile: document.getElementById('phone').value,
+            displayName: document.getElementById('boat_name').value,
+            minBerths: document.getElementById('min_crew').value,
+            maxBerths: document.getElementById('max_crew').value,
+            assistanceRequired: document.getElementById('request_first_mate').checked,
+            socialPreference: document.getElementById('whatsapp_group').checked
         }
     };
 
