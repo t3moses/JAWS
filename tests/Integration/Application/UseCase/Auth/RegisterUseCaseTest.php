@@ -9,6 +9,7 @@ use App\Application\DTO\Request\RegisterRequest;
 use App\Application\Exception\UserAlreadyExistsException;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\WeakPasswordException;
+use App\Application\Port\Service\EmailServiceInterface;
 use App\Infrastructure\Persistence\SQLite\UserRepository;
 use App\Infrastructure\Persistence\SQLite\CrewRepository;
 use App\Infrastructure\Persistence\SQLite\BoatRepository;
@@ -30,27 +31,41 @@ class RegisterUseCaseTest extends IntegrationTestCase
     private CrewRepository $crewRepository;
     private BoatRepository $boatRepository;
     private PhpPasswordService $passwordService;
+    private EmailServiceInterface $emailService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->userRepository = new UserRepository();
         $this->crewRepository = new CrewRepository();
         $this->boatRepository = new BoatRepository();
         $this->passwordService = new PhpPasswordService();
         $tokenService = new JwtTokenService();
-        
+
         // We need RankingService for the usecase
         $rankingService = new \App\Domain\Service\RankingService();
-        
+
+        // Mock EmailService to avoid sending real emails during tests
+        $this->emailService = $this->createMock(EmailServiceInterface::class);
+        $this->emailService->method('send')->willReturn(true);
+
+        // Mock config array
+        $config = [
+            'email' => [
+                'admin_notification_email' => 'test-admin@example.com',
+            ],
+        ];
+
         $this->useCase = new RegisterUseCase(
             $this->userRepository,
             $this->crewRepository,
             $this->boatRepository,
             $this->passwordService,
             $tokenService,
-            $rankingService
+            $rankingService,
+            $this->emailService,
+            $config
         );
     }
 

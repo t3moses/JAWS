@@ -40,7 +40,7 @@ class Boat
         private ?string $displayName,
         private string $ownerFirstName,
         private string $ownerLastName,
-        private string $ownerMobile,
+        private ?string $ownerMobile,
         private int $minBerths,
         private int $maxBerths,
         private bool $assistanceRequired,

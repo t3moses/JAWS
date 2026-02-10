@@ -8,6 +8,7 @@ use App\Application\DTO\Request\RegisterRequest;
 use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
+use App\Application\Port\Service\EmailServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
 use App\Application\Port\Service\TokenServiceInterface;
 use App\Application\UseCase\Auth\RegisterUseCase;
@@ -26,6 +27,8 @@ class RegisterUseCaseTest extends TestCase
     private PasswordServiceInterface $passwordService;
     private TokenServiceInterface $tokenService;
     private RankingService $rankingService;
+    private EmailServiceInterface $emailService;
+    private array $config;
     private RegisterUseCase $useCase;
 
     protected function setUp(): void
@@ -39,6 +42,14 @@ class RegisterUseCaseTest extends TestCase
         $this->passwordService = $this->createMock(PasswordServiceInterface::class);
         $this->tokenService = $this->createMock(TokenServiceInterface::class);
         $this->rankingService = $this->createMock(RankingService::class);
+        $this->emailService = $this->createMock(EmailServiceInterface::class);
+
+        // Mock config array
+        $this->config = [
+            'email' => [
+                'admin_notification_email' => 'test-admin@example.com',
+            ],
+        ];
 
         // Setup common mock behaviors
         $this->userRepository->method('emailExists')->willReturn(false);
@@ -64,13 +75,18 @@ class RegisterUseCaseTest extends TestCase
             Rank::forBoat(flexibility: 1, absence: 0)
         );
 
+        // Default: Email service returns true (success)
+        $this->emailService->method('send')->willReturn(true);
+
         $this->useCase = new RegisterUseCase(
             $this->userRepository,
             $this->crewRepository,
             $this->boatRepository,
             $this->passwordService,
             $this->tokenService,
-            $this->rankingService
+            $this->rankingService,
+            $this->emailService,
+            $this->config
         );
     }
 
@@ -384,5 +400,224 @@ class RegisterUseCaseTest extends TestCase
         $this->assertEquals('ChrisT', $capturedBoat->getDisplayName());
         // Verify the boat key is also based on the displayName (normalized: lowercase, spaces removed)
         $this->assertEquals('christ', $capturedBoat->getKey()->toString());
+    }
+
+    public function testSendsAdminNotificationForCrewRegistration(): void
+    {
+        // Arrange
+        $this->crewRepository->method('findByKey')->willReturn(null);
+
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('test-admin@example.com'),
+                $this->stringContains('New Crew Registration'),
+                $this->stringContains('Crew Member Registration')
+            )
+            ->willReturn(true);
+
+        $request = new RegisterRequest(
+            email: 'john.doe@example.com',
+            password: 'SecurePass123!',
+            accountType: 'crew',
+            profile: [
+                'firstName' => 'John',
+                'lastName' => 'Doe',
+                'displayName' => 'JohnD',
+                'skill' => 1,
+            ]
+        );
+
+        // Act
+        $response = $this->useCase->execute($request);
+
+        // Assert
+        $this->assertNotNull($response);
+        $this->assertEquals('mock.jwt.token', $response->token);
+    }
+
+    public function testSendsAdminNotificationForBoatOwnerRegistration(): void
+    {
+        // Arrange
+        $this->boatRepository->method('findByKey')->willReturn(null);
+
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('test-admin@example.com'),
+                $this->stringContains('New Boat Owner Registration'),
+                $this->stringContains('Boat Owner Registration')
+            )
+            ->willReturn(true);
+
+        $request = new RegisterRequest(
+            email: 'captain@example.com',
+            password: 'SecurePass123!',
+            accountType: 'boat_owner',
+            profile: [
+                'ownerFirstName' => 'Captain',
+                'ownerLastName' => 'Hook',
+                'displayName' => 'The Jolly Roger',
+                'minBerths' => 2,
+                'maxBerths' => 4,
+            ]
+        );
+
+        // Act
+        $response = $this->useCase->execute($request);
+
+        // Assert
+        $this->assertNotNull($response);
+        $this->assertEquals('mock.jwt.token', $response->token);
+    }
+
+    public function testRegistrationSucceedsWhenEmailFails(): void
+    {
+        // Arrange
+        $this->crewRepository->method('findByKey')->willReturn(null);
+
+        // Email service returns false (failure)
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->willReturn(false);
+
+        $request = new RegisterRequest(
+            email: 'test@example.com',
+            password: 'SecurePass123!',
+            accountType: 'crew',
+            profile: [
+                'firstName' => 'Test',
+                'lastName' => 'User',
+            ]
+        );
+
+        // Act
+        $response = $this->useCase->execute($request);
+
+        // Assert - Registration should still succeed
+        $this->assertNotNull($response);
+        $this->assertEquals('mock.jwt.token', $response->token);
+    }
+
+    public function testRegistrationSucceedsWhenEmailThrowsException(): void
+    {
+        // Arrange
+        $this->crewRepository->method('findByKey')->willReturn(null);
+
+        // Email service throws exception
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->willThrowException(new \Exception('Email service unavailable'));
+
+        $request = new RegisterRequest(
+            email: 'exception@example.com',
+            password: 'SecurePass123!',
+            accountType: 'crew',
+            profile: [
+                'firstName' => 'Exception',
+                'lastName' => 'Test',
+            ]
+        );
+
+        // Act
+        $response = $this->useCase->execute($request);
+
+        // Assert - Registration should still succeed despite email exception
+        $this->assertNotNull($response);
+        $this->assertEquals('mock.jwt.token', $response->token);
+    }
+
+    public function testEmailContainsCrewDetailsForCrewRegistration(): void
+    {
+        // Arrange
+        $this->crewRepository->method('findByKey')->willReturn(null);
+
+        $capturedEmailBody = null;
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->anything(),
+                $this->anything(),
+                $this->callback(function (string $body) use (&$capturedEmailBody) {
+                    $capturedEmailBody = $body;
+                    return true;
+                })
+            )
+            ->willReturn(true);
+
+        $request = new RegisterRequest(
+            email: 'detailed@example.com',
+            password: 'SecurePass123!',
+            accountType: 'crew',
+            profile: [
+                'firstName' => 'Detailed',
+                'lastName' => 'Tester',
+                'displayName' => 'D.Tester',
+                'skill' => 2,
+                'membershipNumber' => '12345',
+                'mobile' => '555-1234',
+            ]
+        );
+
+        // Act
+        $this->useCase->execute($request);
+
+        // Assert - Verify email contains key crew details
+        $this->assertNotNull($capturedEmailBody);
+        $this->assertStringContainsString('Detailed', $capturedEmailBody);
+        $this->assertStringContainsString('Tester', $capturedEmailBody);
+        $this->assertStringContainsString('D.Tester', $capturedEmailBody);
+        $this->assertStringContainsString('Advanced', $capturedEmailBody); // skill level 2
+        $this->assertStringContainsString('12345', $capturedEmailBody); // membership number
+        $this->assertStringContainsString('555-1234', $capturedEmailBody); // mobile
+        $this->assertStringContainsString('detailed@example.com', $capturedEmailBody); // email
+    }
+
+    public function testEmailContainsBoatDetailsForBoatOwnerRegistration(): void
+    {
+        // Arrange
+        $this->boatRepository->method('findByKey')->willReturn(null);
+
+        $capturedEmailBody = null;
+        $this->emailService->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->anything(),
+                $this->anything(),
+                $this->callback(function (string $body) use (&$capturedEmailBody) {
+                    $capturedEmailBody = $body;
+                    return true;
+                })
+            )
+            ->willReturn(true);
+
+        $request = new RegisterRequest(
+            email: 'boat@example.com',
+            password: 'SecurePass123!',
+            accountType: 'boat_owner',
+            profile: [
+                'ownerFirstName' => 'Boat',
+                'ownerLastName' => 'Owner',
+                'displayName' => 'SS Minnow',
+                'minBerths' => 3,
+                'maxBerths' => 5,
+                'ownerMobile' => '555-5678',
+                'assistanceRequired' => true,
+                'socialPreference' => true,
+            ]
+        );
+
+        // Act
+        $this->useCase->execute($request);
+
+        // Assert - Verify email contains key boat details
+        $this->assertNotNull($capturedEmailBody);
+        $this->assertStringContainsString('Boat', $capturedEmailBody);
+        $this->assertStringContainsString('Owner', $capturedEmailBody);
+        $this->assertStringContainsString('SS Minnow', $capturedEmailBody);
+        $this->assertStringContainsString('3-5', $capturedEmailBody); // berth capacity
+        $this->assertStringContainsString('555-5678', $capturedEmailBody); // mobile
+        $this->assertStringContainsString('Yes', $capturedEmailBody); // assistance required
+        $this->assertStringContainsString('boat@example.com', $capturedEmailBody); // email
     }
 }
