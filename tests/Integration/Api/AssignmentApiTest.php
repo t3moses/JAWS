@@ -82,9 +82,15 @@ class AssignmentApiTest extends TestCase
                 $this->assertIsArray($assignments);
 
                 foreach ($assignments as $assignment) {
+                    // Verify assignment structure matches AssignmentResponse DTO
                     $this->assertArrayHasKey('eventId', $assignment);
-                    $this->assertArrayHasKey('boat', $assignment);
-                    $this->assertArrayHasKey('crew', $assignment);
+                    $this->assertArrayHasKey('eventDate', $assignment);
+                    $this->assertArrayHasKey('startTime', $assignment);
+                    $this->assertArrayHasKey('finishTime', $assignment);
+                    $this->assertArrayHasKey('availabilityStatus', $assignment);
+                    $this->assertArrayHasKey('boatName', $assignment);
+                    $this->assertArrayHasKey('boatKey', $assignment);
+                    $this->assertArrayHasKey('crewmates', $assignment);
                 }
             }
 
@@ -93,11 +99,14 @@ class AssignmentApiTest extends TestCase
                 $this->assertIsArray($assignments);
 
                 // Verify assignments array exists and is valid
-                // Structure may vary depending on implementation
                 if (!empty($assignments)) {
                     foreach ($assignments as $assignment) {
-                        // Just verify it's an array or object with some data
-                        $this->assertNotEmpty($assignment, 'Assignment should not be empty');
+                        // Verify assignment structure matches AssignmentResponse DTO
+                        $this->assertArrayHasKey('eventId', $assignment);
+                        $this->assertArrayHasKey('eventDate', $assignment);
+                        $this->assertArrayHasKey('availabilityStatus', $assignment);
+                        $this->assertArrayHasKey('boatName', $assignment);
+                        $this->assertArrayHasKey('crewmates', $assignment);
                     }
                 }
             }

@@ -7,6 +7,7 @@ namespace Tests\Integration\Application\UseCase\Crew;
 use App\Application\UseCase\Crew\GetCrewAvailabilityUseCase;
 use App\Application\UseCase\Crew\GetUserAssignmentsUseCase;
 use App\Application\Exception\CrewNotFoundException;
+use App\Infrastructure\Persistence\SQLite\BoatRepository;
 use App\Infrastructure\Persistence\SQLite\CrewRepository;
 use App\Infrastructure\Persistence\SQLite\EventRepository;
 use App\Infrastructure\Persistence\SQLite\SeasonRepository;
@@ -30,6 +31,7 @@ class CrewQueryUseCaseTest extends IntegrationTestCase
 {
     private GetCrewAvailabilityUseCase $getCrewAvailabilityUseCase;
     private GetUserAssignmentsUseCase $getUserAssignmentsUseCase;
+    private BoatRepository $boatRepository;
     private CrewRepository $crewRepository;
     private EventRepository $eventRepository;
     private SeasonRepository $seasonRepository;
@@ -39,6 +41,7 @@ class CrewQueryUseCaseTest extends IntegrationTestCase
     {
         parent::setUp();
 
+        $this->boatRepository = new BoatRepository();
         $this->crewRepository = new CrewRepository();
         $this->eventRepository = new EventRepository();
         $this->seasonRepository = new SeasonRepository();
@@ -51,6 +54,7 @@ class CrewQueryUseCaseTest extends IntegrationTestCase
 
         $this->getUserAssignmentsUseCase = new GetUserAssignmentsUseCase(
             $this->crewRepository,
+            $this->boatRepository,
             $this->eventRepository,
             $this->seasonRepository
         );
@@ -181,11 +185,13 @@ class CrewQueryUseCaseTest extends IntegrationTestCase
 
     // ==================== GetUserAssignmentsUseCase Tests ====================
 
-    public function testGetUserAssignmentsThrowsExceptionWhenCrewNotFound(): void
+    public function testGetUserAssignmentsReturnsEmptyArrayWhenUserNotFound(): void
     {
-        $this->expectException(CrewNotFoundException::class);
+        // Users who are neither crew nor boat owners should get an empty array
+        $assignments = $this->getUserAssignmentsUseCase->execute(999999);
 
-        $this->getUserAssignmentsUseCase->execute(999999);
+        $this->assertIsArray($assignments);
+        $this->assertEmpty($assignments);
     }
 
     public function testGetUserAssignmentsReturnsArrayOfAssignments(): void
