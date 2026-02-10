@@ -4,7 +4,7 @@
  */
 
 import { isSignedIn, getCurrentUser, signOut } from '../authService.js';
-import { updateAuthenticatedNavigation } from '../navigationService.js';
+import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 
 // Update navigation and CTAs based on auth state
 if (await isSignedIn()) {
@@ -12,6 +12,7 @@ if (await isSignedIn()) {
 
     // Update navigation with authenticated user info
     updateAuthenticatedNavigation(user, signOut);
+    addAdminLink(user);
 
     // Update hero CTA
     document.getElementById('hero-message').textContent = 'Welcome back, ' + user.profile.firstName + '! Ready for your next sailing adventure?';

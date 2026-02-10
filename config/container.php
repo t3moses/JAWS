@@ -177,6 +177,7 @@ $container->set(\App\Application\UseCase\Crew\GetCrewAvailabilityUseCase::class,
 $container->set(\App\Application\UseCase\Crew\GetUserAssignmentsUseCase::class, function ($c) {
     return new \App\Application\UseCase\Crew\GetUserAssignmentsUseCase(
         $c->get(CrewRepositoryInterface::class),
+        $c->get(BoatRepositoryInterface::class),
         $c->get(EventRepositoryInterface::class),
         $c->get(SeasonRepositoryInterface::class)
     );
@@ -244,6 +245,12 @@ $container->set(\App\Application\UseCase\Admin\SendNotificationsUseCase::class, 
         $c->get(SeasonRepositoryInterface::class),
         $c->get(EmailServiceInterface::class),
         $c->get(CalendarServiceInterface::class)
+    );
+});
+
+$container->set(\App\Application\UseCase\Admin\GetConfigUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\GetConfigUseCase(
+        $c->get(SeasonRepositoryInterface::class)
     );
 });
 
@@ -339,6 +346,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
     return new \App\Presentation\Controller\AdminController(
         $c->get(\App\Application\UseCase\Admin\GetMatchingDataUseCase::class),
         $c->get(\App\Application\UseCase\Admin\SendNotificationsUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\GetConfigUseCase::class),
         $c->get(\App\Application\UseCase\Season\UpdateConfigUseCase::class)
     );
 });

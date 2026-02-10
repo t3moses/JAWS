@@ -9,6 +9,10 @@ import { updateUser } from '../userService.js';
 import { hashPassword } from '../authService.js';
 import { validatePassword, getPasswordRequirementsHTML } from '../passwordValidator.js';
 import { showSuccess, showError } from '../toastService.js';
+import { addAdminLink } from '../navigationService.js';
+
+// Make signOut available globally for onclick handlers
+window.signOut = signOut;
 
 // Require authentication
 if (!requireAuth()) {
@@ -21,8 +25,11 @@ if (!user) {
     window.location.href = 'signin.html';
 }
 
-// Update navigation with user's name and attach sign-out handler
-updateAuthenticatedNavigation(user, signOut);
+// Update navigation with user info
+updateAuthenticatedNavigation(user);
+
+// Add admin link if user is admin
+addAdminLink(user);
 
 // Build form based on account type
 const formContent = document.getElementById('form-content');

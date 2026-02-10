@@ -24,7 +24,12 @@ export const API_CONFIG = {
         // Event endpoints
         EVENTS: '/events',
         EVENT_BY_ID: '/events/:id',
-        FLOTILLAS: '/flotillas'
+        FLOTILLAS: '/flotillas',
+
+        // Admin endpoints
+        ADMIN_MATCHING: '/admin/matching/:eventId',
+        ADMIN_NOTIFICATIONS: '/admin/notifications/:eventId',
+        ADMIN_CONFIG: '/admin/config'
     }
 };
 

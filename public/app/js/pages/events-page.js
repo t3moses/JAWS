@@ -4,13 +4,14 @@
  */
 
 import { isSignedIn, getCurrentUser, signOut } from '../authService.js';
-import { updateAuthenticatedNavigation } from '../navigationService.js';
+import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 import * as CalendarService from '../calendarService.js';
 
 // Update navigation based on auth state
 if (await isSignedIn()) {
     const user = await getCurrentUser();
     updateAuthenticatedNavigation(user, signOut);
+    addAdminLink(user);
 }
 
 /**

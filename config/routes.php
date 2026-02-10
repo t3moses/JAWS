@@ -159,7 +159,7 @@ return [
         'path' => '/api/admin/matching/{eventId}',
         'controller' => AdminController::class,
         'action' => 'getMatchingData',
-        'auth' => true,  // TODO: Add admin-specific auth
+        'auth' => true,
     ],
 
     // Send Notifications
@@ -168,7 +168,16 @@ return [
         'path' => '/api/admin/notifications/{eventId}',
         'controller' => AdminController::class,
         'action' => 'sendNotifications',
-        'auth' => true,  // TODO: Add admin-specific auth
+        'auth' => true,
+    ],
+
+    // Get Configuration
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/config',
+        'controller' => AdminController::class,
+        'action' => 'getConfig',
+        'auth' => true,
     ],
 
     // Update Configuration
@@ -177,6 +186,6 @@ return [
         'path' => '/api/admin/config',
         'controller' => AdminController::class,
         'action' => 'updateConfig',
-        'auth' => true,  // TODO: Add admin-specific auth
+        'auth' => true,
     ],
 ];

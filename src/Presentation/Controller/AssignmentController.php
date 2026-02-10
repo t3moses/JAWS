@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Presentation\Controller;
 
 use App\Application\UseCase\Crew\GetUserAssignmentsUseCase;
-use App\Application\Exception\CrewNotFoundException;
 use App\Presentation\Response\JsonResponse;
 
 /**
@@ -36,8 +35,6 @@ class AssignmentController
             return JsonResponse::success([
                 'assignments' => array_map(fn($a) => $a->toArray(), $assignments),
             ]);
-        } catch (CrewNotFoundException $e) {
-            return JsonResponse::notFound($e->getMessage());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }

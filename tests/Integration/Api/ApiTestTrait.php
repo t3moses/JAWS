@@ -116,6 +116,66 @@ trait ApiTestTrait
         ];
     }
 
+    private function createTestAdmin(string $baseUrl): array
+    {
+        $suffix = $this->makeUniqueSuffix();
+        $email = $this->makeUniqueEmail('test.admin');
+        $password = 'AdminPass123';
+
+        // Create admin user directly in database (bypasses register endpoint's isAdmin=false)
+        $pdo = \App\Infrastructure\Persistence\SQLite\Connection::getInstance();
+        $stmt = $pdo->prepare('
+            INSERT INTO users (email, password_hash, account_type, is_admin, created_at, updated_at)
+            VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ');
+        $stmt->execute([
+            $email,
+            password_hash($password, PASSWORD_BCRYPT),
+            'crew', // Admin can have any account type
+        ]);
+
+        $userId = (int)$pdo->lastInsertId();
+
+        // Create a crew profile for the admin (required for some operations)
+        $firstName = "AdminTest{$suffix}";
+        $lastName = "User";
+
+        // Generate crew key: lowercase firstname + lastname (no spaces)
+        $crewKey = strtolower(str_replace(' ', '', $firstName) . str_replace(' ', '', $lastName));
+
+        $stmt = $pdo->prepare('
+            INSERT INTO crews (
+                key, display_name, first_name, last_name, email, skill, user_id,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, 1, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ');
+        $stmt->execute([
+            $crewKey,
+            "Admin Test {$suffix}",
+            $firstName,
+            $lastName,
+            $email,
+            $userId,
+        ]);
+
+        // Login to get a valid JWT token with is_admin=true
+        $response = $this->makeRequest('POST', "{$baseUrl}/auth/login", [
+            'email' => $email,
+            'password' => $password,
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertArrayHasKey('token', $response['body']['data']);
+
+        return [
+            'token' => $response['body']['data']['token'],
+            'userId' => $userId,
+            'firstName' => $firstName,
+            'lastName' => $lastName,
+            'email' => $email,
+        ];
+    }
+
     private function cleanupTestUser(?int $userId): void
     {
         if ($userId) {

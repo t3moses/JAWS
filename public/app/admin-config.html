@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Season Configuration - Admin - NSC Social Day Cruising</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+                    <li id="nav-account"><a href="signin.html">Sign In</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Season Configuration<span class="admin-badge">Admin</span></h1>
+            <p>Manage season-wide settings and time configuration</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+            <form id="config-form">
+                <!-- Time Source Section -->
+                <div class="form-section">
+                    <h3>Time Source</h3>
+                    <p class="help-text">Choose whether to use production (system clock) or simulated time for testing.</p>
+
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="source-production" name="source" value="production" checked>
+                            <label for="source-production">Production (System Clock)</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="source-simulated" name="source" value="simulated">
+                            <label for="source-simulated">Simulated (Testing Mode)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulated Date Section (conditional) -->
+                <div id="simulated-date-section" class="form-section" style="display: none;">
+                    <h3>Simulated Date</h3>
+                    <p class="help-text">Set the simulated date for testing purposes (only used when time source is set to "Simulated").</p>
+
+                    <div class="form-group">
+                        <label for="simulated-date">Simulated Date</label>
+                        <input type="date" id="simulated-date" name="simulated_date" class="form-input">
+                    </div>
+                </div>
+
+                <!-- Year Section -->
+                <div class="form-section">
+                    <h3>Season Year</h3>
+                    <p class="help-text">The calendar year for the current sailing season.</p>
+
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" class="form-input" min="2020" max="2100" required>
+                    </div>
+                </div>
+
+                <!-- Event Times Section -->
+                <div class="form-section">
+                    <h3>Event Times</h3>
+                    <p class="help-text">Default start and finish times for all events in the season.</p>
+
+                    <div class="form-group">
+                        <label for="start-time">Start Time (HH:MM:SS)</label>
+                        <input type="text" id="start-time" name="start_time" class="form-input" pattern="[0-2][0-9]:[0-5][0-9]:[0-5][0-9]" placeholder="10:00:00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="finish-time">Finish Time (HH:MM:SS)</label>
+                        <input type="text" id="finish-time" name="finish_time" class="form-input" pattern="[0-2][0-9]:[0-5][0-9]:[0-5][0-9]" placeholder="18:00:00" required>
+                    </div>
+                </div>
+
+                <!-- Blackout Window Section -->
+                <div class="form-section">
+                    <h3>Blackout Window</h3>
+                    <p class="help-text">Time range during which participants cannot update their availability. This prevents changes during the event.</p>
+
+                    <div class="form-group">
+                        <label for="blackout-from">Blackout From (HH:MM:SS)</label>
+                        <input type="text" id="blackout-from" name="blackout_from" class="form-input" pattern="[0-2][0-9]:[0-5][0-9]:[0-5][0-9]" placeholder="10:00:00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="blackout-to">Blackout To (HH:MM:SS)</label>
+                        <input type="text" id="blackout-to" name="blackout_to" class="form-input" pattern="[0-2][0-9]:[0-5][0-9]:[0-5][0-9]" placeholder="18:00:00" required>
+                    </div>
+                </div>
+
+                <!-- Last Updated -->
+                <div class="form-section">
+                    <p style="color: var(--text-gray); font-size: 0.9rem;">
+                        <strong>Last updated:</strong> <span id="last-updated">—</span>
+                    </p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary">Save Configuration</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2025 Nepean Sailing Club. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/pages/admin-config-page.js"></script>
+</body>
+</html>
