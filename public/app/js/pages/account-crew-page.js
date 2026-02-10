@@ -49,7 +49,6 @@ document.querySelector('form').addEventListener('submit', async function(e) {
     const result = await register(userData);
 
     if (result.success) {
-        alert('Welcome to the crew! Check out the events page to register for your first sail!');
         window.location.href = 'dashboard.html';
     } else {
         alert('Error: ' + result.error);
