@@ -136,9 +136,9 @@ class GetUserAssignmentsUseCase
                             $crews
                         );
 
-                        // For boat owners, show berths availability as status
-                        $berths = $boat->getBerths($eventId);
-                        $availabilityStatus = $berths > 0 ? 1 : 0; // 1 = available, 0 = unavailable
+                        // For boat owners with crew assigned, status is GUARANTEED (2)
+                        // If the boat is in crewed_boats, it's confirmed for the event
+                        $availabilityStatus = 2; // GUARANTEED
 
                         $assignments[] = new AssignmentResponse(
                             eventId: $eventIdString,
