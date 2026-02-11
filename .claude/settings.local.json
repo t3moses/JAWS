@@ -24,7 +24,8 @@
       "Bash(composer remove:*)",
       "Bash(vendor\\\\bin\\\\phinx migrate:*)",
       "Bash(dir:*)",
-      "Bash(vendor/bin/phinx migrate:*)"
+      "Bash(vendor/bin/phinx migrate:*)",
+      "Bash(composer update:*)"
     ]
   }
 }

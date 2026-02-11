@@ -318,7 +318,7 @@ Presentation → Infrastructure → Application → Domain
   - `SeasonRepository.php` - Implements `SeasonRepositoryInterface` (config & flotilla JSON storage)
 
 - **Service Adapters** (`Service/`)
-  - `AwsSesEmailService.php` - Implements `EmailServiceInterface` using AWS SES via PHPMailer
+  - `PhpMailerEmailService.php` - Implements `EmailServiceInterface` using PHPMailer with SMTP
   - `ICalendarService.php` - Implements `CalendarServiceInterface` using eluceo/ical
   - `SystemTimeService.php` - Implements `TimeServiceInterface` (production/simulated time)
 
@@ -702,12 +702,16 @@ class MyIntegrationTest extends IntegrationTestCase
 - `DB_PATH` - Database file path (default: `database/jaws.db`)
 - `JWT_SECRET` - JWT signing secret (minimum 32 characters, required)
 - `JWT_EXPIRATION_MINUTES` - Token expiration (default: 60)
-- `SES_REGION` - AWS SES region (default: `ca-central-1`)
-- `SES_SMTP_USERNAME` - SMTP credentials
-- `SES_SMTP_PASSWORD` - SMTP credentials
+- `SMTP_HOST` - SMTP server hostname (default: `email-smtp.ca-central-1.amazonaws.com`)
+- `SMTP_PORT` - SMTP server port (default: `587`)
+- `SMTP_SECURE` - SMTP encryption (default: `tls`)
+- `SMTP_USERNAME` - SMTP authentication username
+- `SMTP_PASSWORD` - SMTP authentication password
 - `EMAIL_FROM` - From email address
 - `EMAIL_FROM_NAME` - From name
+- `ADMIN_NOTIFICATION_EMAIL` - Admin email for notifications
 - `APP_DEBUG` - Debug mode (true/false)
+- `APP_ENV` - Environment (production/development)
 - `APP_TIMEZONE` - Timezone (default: `America/Toronto`)
 - `CORS_ALLOWED_ORIGINS` - Comma-separated origins
 - `CORS_ALLOWED_HEADERS` - Comma-separated headers (default: `Content-Type,Authorization`)
@@ -906,7 +910,7 @@ Implementation in `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 - `src/Infrastructure/Persistence/SQLite/Connection.php`
 - `src/Infrastructure/Persistence/SQLite/BoatRepository.php`
 - `src/Infrastructure/Persistence/SQLite/CrewRepository.php`
-- `src/Infrastructure/Service/AwsSesEmailService.php`
+- `src/Infrastructure/Service/PhpMailerEmailService.php`
 - `src/Infrastructure/Service/ICalendarService.php`
 - `src/Infrastructure/Service/SystemTimeService.php`
 

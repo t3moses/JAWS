@@ -118,10 +118,10 @@ curl http://localhost:8000/api/events
 
 ### Additional Resources
 
-☁️ **[LocalStack Setup](LocalStack/LOCALSTACK_SETUP.md)** - Testing AWS SES locally
-- Docker setup for LocalStack
-- Email verification
-- Testing notifications without AWS costs
+📧 **Email Testing** - Local SMTP testing
+
+- Use MailHog or similar for local SMTP testing
+- Testing notifications without production email sends
 
 🤖 **[CLAUDE.md](CLAUDE.md)** - AI assistant project guide
 - Complete technical specifications
@@ -153,7 +153,7 @@ Presentation → Infrastructure → Application → Domain
 **Infrastructure Layer** (`src/Infrastructure/`)
 - External service adapters
 - Depends on: Application + Domain layers
-- Contains: Repositories (SQLite), Email Service (AWS SES), Calendar Service, Time Service
+- Contains: Repositories (SQLite), Email Service (PHPMailer/SMTP), Calendar Service, Time Service
 
 **Presentation Layer** (`src/Presentation/`)
 - HTTP/REST API
@@ -311,10 +311,12 @@ DB_PATH=database/jaws.db
 JWT_SECRET=your-secret-key-minimum-32-characters-long
 JWT_EXPIRATION_MINUTES=60
 
-# AWS SES (Email Service)
-SES_REGION=ca-central-1
-SES_SMTP_USERNAME=your_smtp_username
-SES_SMTP_PASSWORD=your_smtp_password
+# SMTP Email Configuration
+SMTP_HOST=email-smtp.ca-central-1.amazonaws.com
+SMTP_PORT=587
+SMTP_SECURE=tls
+SMTP_USERNAME=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
 EMAIL_FROM=noreply@nsc-sdc.ca
 
 # Application

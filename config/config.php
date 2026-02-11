@@ -15,11 +15,17 @@ return [
         'path' => getenv('DB_PATH') ?: __DIR__ . '/../database/jaws.db',
     ],
 
-    // AWS SES (Email Service)
+    // SMTP Email Configuration (PHPMailer)
+    'smtp' => [
+        'host' => getenv('SMTP_HOST') ?: 'email-smtp.ca-central-1.amazonaws.com',
+        'port' => (int)(getenv('SMTP_PORT') ?: 587),
+        'secure' => getenv('SMTP_SECURE') ?: 'tls',
+        'username' => getenv('SMTP_USERNAME') ?: '',
+        'password' => getenv('SMTP_PASSWORD') ?: '',
+    ],
+
+    // Email Settings
     'email' => [
-        'region' => getenv('SES_REGION') ?: 'ca-central-1',
-        'smtp_username' => getenv('SES_SMTP_USERNAME') ?: '',
-        'smtp_password' => getenv('SES_SMTP_PASSWORD') ?: '',
         'from_address' => getenv('EMAIL_FROM') ?: 'noreply@nsc-sdc.ca',
         'from_name' => getenv('EMAIL_FROM_NAME') ?: 'Nepean Sailing Club - Social Day Cruising',
         'admin_notification_email' => getenv('ADMIN_NOTIFICATION_EMAIL') ?: 'nsc-sdc@nsc.ca',
