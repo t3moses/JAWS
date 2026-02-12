@@ -26,7 +26,7 @@ use App\Infrastructure\Persistence\SQLite\CrewRepository;
 use App\Infrastructure\Persistence\SQLite\EventRepository;
 use App\Infrastructure\Persistence\SQLite\SeasonRepository;
 use App\Infrastructure\Persistence\SQLite\UserRepository;
-use App\Infrastructure\Service\AwsSesEmailService;
+use App\Infrastructure\Service\PhpMailerEmailService;
 use App\Infrastructure\Service\ICalendarService;
 use App\Infrastructure\Service\SystemTimeService;
 use App\Infrastructure\Service\JwtTokenService;
@@ -100,7 +100,7 @@ $container->set(UserRepositoryInterface::class, function () {
 
 // Services (External Adapters)
 $container->set(EmailServiceInterface::class, function () {
-    return new AwsSesEmailService();
+    return new PhpMailerEmailService();
 });
 
 $container->set(CalendarServiceInterface::class, function () {

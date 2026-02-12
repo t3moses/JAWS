@@ -10,7 +10,7 @@ This guide will walk you through setting up JAWS for local development, from ins
 - [Database Initialization](#database-initialization)
 - [Starting the Development Server](#starting-the-development-server)
 - [Verification](#verification)
-- [LocalStack Setup (Optional)](#localstack-setup-optional)
+- [Local Email Testing (Optional)](#local-email-testing-optional)
 - [Frontend Integration](#frontend-integration)
 - [Common Setup Issues](#common-setup-issues)
 - [Next Steps](#next-steps)
@@ -84,7 +84,7 @@ php -m
 - **Postman** - API testing tool
   - Download: https://www.postman.com/downloads/
 
-- **Docker Desktop** - Required only for LocalStack (AWS SES emulation)
+- **Docker Desktop** - Optional for local SMTP testing (MailHog)
   - Download: https://www.docker.com/products/docker-desktop
 
 ---
@@ -107,7 +107,8 @@ composer install
 ```
 
 This will install:
-- `phpmailer/phpmailer` - Email service via AWS SES
+
+- `phpmailer/phpmailer` - Email service via SMTP
 - `eluceo/ical` - iCalendar file generation
 - `phpunit/phpunit` (dev) - Testing framework
 - `robmorgan/phinx` (dev) - Database migrations
@@ -155,12 +156,14 @@ DB_PATH=database/jaws.db
 JWT_SECRET=your-secret-key-at-least-32-characters-long-change-this-in-production
 JWT_EXPIRATION_MINUTES=60
 
-# AWS SES (Email Service)
-# For development, you can use LocalStack (see LocalStack Setup section)
-SES_REGION=ca-central-1
-SES_SMTP_USERNAME=your_smtp_username
-SES_SMTP_PASSWORD=your_smtp_password
-# SES_ENDPOINT=http://localhost:4566  # Uncomment for LocalStack
+# SMTP Email Configuration
+# For production: Use AWS SES SMTP endpoint
+# For development: Use MailHog or similar (localhost:1025)
+SMTP_HOST=email-smtp.ca-central-1.amazonaws.com
+SMTP_PORT=587
+SMTP_SECURE=tls
+SMTP_USERNAME=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
 EMAIL_FROM=noreply@nsc-sdc.ca
 EMAIL_FROM_NAME="Nepean Sailing Club - Social Day Cruising"
 
@@ -331,9 +334,9 @@ You should see the JAWS frontend application (or a placeholder if the frontend h
 
 ---
 
-## LocalStack Setup (Optional)
+## Local Email Testing (Optional)
 
-LocalStack emulates AWS services locally, allowing you to test email functionality without using real AWS SES or incurring costs.
+For local development, use MailHog to capture and view emails without sending real messages.
 
 ### Quick Start
 

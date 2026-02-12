@@ -22,7 +22,7 @@ Before deploying to production, verify the following:
 - [ ] Code reviewed and approved via Pull Request
 - [ ] Database migrations tested locally
 - [ ] Production `.env` file prepared with secure credentials
-- [ ] AWS SES configured and email sending tested
+- [ ] SMTP credentials configured and email sending tested
 - [ ] Backup of current production database created
 - [ ] Deployment window scheduled (avoid event hours 10:00-18:00)
 - [ ] Rollback plan prepared
@@ -363,10 +363,12 @@ DB_PATH=/opt/bitnami/jaws/database/jaws.db
 JWT_SECRET=your-production-secret-key-at-least-32-characters-long-must-be-different-from-dev
 JWT_EXPIRATION_MINUTES=60
 
-# AWS SES (Email Service)
-SES_REGION=ca-central-1
-SES_SMTP_USERNAME=your_production_smtp_username
-SES_SMTP_PASSWORD=your_production_smtp_password
+# SMTP Email Configuration
+SMTP_HOST=email-smtp.ca-central-1.amazonaws.com
+SMTP_PORT=587
+SMTP_SECURE=tls
+SMTP_USERNAME=your_production_smtp_username
+SMTP_PASSWORD=your_production_smtp_password
 EMAIL_FROM=noreply@nsc-sdc.ca
 EMAIL_FROM_NAME="Nepean Sailing Club - Social Day Cruising"
 
@@ -829,25 +831,31 @@ sudo chmod 775 /opt/bitnami/jaws/database
 #### Issue: Email notifications not sending
 
 **Possible Causes:**
-- AWS SES credentials incorrect
-- Email not verified in AWS SES
-- SES in sandbox mode
+
+- SMTP credentials incorrect
+- SMTP server connection blocked
+- Email address not verified with SMTP provider
 
 **Solution:**
 
-1. Check SES credentials in `.env`:
+1. Check SMTP credentials in `.env`:
    ```bash
-   cat /opt/bitnami/jaws/.env | grep SES
+   cat /opt/bitnami/jaws/.env | grep SMTP
    ```
 
-2. Test sending email via AWS CLI:
+2. Test SMTP connection:
    ```bash
-   aws ses send-email --from noreply@nsc-sdc.ca --to test@example.com --subject "Test" --text "Test"
+   telnet email-smtp.ca-central-1.amazonaws.com 587
    ```
 
-3. Verify email address is verified in AWS SES console
+3. Check PHPMailer debug output in error log:
+   ```bash
+   tail -f /opt/bitnami/apache/logs/error_log | grep -i phpmailer
+   ```
 
-4. Check Apache error log for AWS SES errors
+4. Verify email address is verified with your SMTP provider (e.g., AWS SES)
+
+5. Check Apache error log for SMTP connection errors
 
 #### Issue: Frontend not loading
 
