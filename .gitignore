@@ -18,6 +18,7 @@ composer.phar
 # Environment
 .env
 .env.local
+settings.local.*
 
 # IDE
 .idea/
@@ -43,10 +44,6 @@ Thumbs.db
 
 # Debug files
 database/assignment_debug.txt
-
-# LocalStack
-/LocalStack/.env.localstack
-/LocalStack/localstack-data/
 
 # Temporary test files
 /tests/temp/
