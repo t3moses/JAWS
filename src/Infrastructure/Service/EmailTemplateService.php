@@ -93,6 +93,14 @@ class EmailTemplateService implements EmailTemplateServiceInterface
                     <span class="value">{$timestamp}</span>
                 </div>
             </div>
+            <div class="section">
+                <h3>AWS SES Email Verification</h3>
+                <p>To enable this user to receive system emails, verify their email address in AWS SES by running the following command:</p>
+                <div class="command-block">
+                    aws ses verify-email-identity --email-address {$user->getEmail()}
+                </div>
+                <p style="font-size: 0.9em; color: #666;">Copy and paste this command in your AWS CLI terminal.</p>
+            </div>
             <div class="footer">
                 <p>This is an automated notification from the JAWS sailing management system.</p>
             </div>
@@ -174,6 +182,14 @@ HTML;
                     <span class="label">Registration Date:</span>
                     <span class="value">{$timestamp}</span>
                 </div>
+            </div>
+            <div class="section">
+                <h3>AWS SES Email Verification</h3>
+                <p>To enable this user to receive system emails, verify their email address in AWS SES by running the following command:</p>
+                <div class="command-block">
+                    aws ses verify-email-identity --email-address {$user->getEmail()}
+                </div>
+                <p style="font-size: 0.9em; color: #666;">Copy and paste this command in your AWS CLI terminal.</p>
             </div>
             <div class="footer">
                 <p>This is an automated notification from the JAWS sailing management system.</p>
@@ -272,6 +288,7 @@ body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
 .label { font-weight: bold; color: #0066cc; display: inline-block; min-width: 180px; }
 .value { display: inline; }
 .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666; }
+.command-block { background-color: #f4f4f4; padding: 10px; border-left: 4px solid #0066cc; font-family: 'Courier New', monospace; margin: 10px 0; overflow-x: auto; }
 CSS;
     }
 
