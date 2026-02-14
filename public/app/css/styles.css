@@ -133,6 +133,53 @@ html.authenticated .nav-unauthenticated {
   display: none !important;
 }
 
+/* ===================================
+   Navigation Button Styling
+   For Sign In and Join Now buttons in nav
+   =================================== */
+
+/* Base navigation button style */
+.nav-btn {
+  padding: 0.6rem 1.5rem !important;
+  border-radius: 50px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+/* Override default nav link underline for buttons */
+.nav-btn::after {
+  display: none !important;
+}
+
+/* Primary navigation button (Join Now) */
+.nav-btn-primary {
+  background: var(--gradient-2);
+  color: var(--white) !important;
+}
+
+.nav-btn-primary:hover {
+  background: var(--gradient-1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 163, 150, 0.3);
+  color: var(--white) !important;
+}
+
+/* Secondary navigation button (Sign In) */
+.nav-btn-secondary {
+  background: var(--white);
+  color: var(--teal) !important;
+  border: 2px solid var(--teal);
+}
+
+.nav-btn-secondary:hover {
+  background: var(--teal);
+  color: var(--white) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 163, 150, 0.3);
+}
+
 /* Hamburger Menu Button */
 .hamburger {
   display: none;
@@ -195,6 +242,11 @@ html.authenticated .nav-unauthenticated {
   padding: 6rem 2rem;
   position: relative;
   overflow: hidden;
+}
+
+/* Mobile Sign In Link - hidden by default, shown only on mobile */
+.mobile-signin-link {
+  display: none !important;
 }
 
 .hero::before {
@@ -683,6 +735,18 @@ footer {
 }
 
 /* Responsive Design */
+
+/* Intermediate screen sizes: Reduce nav spacing to prevent button wrapping */
+@media (max-width: 900px) {
+  nav ul {
+    gap: 1.5rem; /* Reduce from 2.5rem */
+  }
+
+  .nav-btn {
+    padding: 0.6rem 1.2rem !important; /* Slightly reduce horizontal padding */
+  }
+}
+
 @media (max-width: 768px) {
   h1 {
     font-size: 2.5rem;
@@ -760,12 +824,43 @@ footer {
     color: var(--teal);
   }
 
+  /* Navigation buttons on mobile */
+  nav .nav-btn {
+    margin: 0.5rem 1.5rem;
+    padding: 1rem 2rem !important;
+    display: block;
+    text-align: center;
+    border-radius: 50px;
+  }
+
+  nav .nav-btn:hover,
+  nav .nav-btn.active {
+    background: var(--teal) !important;
+    color: var(--white) !important;
+  }
+
+  nav .nav-btn-primary:hover {
+    background: var(--gradient-1) !important;
+  }
+
+  /* Hide Sign In and Join Now from mobile hamburger menu on index page only */
+  .index-page nav .nav-unauthenticated {
+    display: none !important;
+  }
+
   .hero {
     padding: 4rem 1.5rem;
   }
 
   .hero p {
     font-size: 1.1rem;
+  }
+
+  /* Show mobile Sign In link on mobile only (when hamburger menu is visible) */
+  .mobile-signin-link {
+    display: block !important;
+    width: fit-content;
+    margin: 1rem auto 0;
   }
 
   main {
