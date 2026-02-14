@@ -9,6 +9,7 @@ use App\Application\Exception\FlotillaNotFoundException;
 use App\Application\Port\Repository\EventRepositoryInterface;
 use App\Application\Port\Repository\SeasonRepositoryInterface;
 use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\CalendarServiceInterface;
 use App\Domain\ValueObject\EventId;
 
@@ -24,6 +25,7 @@ class SendNotificationsUseCase
         private EventRepositoryInterface $eventRepository,
         private SeasonRepositoryInterface $seasonRepository,
         private EmailServiceInterface $emailService,
+        private EmailTemplateServiceInterface $emailTemplateService,
         private CalendarServiceInterface $calendarService,
     ) {
     }
@@ -98,7 +100,7 @@ class SendNotificationsUseCase
 
             // Send email to boat owner
             $subject = "Boat Assignment for {$eventId->toString()}";
-            $body = $this->buildAssignmentEmailBody(
+            $body = $this->emailTemplateService->renderAssignmentNotification(
                 $boat['owner_first_name'],
                 $eventId->toString(),
                 $boat['display_name'],
@@ -120,7 +122,7 @@ class SendNotificationsUseCase
 
             // Send email to each crew member
             foreach ($crews as $crew) {
-                $body = $this->buildAssignmentEmailBody(
+                $body = $this->emailTemplateService->renderAssignmentNotification(
                     $crew['first_name'],
                     $eventId->toString(),
                     $boat['display_name'],
@@ -146,89 +148,4 @@ class SendNotificationsUseCase
         ];
     }
 
-    /**
-     * Build HTML email body for assignment notification
-     *
-     * @param string $recipientFirstName
-     * @param string $eventId
-     * @param string $boatName
-     * @param array $crews Array of crew data (arrays, not objects)
-     */
-    private function buildAssignmentEmailBody(
-        string $recipientFirstName,
-        string $eventId,
-        string $boatName,
-        array $crews
-    ): string {
-        $crewList = '';
-        foreach ($crews as $crew) {
-            $crewList .= sprintf(
-                '<li>%s %s (%s) - Skill: %s</li>',
-                htmlspecialchars($crew['first_name']),
-                htmlspecialchars($crew['last_name']),
-                htmlspecialchars($crew['email']),
-                $this->getSkillLevelLabel($crew['skill'])
-            );
-        }
-
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #0066cc; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
-        .boat-name { font-size: 1.2em; font-weight: bold; color: #0066cc; }
-        .crew-list { background-color: white; padding: 15px; border-radius: 5px; margin-top: 15px; }
-        ul { padding-left: 20px; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>Social Day Cruising - Assignment Notification</h2>
-        </div>
-        <div class="content">
-            <p>Hi {$recipientFirstName},</p>
-
-            <p>You have been assigned for the upcoming sailing event:</p>
-
-            <p><strong>Event:</strong> {$eventId}</p>
-            <p><strong>Boat:</strong> <span class="boat-name">{$boatName}</span></p>
-
-            <div class="crew-list">
-                <h3>Crew Members:</h3>
-                <ul>
-                    {$crewList}
-                </ul>
-            </div>
-
-            <p>Please confirm your participation and coordinate with your crew members.</p>
-
-            <div class="footer">
-                <p>This is an automated notification from the JAWS (Just Another Web System) sailing management system.</p>
-                <p>If you have any questions, please contact the sailing coordinator.</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    /**
-     * Get human-readable skill level label
-     */
-    private function getSkillLevelLabel(int $skillLevel): string
-    {
-        return match($skillLevel) {
-            0 => 'Novice',
-            1 => 'Intermediate',
-            2 => 'Advanced',
-            default => 'Unknown'
-        };
-    }
 }

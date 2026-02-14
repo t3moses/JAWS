@@ -17,6 +17,7 @@ use App\Application\Port\Repository\EventRepositoryInterface;
 use App\Application\Port\Repository\SeasonRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
 use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\CalendarServiceInterface;
 use App\Application\Port\Service\TimeServiceInterface;
 use App\Application\Port\Service\TokenServiceInterface;
@@ -27,6 +28,7 @@ use App\Infrastructure\Persistence\SQLite\EventRepository;
 use App\Infrastructure\Persistence\SQLite\SeasonRepository;
 use App\Infrastructure\Persistence\SQLite\UserRepository;
 use App\Infrastructure\Service\PhpMailerEmailService;
+use App\Infrastructure\Service\EmailTemplateService;
 use App\Infrastructure\Service\ICalendarService;
 use App\Infrastructure\Service\SystemTimeService;
 use App\Infrastructure\Service\JwtTokenService;
@@ -101,6 +103,10 @@ $container->set(UserRepositoryInterface::class, function () {
 // Services (External Adapters)
 $container->set(EmailServiceInterface::class, function () {
     return new PhpMailerEmailService();
+});
+
+$container->set(EmailTemplateServiceInterface::class, function () {
+    return new EmailTemplateService();
 });
 
 $container->set(CalendarServiceInterface::class, function () {
@@ -244,6 +250,7 @@ $container->set(\App\Application\UseCase\Admin\SendNotificationsUseCase::class, 
         $c->get(EventRepositoryInterface::class),
         $c->get(SeasonRepositoryInterface::class),
         $c->get(EmailServiceInterface::class),
+        $c->get(EmailTemplateServiceInterface::class),
         $c->get(CalendarServiceInterface::class)
     );
 });
@@ -264,6 +271,7 @@ $container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function (
         $c->get(TokenServiceInterface::class),
         $c->get(RankingService::class),
         $c->get(EmailServiceInterface::class),
+        $c->get(EmailTemplateServiceInterface::class),
         $config
     );
 });

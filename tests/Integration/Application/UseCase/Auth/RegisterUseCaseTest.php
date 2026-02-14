@@ -50,6 +50,13 @@ class RegisterUseCaseTest extends IntegrationTestCase
         $this->emailService = $this->createMock(EmailServiceInterface::class);
         $this->emailService->method('send')->willReturn(true);
 
+        // Mock EmailTemplateService
+        $emailTemplateService = $this->createMock(\App\Application\Port\Service\EmailTemplateServiceInterface::class);
+        $emailTemplateService->method('renderCrewRegistrationNotification')
+            ->willReturn('<html><body>Crew Registration Email</body></html>');
+        $emailTemplateService->method('renderBoatOwnerRegistrationNotification')
+            ->willReturn('<html><body>Boat Owner Registration Email</body></html>');
+
         // Mock config array
         $config = [
             'email' => [
@@ -65,6 +72,7 @@ class RegisterUseCaseTest extends IntegrationTestCase
             $tokenService,
             $rankingService,
             $this->emailService,
+            $emailTemplateService,
             $config
         );
     }
