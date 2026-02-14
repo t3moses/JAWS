@@ -32,7 +32,6 @@ class EmailTemplateService implements EmailTemplateServiceInterface
         $skillLabel = $this->getSkillLevelLabel($profile['skill'] ?? 0);
         $mobile = $profile['mobile'] ?? 'Not provided';
         $membershipNumber = $profile['membershipNumber'] ?? 'Not provided';
-        $partnerKey = $profile['partnerKey'] ?? 'None';
         $socialPreference = $this->parseYesNo($profile['socialPreference'] ?? null) ? 'Yes' : 'No';
         $experience = $profile['experience'] ?? 'Not provided';
         $timestamp = date('Y-m-d H:i:s');
@@ -76,10 +75,6 @@ class EmailTemplateService implements EmailTemplateServiceInterface
                 <div class="field">
                     <span class="label">Membership Number:</span>
                     <span class="value">{$membershipNumber}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Partner Preference:</span>
-                    <span class="value">{$partnerKey}</span>
                 </div>
                 <div class="field">
                     <span class="label">Social Preference:</span>
