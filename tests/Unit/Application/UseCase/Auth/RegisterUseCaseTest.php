@@ -9,6 +9,7 @@ use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
 use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
 use App\Application\Port\Service\TokenServiceInterface;
 use App\Application\UseCase\Auth\RegisterUseCase;
@@ -28,6 +29,7 @@ class RegisterUseCaseTest extends TestCase
     private TokenServiceInterface $tokenService;
     private RankingService $rankingService;
     private EmailServiceInterface $emailService;
+    private EmailTemplateServiceInterface $emailTemplateService;
     private array $config;
     private RegisterUseCase $useCase;
 
@@ -43,6 +45,7 @@ class RegisterUseCaseTest extends TestCase
         $this->tokenService = $this->createMock(TokenServiceInterface::class);
         $this->rankingService = $this->createMock(RankingService::class);
         $this->emailService = $this->createMock(EmailServiceInterface::class);
+        $this->emailTemplateService = $this->createMock(EmailTemplateServiceInterface::class);
 
         // Mock config array
         $this->config = [
@@ -78,6 +81,37 @@ class RegisterUseCaseTest extends TestCase
         // Default: Email service returns true (success)
         $this->emailService->method('send')->willReturn(true);
 
+        // Mock email template service to return HTML strings with actual data
+        $this->emailTemplateService->method('renderCrewRegistrationNotification')
+            ->willReturnCallback(function ($user, $profile) {
+                // Return HTML that includes the actual profile data for testing
+                return sprintf(
+                    '<html><body>Crew member registration: %s %s (%s), Display: %s, Skill: %s, Member: %s, Mobile: %s</body></html>',
+                    $profile['firstName'] ?? '',
+                    $profile['lastName'] ?? '',
+                    $user->getEmail(),
+                    $profile['displayName'] ?? '',
+                    ($profile['skill'] ?? 0) === 2 ? 'Advanced' : (($profile['skill'] ?? 0) === 1 ? 'Intermediate' : 'Novice'),
+                    $profile['membershipNumber'] ?? '',
+                    $profile['mobile'] ?? ''
+                );
+            });
+        $this->emailTemplateService->method('renderBoatOwnerRegistrationNotification')
+            ->willReturnCallback(function ($user, $profile) {
+                // Return HTML that includes the actual profile data for testing
+                return sprintf(
+                    '<html><body>Boat Owner Registration: %s %s (%s), Boat: %s, Berths: %d-%d, Mobile: %s, Assistance: %s</body></html>',
+                    $profile['ownerFirstName'] ?? '',
+                    $profile['ownerLastName'] ?? '',
+                    $user->getEmail(),
+                    $profile['displayName'] ?? '',
+                    $profile['minBerths'] ?? 0,
+                    $profile['maxBerths'] ?? 0,
+                    $profile['ownerMobile'] ?? '',
+                    ($profile['assistanceRequired'] ?? false) ? 'Yes' : 'No'
+                );
+            });
+
         $this->useCase = new RegisterUseCase(
             $this->userRepository,
             $this->crewRepository,
@@ -86,6 +120,7 @@ class RegisterUseCaseTest extends TestCase
             $this->tokenService,
             $this->rankingService,
             $this->emailService,
+            $this->emailTemplateService,
             $this->config
         );
     }

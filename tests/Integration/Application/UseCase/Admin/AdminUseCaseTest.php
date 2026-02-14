@@ -114,6 +114,27 @@ class AdminUseCaseTest extends IntegrationTestCase
             }
         };
 
+        $mockEmailTemplateService = new class implements \App\Application\Port\Service\EmailTemplateServiceInterface {
+            public function renderCrewRegistrationNotification(\App\Domain\Entity\User $user, array $profile): string
+            {
+                return '<html><body>Crew Registration Email</body></html>';
+            }
+
+            public function renderBoatOwnerRegistrationNotification(\App\Domain\Entity\User $user, array $profile): string
+            {
+                return '<html><body>Boat Owner Registration Email</body></html>';
+            }
+
+            public function renderAssignmentNotification(
+                string $recipientFirstName,
+                string $eventId,
+                string $boatName,
+                array $crews
+            ): string {
+                return '<html><body>Assignment Email</body></html>';
+            }
+        };
+
         $this->getMatchingDataUseCase = new GetMatchingDataUseCase(
             $this->boatRepository,
             $this->crewRepository,
@@ -124,6 +145,7 @@ class AdminUseCaseTest extends IntegrationTestCase
             $this->eventRepository,
             $this->seasonRepository,
             $mockEmailService,
+            $mockEmailTemplateService,
             $mockCalendarService
         );
 

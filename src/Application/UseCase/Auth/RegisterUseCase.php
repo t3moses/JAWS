@@ -14,6 +14,7 @@ use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
 use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
 use App\Application\Port\Service\TokenServiceInterface;
 use App\Domain\Entity\Boat;
@@ -41,6 +42,7 @@ class RegisterUseCase
         private TokenServiceInterface $tokenService,
         private RankingService $rankingService,
         private EmailServiceInterface $emailService,
+        private EmailTemplateServiceInterface $emailTemplateService,
         private array $config,
     ) {
     }
@@ -280,7 +282,7 @@ class RegisterUseCase
                     $request->profile['firstName'],
                     $request->profile['lastName']
                 );
-                $body = $this->buildCrewNotificationEmail($user, $request->profile);
+                $body = $this->emailTemplateService->renderCrewRegistrationNotification($user, $request->profile);
             } else {
                 $subject = sprintf(
                     'New Boat Owner Registration - %s',
@@ -289,7 +291,7 @@ class RegisterUseCase
                         $request->profile['ownerLastName']
                     )
                 );
-                $body = $this->buildBoatOwnerNotificationEmail($user, $request->profile);
+                $body = $this->emailTemplateService->renderBoatOwnerRegistrationNotification($user, $request->profile);
             }
 
             $result = $this->emailService->send($adminEmail, $subject, $body);
@@ -305,210 +307,4 @@ class RegisterUseCase
         }
     }
 
-    /**
-     * Build HTML email body for crew registration notification
-     *
-     * @param User $user User entity
-     * @param array $profile Crew profile data
-     * @return string HTML email body
-     */
-    private function buildCrewNotificationEmail(User $user, array $profile): string
-    {
-        $displayName = $profile['displayName'] ?? $this->generateDisplayName(
-            $profile['firstName'],
-            $profile['lastName']
-        );
-
-        $skillLabel = $this->getSkillLevelLabel($profile['skill'] ?? 0);
-        $mobile = $profile['mobile'] ?? 'Not provided';
-        $membershipNumber = $profile['membershipNumber'] ?? 'Not provided';
-        $partnerKey = $profile['partnerKey'] ?? 'None';
-        $socialPreference = $this->parseYesNo($profile['socialPreference'] ?? null) ? 'Yes' : 'No';
-        $experience = $profile['experience'] ?? 'Not provided';
-        $timestamp = date('Y-m-d H:i:s');
-
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #0066cc; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
-        .section { background-color: white; padding: 15px; border-radius: 5px; margin-top: 15px; }
-        .field { margin-bottom: 10px; }
-        .label { font-weight: bold; color: #0066cc; display: inline-block; min-width: 180px; }
-        .value { display: inline; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>New Registration Notification</h2>
-        </div>
-        <div class="content">
-            <div class="section">
-                <h3>Crew Member Registration</h3>
-                <div class="field">
-                    <span class="label">Name:</span>
-                    <span class="value">{$profile['firstName']} {$profile['lastName']}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Display Name:</span>
-                    <span class="value">{$displayName}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Email:</span>
-                    <span class="value">{$user->getEmail()}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Mobile:</span>
-                    <span class="value">{$mobile}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Skill Level:</span>
-                    <span class="value">{$skillLabel}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Membership Number:</span>
-                    <span class="value">{$membershipNumber}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Partner Preference:</span>
-                    <span class="value">{$partnerKey}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Social Preference:</span>
-                    <span class="value">{$socialPreference}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Experience:</span>
-                    <span class="value">{$experience}</span>
-                </div>
-                <div class="field">
-                    <span class="label">User ID:</span>
-                    <span class="value">{$user->getId()}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Registration Date:</span>
-                    <span class="value">{$timestamp}</span>
-                </div>
-            </div>
-            <div class="footer">
-                <p>This is an automated notification from the JAWS sailing management system.</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    /**
-     * Build HTML email body for boat owner registration notification
-     *
-     * @param User $user User entity
-     * @param array $profile Boat profile data
-     * @return string HTML email body
-     */
-    private function buildBoatOwnerNotificationEmail(User $user, array $profile): string
-    {
-        $displayName = $profile['displayName'] ?? $this->generateDisplayName(
-            $profile['ownerFirstName'],
-            $profile['ownerLastName']
-        );
-
-        $ownerMobile = $profile['ownerMobile'] ?? 'Not provided';
-        $assistanceRequired = $this->parseYesNo($profile['assistanceRequired'] ?? null) ? 'Yes' : 'No';
-        $socialPreference = $this->parseYesNo($profile['socialPreference'] ?? null) ? 'Yes' : 'No';
-        $timestamp = date('Y-m-d H:i:s');
-
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #0066cc; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 5px 5px; }
-        .section { background-color: white; padding: 15px; border-radius: 5px; margin-top: 15px; }
-        .field { margin-bottom: 10px; }
-        .label { font-weight: bold; color: #0066cc; display: inline-block; min-width: 180px; }
-        .value { display: inline; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>New Registration Notification</h2>
-        </div>
-        <div class="content">
-            <div class="section">
-                <h3>Boat Owner Registration</h3>
-                <div class="field">
-                    <span class="label">Boat Name:</span>
-                    <span class="value">{$displayName}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Owner:</span>
-                    <span class="value">{$profile['ownerFirstName']} {$profile['ownerLastName']}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Owner Email:</span>
-                    <span class="value">{$user->getEmail()}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Owner Mobile:</span>
-                    <span class="value">{$ownerMobile}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Berth Capacity:</span>
-                    <span class="value">{$profile['minBerths']}-{$profile['maxBerths']}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Assistance Required:</span>
-                    <span class="value">{$assistanceRequired}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Social Preference:</span>
-                    <span class="value">{$socialPreference}</span>
-                </div>
-                <div class="field">
-                    <span class="label">User ID:</span>
-                    <span class="value">{$user->getId()}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Registration Date:</span>
-                    <span class="value">{$timestamp}</span>
-                </div>
-            </div>
-            <div class="footer">
-                <p>This is an automated notification from the JAWS sailing management system.</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    /**
-     * Get human-readable skill level label
-     *
-     * @param int $skillLevel Skill level (0-2)
-     * @return string Skill level label
-     */
-    private function getSkillLevelLabel(int $skillLevel): string
-    {
-        return match($skillLevel) {
-            0 => 'Novice',
-            1 => 'Intermediate',
-            2 => 'Advanced',
-            default => 'Unknown'
-        };
-    }
 }
