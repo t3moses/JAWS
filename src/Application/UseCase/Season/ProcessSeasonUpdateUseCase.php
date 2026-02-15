@@ -200,15 +200,19 @@ class ProcessSeasonUpdateUseCase
             ];
         }
 
-        // Distribute selected crews to boats (initial even distribution before optimization)
+        // Distribute selected crews to boats based on each boat's occupied_berths
+        // This respects the capacity-aware distribution calculated by SelectionService
         $crewIndex = 0;
-        foreach ($selectedCrews as $crew) {
-            if (count($crewedBoats) > 0) {
-                $boatIndex = $crewIndex % count($crewedBoats);
-                $crewedBoats[$boatIndex]['crews'][] = $crew;
+        foreach ($crewedBoats as &$crewedBoat) {
+            $boat = $crewedBoat['boat'];
+            $crewsForThisBoat = $boat->occupied_berths;
+
+            for ($i = 0; $i < $crewsForThisBoat && $crewIndex < count($selectedCrews); $i++) {
+                $crewedBoat['crews'][] = $selectedCrews[$crewIndex];
                 $crewIndex++;
             }
         }
+        unset($crewedBoat); // Break the reference
 
         return [
             'event_id' => $eventId->toString(),
