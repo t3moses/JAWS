@@ -531,4 +531,124 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $totalBoats = count($flotilla['crewed_boats']) + count($flotilla['waitlist_boats']);
         $this->assertEquals(3, $totalBoats);
     }
+
+    /**
+     * Test: Crews are distributed to boats according to occupied_berths (capacity-aware)
+     *
+     * CRITICAL: This test verifies the fix for capacity-based crew distribution.
+     * Instead of round-robin distribution, crews should be assigned based on each
+     * boat's max_berths so that larger boats get appropriately more crews.
+     *
+     * Scenario: 2 boats with different capacities
+     * - boat1: min_berths=1, max_berths=2 (small)
+     * - boat2: min_berths=2, max_berths=4 (large)
+     * - 6 crews available (perfect fit: 2+4=6 berths)
+     *
+     * Expected distribution: boat1 gets 2 crews, boat2 gets 4 crews
+     * (matching their max_berths, not round-robin like 3-3)
+     */
+    public function testCrewsDistributedAccordingToOccupiedBerths(): void
+    {
+        // Arrange
+        // Create 2 boats with different capacities
+        $boat1Id = $this->createTestBoat('boat1', 1, 2); // Small boat: 2 max berths
+        $boat2Id = $this->createTestBoat('boat2', 2, 4); // Large boat: 4 max berths
+
+        // Create 6 crews (perfect fit for 2+4=6 berths)
+        $crewIds = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $crewIds[] = $this->createTestCrew("crew$i");
+        }
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        // Both boats offer their full capacity
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 4);
+
+        // All crews available
+        foreach ($crewIds as $crewId) {
+            $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        }
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        // Should have exactly 2 boats (both crewed)
+        $this->assertCount(2, $flotilla['crewed_boats']);
+        $this->assertCount(0, $flotilla['waitlist_boats']);
+        $this->assertCount(0, $flotilla['waitlist_crews']);
+
+        // Get crew counts per boat
+        $crewCountsPerBoat = [];
+        foreach ($flotilla['crewed_boats'] as $index => $crewedBoat) {
+            $crewCountsPerBoat[$index] = count($crewedBoat['crews']);
+        }
+
+        // Sort crew counts to get min and max (order may vary)
+        sort($crewCountsPerBoat);
+
+        // Assert distribution is capacity-aware, not round-robin
+        // With capacities of 2 and 4, we expect distribution of [2, 4], not [3, 3]
+        $this->assertEquals(2, $crewCountsPerBoat[0], 'Smaller boat should have 2 crews');
+        $this->assertEquals(4, $crewCountsPerBoat[1], 'Larger boat should have 4 crews');
+    }
+
+    /**
+     * Test: Uneven capacity distribution respects boat max_berths
+     *
+     * Scenario: 3 boats with varied capacities
+     * - boat1: max_berths=2
+     * - boat2: max_berths=3
+     * - boat3: max_berths=5
+     * - 10 crews available (perfect fit: 2+3+5=10)
+     *
+     * Expected: Each boat gets crews matching its capacity (2, 3, 5)
+     * Not round-robin distribution (which would be 3-3-4 or 4-3-3)
+     */
+    public function testUnevenCapacityDistributionRespectsBerthsPerBoat(): void
+    {
+        // Arrange
+        $boat1Id = $this->createTestBoat('boat1', 1, 2);
+        $boat2Id = $this->createTestBoat('boat2', 2, 3);
+        $boat3Id = $this->createTestBoat('boat3', 3, 5);
+
+        $crewIds = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $crewIds[] = $this->createTestCrew("crew$i");
+        }
+
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        $this->setBoatAvailability($boat1Id, 'Fri May 29', 2);
+        $this->setBoatAvailability($boat2Id, 'Fri May 29', 3);
+        $this->setBoatAvailability($boat3Id, 'Fri May 29', 5);
+
+        foreach ($crewIds as $crewId) {
+            $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+        }
+
+        // Act
+        $this->useCase->execute();
+
+        $flotilla = $this->seasonRepository->getFlotilla(EventId::fromString('Fri May 29'));
+
+        // Assert
+        $this->assertCount(3, $flotilla['crewed_boats']);
+        $this->assertCount(0, $flotilla['waitlist_boats']);
+        $this->assertCount(0, $flotilla['waitlist_crews']);
+
+        // Collect crew counts and verify they match capacities
+        $crewCountsPerBoat = array_map(
+            fn($crewedBoat) => count($crewedBoat['crews']),
+            $flotilla['crewed_boats']
+        );
+        sort($crewCountsPerBoat);
+
+        // Verify distribution matches [2, 3, 5] (capacity-aware), not [3, 3, 4] (round-robin)
+        $this->assertEquals([2, 3, 5], $crewCountsPerBoat);
+    }
 }
