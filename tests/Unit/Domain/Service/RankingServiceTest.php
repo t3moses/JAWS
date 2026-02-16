@@ -329,4 +329,158 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::ABSENCE));
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
+
+    // Tests membership number validation with minimum valid length (4 digits)
+    public function testUpdateCrewMembershipRankWithMinimumValidLength(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('1234');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - 4 digits is valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with maximum valid length (9 digits)
+    public function testUpdateCrewMembershipRankWithMaximumValidLength(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('123456789');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - 9 digits is valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with too short length (< 4 digits)
+    public function testUpdateCrewMembershipRankWithTooShortNumber(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('123');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - 3 digits is invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with too long length (> 9 digits)
+    public function testUpdateCrewMembershipRankWithTooLongNumber(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('1234567890');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - 10 digits is invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with letters after cleaning
+    public function testUpdateCrewMembershipRankWithLetters(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('12A45');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - contains letters, should get rank 0 (invalid)
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with all letters
+    public function testUpdateCrewMembershipRankWithAllLetters(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('ABCD');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - all letters, should get rank 0 (invalid)
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with special characters that get cleaned
+    public function testUpdateCrewMembershipRankWithDashes(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('12-34-56');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - after removing dashes → "123456" (6 digits), valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with spaces that get cleaned
+    public function testUpdateCrewMembershipRankWithSpaces(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('  12345  ');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - after removing spaces → "12345" (5 digits), valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with only special characters
+    public function testUpdateCrewMembershipRankWithOnlySpecialChars(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('----');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - after cleaning → "", empty, should get rank 0 (invalid)
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with empty string
+    public function testUpdateCrewMembershipRankWithEmptyString(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - empty string, should get rank 0 (invalid)
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    // Tests membership number validation with mixed alphanumeric that has letters
+    public function testUpdateCrewMembershipRankWithMixedAlphanumeric(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $crew->setMembershipNumber('ABC-123');
+
+        // Act
+        $this->service->updateCrewMembershipRank($crew);
+
+        // Assert - after removing dash → "ABC123", contains letters, should get rank 0 (invalid)
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
 }
