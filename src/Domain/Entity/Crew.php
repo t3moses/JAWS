@@ -50,7 +50,7 @@ class Crew
         $this->rank = Rank::forCrew(
             commitment: 0,   // Default: unavailable
             flexibility: 1,  // Default: inflexible (not boat owner)
-            membership: $this->calculateMembershipRank($membershipNumber),
+            membership: self::calculateMembershipRank($membershipNumber),
             absence: 0       // Default: no absences
         );
     }
@@ -178,7 +178,7 @@ class Crew
         // Update rank when membership changes
         $this->setRankDimension(
             CrewRankDimension::MEMBERSHIP,
-            $this->calculateMembershipRank($membershipNumber)
+            self::calculateMembershipRank($membershipNumber)
         );
     }
 
@@ -249,7 +249,7 @@ class Crew
      * @param string|null $membershipNumber
      * @return int 0 for invalid (higher priority), 1 for valid (lower priority)
      */
-    private function calculateMembershipRank(?string $membershipNumber): int
+    public static function calculateMembershipRank(?string $membershipNumber): int
     {
         // Handle null/empty - invalid
         if ($membershipNumber === null || $membershipNumber === '') {
