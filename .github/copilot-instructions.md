@@ -109,8 +109,8 @@ public/                  # Web root (index.php, frontend app/)
 
 ## Environment Requirements
 
-**Required extensions**: pdo, pdo_sqlite, sqlite3, curl, mbstring, openssl  
-**Optional**: Xdebug, LocalStack (for AWS SES testing: `cd LocalStack && docker-compose up -d`)
+**Required extensions**: pdo, pdo_sqlite, sqlite3, curl, mbstring, openssl
+**Optional**: Xdebug (for debugging), MailHog (for local email testing)
 
 ## Common Issues & Solutions
 

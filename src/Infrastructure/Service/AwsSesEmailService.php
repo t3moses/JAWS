@@ -12,7 +12,6 @@ use Aws\Exception\AwsException;
  * AWS SES Email Service
  *
  * Implements email sending via AWS Simple Email Service (SES) using AWS SDK.
- * Supports LocalStack for local development/testing.
  */
 class AwsSesEmailService implements EmailServiceInterface
 {
@@ -24,7 +23,6 @@ class AwsSesEmailService implements EmailServiceInterface
         ?string $region = null,
         ?string $accessKeyId = null,
         ?string $secretAccessKey = null,
-        ?string $endpoint = null,
         ?string $defaultFromEmail = null,
         ?string $defaultFromName = null
     ) {
@@ -32,7 +30,6 @@ class AwsSesEmailService implements EmailServiceInterface
         $region = $region ?? getenv('SES_REGION') ?: 'ca-central-1';
         $accessKeyId = $accessKeyId ?? getenv('SES_SMTP_USERNAME') ?: getenv('AWS_ACCESS_KEY_ID') ?: 'test';
         $secretAccessKey = $secretAccessKey ?? getenv('SES_SMTP_PASSWORD') ?: getenv('AWS_SECRET_ACCESS_KEY') ?: 'test';
-        $endpoint = $endpoint ?? getenv('SES_ENDPOINT') ?: null;
         $this->defaultFromEmail = $defaultFromEmail ?? getenv('EMAIL_FROM') ?: 'noreply@example.com';
         $this->defaultFromName = $defaultFromName ?? getenv('EMAIL_FROM_NAME') ?: 'JAWS System';
 
@@ -45,15 +42,6 @@ class AwsSesEmailService implements EmailServiceInterface
                 'secret' => $secretAccessKey,
             ],
         ];
-
-        // Add endpoint for LocalStack
-        if ($endpoint !== null && $endpoint !== '') {
-            $config['endpoint'] = $endpoint;
-            // Disable SSL verification for LocalStack
-            $config['http'] = [
-                'verify' => false,
-            ];
-        }
 
         $this->sesClient = new SesClient($config);
     }
