@@ -219,7 +219,8 @@ $container->set(\App\Application\UseCase\Season\ProcessSeasonUpdateUseCase::clas
         $c->get(EventRepositoryInterface::class),
         $c->get(SeasonRepositoryInterface::class),
         $c->get(SelectionService::class),
-        $c->get(AssignmentService::class)
+        $c->get(AssignmentService::class),
+        $c->get(FlexService::class)
     );
 });
 

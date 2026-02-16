@@ -101,6 +101,14 @@ interface BoatRepositoryInterface
     public function updateHistory(BoatKey $key, EventId $eventId, string $participated): void;
 
     /**
+     * Update boat flexibility rank only (without touching other fields)
+     *
+     * @param Boat $boat Boat with updated flexibility rank
+     * @return void
+     */
+    public function updateRankFlexibility(Boat $boat): void;
+
+    /**
      * Get boat count
      *
      * @return int

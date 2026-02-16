@@ -14,6 +14,7 @@ use App\Domain\Entity\Boat;
 use App\Domain\Entity\Crew;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
+use App\Domain\Service\FlexService;
 use App\Domain\ValueObject\EventId;
 use App\Domain\Enum\AvailabilityStatus;
 
@@ -43,6 +44,7 @@ class ProcessSeasonUpdateUseCase
         private SeasonRepositoryInterface $seasonRepository,
         private SelectionService $selectionService,
         private AssignmentService $assignmentService,
+        private FlexService $flexService,
     ) {
     }
 
@@ -58,6 +60,13 @@ class ProcessSeasonUpdateUseCase
         $squad = $this->loadSquad();
         $futureEvents = $this->eventRepository->findFutureEvents();
         $nextEventId = $this->eventRepository->findNextEvent();
+
+        // Recalculate flexibility ranks based on current fleet/squad composition
+        // This ensures flex status is accurate before selection runs
+        $this->flexService->updateAllFlexRanks($fleet, $squad);
+
+        // Persist updated flexibility ranks to database
+        $this->persistFlexRanks($fleet, $squad);
 
         $eventsProcessed = 0;
         $flotillasGenerated = 0;
@@ -328,6 +337,34 @@ class ProcessSeasonUpdateUseCase
                     );
                 }
             }
+        }
+    }
+
+    /**
+     * Persist updated flexibility ranks to database (ONLY rank_flexibility column)
+     *
+     * After FlexService updates flexibility ranks in memory based on current
+     * fleet/squad composition, save the rank_flexibility values to database.
+     * Uses targeted updateRankFlexibility() methods to update only the
+     * rank_flexibility column, avoiding side effects from full entity saves
+     * which would also update availability and history.
+     *
+     * Note: Currently updates ALL boats/crews. Future optimization could track
+     * which ranks actually changed and only persist those.
+     *
+     * @param Fleet $fleet Fleet with updated boat flexibility ranks
+     * @param Squad $squad Squad with updated crew flexibility ranks
+     */
+    private function persistFlexRanks(Fleet $fleet, Squad $squad): void
+    {
+        // Update only boat rank_flexibility column directly
+        foreach ($fleet->all() as $boat) {
+            $this->boatRepository->updateRankFlexibility($boat);
+        }
+
+        // Update only crew rank_flexibility column directly
+        foreach ($squad->all() as $crew) {
+            $this->crewRepository->updateRankFlexibility($crew);
         }
     }
 }

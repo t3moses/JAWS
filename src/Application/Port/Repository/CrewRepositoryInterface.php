@@ -129,6 +129,14 @@ interface CrewRepositoryInterface
     public function removeFromWhitelist(CrewKey $crewKey, BoatKey $boatKey): void;
 
     /**
+     * Update crew flexibility rank only (without touching other fields)
+     *
+     * @param Crew $crew Crew with updated flexibility rank
+     * @return void
+     */
+    public function updateRankFlexibility(Crew $crew): void;
+
+    /**
      * Get crew count
      *
      * @return int

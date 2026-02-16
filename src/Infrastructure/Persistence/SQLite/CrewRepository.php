@@ -232,6 +232,25 @@ class CrewRepository implements CrewRepositoryInterface
         ]);
     }
 
+    public function updateRankFlexibility(Crew $crew): void
+    {
+        if ($crew->getId() === null) {
+            // Crew not yet persisted, skip update
+            return;
+        }
+
+        $rank = $crew->getRank();
+        $stmt = $this->pdo->prepare('
+            UPDATE crews
+            SET rank_flexibility = :rank_flexibility
+            WHERE id = :id
+        ');
+        $stmt->execute([
+            'id' => $crew->getId(),
+            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
+        ]);
+    }
+
     public function count(): int
     {
         $stmt = $this->pdo->query('SELECT COUNT(*) FROM crews');
