@@ -115,15 +115,15 @@ function transformProfile(profileData, accountType) {
             whatsappGroup: profileData.socialPreference || false
         };
     } else {
-        // Boat owner profile - same structure as crew profile
+        // Boat owner profile - map from backend BoatResponse fields
         return {
-            firstName: profileData.firstName || '',
-            lastName: profileData.lastName || '',
-            phone: profileData.mobile || '',
+            firstName: profileData.ownerFirstName || '',
+            lastName: profileData.ownerLastName || '',
+            phone: profileData.ownerMobile || '',
             boatName: profileData.displayName || '',
-            minCrew: '1',  // Default - backend should provide this field
-            maxCrew: '4',  // Default - backend should provide this field
-            requestFirstMate: false,  // Default - backend should provide this field
+            minCrew: String(profileData.minBerths || 1),
+            maxCrew: String(profileData.maxBerths || 4),
+            requestFirstMate: profileData.assistanceRequired || false,
             whatsappGroup: profileData.socialPreference || false
         };
     }
