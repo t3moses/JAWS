@@ -670,4 +670,44 @@ class UpdateBoatAvailabilityUseCaseTest extends IntegrationTestCase
         // Assert - should use maxBerths (10)
         $this->assertEquals(10, $response->availabilities['Fri May 15']);
     }
+
+    /**
+     * Test: Updating boat availability preserves flexibility rank
+     *
+     * Verifies that UpdateBoatAvailabilityUseCase doesn't overwrite
+     * the flexibility rank when updating availability. This is critical
+     * because flex status (boat owner who is also crew) should only be
+     * set during FlexService::updateAllFlexRanks() and not modified by
+     * availability updates.
+     */
+    public function testUpdateAvailabilityPreservesFlexibilityRank(): void
+    {
+        // Arrange - Create boat with flexibility rank = 0 (flex boat owner)
+        $userId = $this->createTestUser();
+        $boatKey = $this->createBoatProfileForUser($userId);
+
+        // Set flexibility rank to 0 in database (simulating flex status)
+        $stmt = $this->pdo->prepare('UPDATE boats SET rank_flexibility = 0 WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+
+        // Verify initial flexibility rank is 0
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $initialRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$initialRank, 'Initial flexibility rank should be 0');
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true],
+            ['eventId' => 'Fri May 22', 'isAvailable' => false],
+        ]);
+
+        // Act - Update availability
+        $this->useCase->execute($userId, $request);
+
+        // Assert - Verify flexibility rank is still 0 after update
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $finalRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$finalRank, 'Flexibility rank should remain 0 after availability update');
+    }
 }
