@@ -52,7 +52,6 @@ document.querySelector('form').addEventListener('submit', async function(e) {
     const result = await register(userData);
 
     if (result.success) {
-        alert('Boat registered! Now set your availability for events and meet your crew!');
         window.location.href = 'dashboard.html';
     } else {
         alert('Error: ' + result.error);
