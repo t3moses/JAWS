@@ -107,6 +107,9 @@ class UpdateUserProfileUseCase
             throw new ValidationException(['crew_profile' => 'User does not have a crew profile']);
         }
 
+        // Store original rank to preserve it (especially flexibility rank)
+        $originalRank = $crew->getRank();
+
         // Update allowed fields
         if (isset($profile['displayName'])) {
             $crew->setDisplayName($profile['displayName']);
@@ -127,6 +130,9 @@ class UpdateUserProfileUseCase
             $crew->setExperience($profile['experience']);
         }
 
+        // Restore original rank before saving to avoid overwriting flexibility
+        $crew->setRank($originalRank);
+
         $this->crewRepository->save($crew);
     }
 
@@ -143,6 +149,9 @@ class UpdateUserProfileUseCase
         if ($boat === null) {
             throw new ValidationException(['boat_profile' => 'User does not have a boat profile']);
         }
+
+        // Store original rank to preserve it (especially flexibility rank)
+        $originalRank = $boat->getRank();
 
         // Update allowed fields
         if (isset($profile['displayName'])) {
@@ -163,6 +172,9 @@ class UpdateUserProfileUseCase
         if (isset($profile['socialPreference'])) {
             $boat->setSocialPreference($profile['socialPreference']);
         }
+
+        // Restore original rank before saving to avoid overwriting flexibility
+        $boat->setRank($originalRank);
 
         $this->boatRepository->save($boat);
     }
