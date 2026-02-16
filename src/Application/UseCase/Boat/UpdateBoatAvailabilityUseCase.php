@@ -52,8 +52,9 @@ class UpdateBoatAvailabilityUseCase
 
         // Get boat capacity once
         $maxBerths = $boat->getMaxBerths();
+        $boatKey = $boat->getKey();
 
-        // Update availability for each event
+        // Update availability for each event using targeted update
         foreach ($request->availabilities as $availability) {
             $eventId = EventId::fromString($availability['eventId']);
 
@@ -70,11 +71,12 @@ class UpdateBoatAvailabilityUseCase
                 throw new ValidationException(['boat' => 'Boat has no capacity configured']);
             }
 
-            $boat->setBerths($eventId, $berths);
+            // Use targeted update instead of loading, modifying, and saving entire entity
+            $this->boatRepository->updateAvailability($boatKey, $eventId, $berths);
         }
 
-        // Save boat
-        $this->boatRepository->save($boat);
+        // Reload boat to get updated availability for response
+        $boat = $this->boatRepository->findByOwnerUserId($userId);
 
         return BoatResponse::fromEntity($boat);
     }

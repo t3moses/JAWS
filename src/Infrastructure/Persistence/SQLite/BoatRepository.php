@@ -179,6 +179,25 @@ class BoatRepository implements BoatRepositoryInterface
         ]);
     }
 
+    public function updateRankFlexibility(Boat $boat): void
+    {
+        if ($boat->getId() === null) {
+            // Boat not yet persisted, skip update
+            return;
+        }
+
+        $rank = $boat->getRank();
+        $stmt = $this->pdo->prepare('
+            UPDATE boats
+            SET rank_flexibility = :rank_flexibility
+            WHERE id = :id
+        ');
+        $stmt->execute([
+            'id' => $boat->getId(),
+            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+        ]);
+    }
+
     public function count(): int
     {
         $stmt = $this->pdo->query('SELECT COUNT(*) FROM boats');

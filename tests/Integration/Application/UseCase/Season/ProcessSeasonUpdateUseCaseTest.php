@@ -55,7 +55,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
             $this->eventRepository,
             $this->seasonRepository,
             $selectionService,
-            $assignmentService
+            $assignmentService,
+            $flexService
         );
     }
 
@@ -650,5 +651,62 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
 
         // Verify distribution matches [2, 3, 5] (capacity-aware), not [3, 3, 4] (round-robin)
         $this->assertEquals([2, 3, 5], $crewCountsPerBoat);
+    }
+
+    /**
+     * Test: execute() recalculates and persists flexibility ranks
+     *
+     * CRITICAL: Verifies fix for flexibility rank reset bug.
+     * When a boat owner is also crew (or crew owns boat), their flexibility
+     * rank should be set to 0 (flexible/higher priority) and persisted to database.
+     */
+    public function testExecuteRecalculatesAndPersistsFlexibilityRanks(): void
+    {
+        // Arrange: Create flex user (John Doe owns boat AND is crew)
+
+        // Create boat owned by John Doe
+        $stmt = $this->pdo->prepare("
+            INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
+                              owner_email, min_berths, max_berths, assistance_required,
+                              social_preference, rank_flexibility, rank_absence)
+            VALUES ('sailaway', 'Sail Away', 'John', 'Doe', 'john@example.com',
+                    2, 3, 'No', 'No', 1, 0)
+        ");
+        $stmt->execute();
+        $boatId = (int)$this->pdo->lastInsertId();
+
+        // Create crew member John Doe (same person owns boat and is crew)
+        $stmt = $this->pdo->prepare("
+            INSERT INTO crews (key, display_name, first_name, last_name, email,
+                              skill, membership_number, social_preference,
+                              rank_commitment, rank_flexibility, rank_membership, rank_absence)
+            VALUES ('johndoe', 'John Doe', 'John', 'Doe', 'john@example.com',
+                    1, '12345', 'No', 0, 1, 0, 0)
+        ");
+        $stmt->execute();
+        $crewId = (int)$this->pdo->lastInsertId();
+
+        // Create future event
+        $this->createTestEvent('Fri May 29', '2026-05-29');
+
+        // Set availability
+        $this->setBoatAvailability($boatId, 'Fri May 29', 2);
+        $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
+
+        // Verify initial state: flexibility is 1 (inflexible) for both
+        $boatRank = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
+        $crewRank = $this->pdo->query("SELECT rank_flexibility FROM crews WHERE id = $crewId")->fetchColumn();
+        $this->assertEquals(1, (int)$boatRank, 'Initial boat flexibility should be 1');
+        $this->assertEquals(1, (int)$crewRank, 'Initial crew flexibility should be 1');
+
+        // Act: Run season update
+        $this->useCase->execute();
+
+        // Assert: Verify flexibility ranks updated to 0 (flexible) in database
+        $boatRankAfter = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
+        $crewRankAfter = $this->pdo->query("SELECT rank_flexibility FROM crews WHERE id = $crewId")->fetchColumn();
+
+        $this->assertEquals(0, (int)$boatRankAfter, 'Boat flexibility should be 0 (owner is crew)');
+        $this->assertEquals(0, (int)$crewRankAfter, 'Crew flexibility should be 0 (crew owns boat)');
     }
 }

@@ -738,4 +738,65 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
         // Verify hash can be verified
         $this->assertTrue(password_verify($plainPassword, $hash));
     }
+
+    /**
+     * Test: Updating user profile preserves flexibility ranks
+     *
+     * Verifies that UpdateUserProfileUseCase doesn't overwrite flexibility
+     * ranks when updating crew or boat profiles. This is critical for flex
+     * users (boat owners who are also crew) because flex status should only
+     * be set during FlexService::updateAllFlexRanks() and not modified by
+     * profile updates.
+     */
+    public function testUpdateProfilePreservesFlexibilityRanks(): void
+    {
+        // Arrange - Create flex user (both crew and boat owner)
+        $userId = $this->createTestUser('flex@example.com', 'crew', createCrewProfile: true);
+        $this->createBoatProfileForUser($userId);
+
+        // Set flexibility ranks to 0 in database (simulating flex status)
+        $stmt = $this->pdo->prepare('UPDATE crews SET rank_flexibility = 0 WHERE user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $stmt = $this->pdo->prepare('UPDATE boats SET rank_flexibility = 0 WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+
+        // Verify initial flexibility ranks are 0
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM crews WHERE user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $initialCrewRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$initialCrewRank, 'Initial crew flexibility rank should be 0');
+
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $initialBoatRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$initialBoatRank, 'Initial boat flexibility rank should be 0');
+
+        // Update both crew and boat profiles
+        $request = new UpdateProfileRequest(
+            crewProfile: [
+                'displayName' => 'Updated Crew Name',
+                'mobile' => '555-9999',
+                'skill' => SkillLevel::ADVANCED->value
+            ],
+            boatProfile: [
+                'displayName' => 'Updated Boat Name',
+                'ownerMobile' => '555-8888',
+                'maxBerths' => 6
+            ]
+        );
+
+        // Act - Update profiles
+        $this->useCase->execute($userId, $request);
+
+        // Assert - Verify both flexibility ranks are still 0 after update
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM crews WHERE user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $finalCrewRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$finalCrewRank, 'Crew flexibility rank should remain 0 after profile update');
+
+        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt->execute(['userId' => $userId]);
+        $finalBoatRank = $stmt->fetchColumn();
+        $this->assertEquals(0, (int)$finalBoatRank, 'Boat flexibility rank should remain 0 after profile update');
+    }
 }

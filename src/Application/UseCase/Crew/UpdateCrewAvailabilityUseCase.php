@@ -51,7 +51,9 @@ class UpdateCrewAvailabilityUseCase
             throw new CrewNotFoundException("Crew not found for user ID: {$userId}");
         }
 
-        // Update availability for each event
+        $crewKey = $crew->getKey();
+
+        // Update availability for each event using targeted update
         foreach ($request->availabilities as $availability) {
             $eventId = EventId::fromString($availability['eventId']);
 
@@ -65,11 +67,12 @@ class UpdateCrewAvailabilityUseCase
                 ? AvailabilityStatus::AVAILABLE
                 : AvailabilityStatus::UNAVAILABLE;
 
-            $crew->setAvailability($eventId, $status);
+            // Use targeted update instead of loading, modifying, and saving entire entity
+            $this->crewRepository->updateAvailability($crewKey, $eventId, $status);
         }
 
-        // Save crew
-        $this->crewRepository->save($crew);
+        // Reload crew to get updated availability for response
+        $crew = $this->crewRepository->findByUserId($userId);
 
         return CrewResponse::fromEntity($crew);
     }
