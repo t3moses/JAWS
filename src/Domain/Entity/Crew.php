@@ -50,7 +50,7 @@ class Crew
         $this->rank = Rank::forCrew(
             commitment: 0,   // Default: unavailable
             flexibility: 1,  // Default: inflexible (not boat owner)
-            membership: (empty($membershipNumber) || $membershipNumber === null) ? 1 : 0,
+            membership: self::calculateMembershipRank($membershipNumber),
             absence: 0       // Default: no absences
         );
     }
@@ -178,7 +178,7 @@ class Crew
         // Update rank when membership changes
         $this->setRankDimension(
             CrewRankDimension::MEMBERSHIP,
-            (empty($membershipNumber) || $membershipNumber === null) ? 1 : 0
+            self::calculateMembershipRank($membershipNumber)
         );
     }
 
@@ -235,6 +235,48 @@ class Crew
             }
         }
         $this->setRankDimension(CrewRankDimension::ABSENCE, $absences);
+    }
+
+    /**
+     * Calculate membership rank based on validation rules
+     *
+     * Algorithm:
+     * 1. Remove all non-alphanumeric characters
+     * 2. If remaining string contains non-numeric characters → rank 0 (invalid)
+     * 3. If length < 4 or > 9 → rank 0 (invalid)
+     * 4. Otherwise → rank 1 (valid)
+     *
+     * @param string|null $membershipNumber
+     * @return int 0 for invalid (higher priority), 1 for valid (lower priority)
+     */
+    public static function calculateMembershipRank(?string $membershipNumber): int
+    {
+        // Handle null/empty - invalid
+        if ($membershipNumber === null || $membershipNumber === '') {
+            return 0;
+        }
+
+        // Step 1: Remove all non-alphanumeric characters
+        $cleaned = preg_replace('/[^a-zA-Z0-9]/', '', $membershipNumber);
+
+        // Check if empty after cleaning
+        if ($cleaned === '') {
+            return 0; // Invalid: nothing left
+        }
+
+        // Step 2: If remaining string contains non-numeric characters → rank 0
+        if (preg_match('/[^0-9]/', $cleaned)) {
+            return 0; // Invalid: has letters
+        }
+
+        // Step 3: If length < 4 or > 9 → rank 0
+        $length = strlen($cleaned);
+        if ($length < 4 || $length > 9) {
+            return 0; // Invalid: wrong length
+        }
+
+        // Step 4: Otherwise → rank 1 (valid membership)
+        return 1;
     }
 
     // === Availability ===

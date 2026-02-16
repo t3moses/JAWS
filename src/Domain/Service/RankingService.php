@@ -62,7 +62,7 @@ class RankingService
         }
 
         // Calculate membership (has valid membership number)
-        $membership = empty($crew->getMembershipNumber()) ? 0 : 1;
+        $membership = Crew::calculateMembershipRank($crew->getMembershipNumber());
 
         // Calculate absence (count of past no-shows)
         $absence = 0;
@@ -184,7 +184,7 @@ class RankingService
      */
     public function updateCrewMembershipRank(Crew $crew): void
     {
-        $membershipRank = empty($crew->getMembershipNumber()) ? 0 : 1;
+        $membershipRank = Crew::calculateMembershipRank($crew->getMembershipNumber());
         $crew->setRankDimension(CrewRankDimension::MEMBERSHIP, $membershipRank);
     }
 

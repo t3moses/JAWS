@@ -62,7 +62,7 @@ class CrewTest extends TestCase
         // Assert
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::COMMITMENT));
         $this->assertEquals(1, $rank->getDimension(CrewRankDimension::FLEXIBILITY));
-        $this->assertEquals(0, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // Has membership number
+        $this->assertEquals(1, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // Valid membership number '12345'
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::ABSENCE));
     }
 
@@ -85,7 +85,7 @@ class CrewTest extends TestCase
 
         $rank = $crew->getRank();
         // Assert
-        $this->assertEquals(1, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // No membership
+        $this->assertEquals(0, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // No membership (invalid)
     }
 
     public function testIdStartsAsNull(): void
@@ -181,11 +181,12 @@ class CrewTest extends TestCase
         $crew = $this->createCrew();
 
         $crew->setMembershipNumber(null);
-        // Assert
-        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+        // Assert - null is invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
 
         $crew->setMembershipNumber('12345');
-        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+        // Valid membership (5 digits, numeric), should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 
     public function testSetAndGetRank(): void
@@ -567,5 +568,183 @@ class CrewTest extends TestCase
         $this->assertIsArray($array['availability']);
         $this->assertIsArray($array['history']);
         $this->assertIsArray($array['whitelist']);
+    }
+
+    // Membership validation tests
+
+    public function testConstructorWithMinimumValidMembershipLength(): void
+    {
+        // Arrange
+        $crew = new Crew(
+            key: CrewKey::fromString('johndoe'),
+            displayName: 'John Doe',
+            firstName: 'John',
+            lastName: 'Doe',
+            partnerKey: null,
+            mobile: null,
+            socialPreference: false,
+            membershipNumber: '1234', // Minimum valid length
+            skill: SkillLevel::NOVICE,
+            experience: null
+        );
+
+        // Assert - 4 digits is valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testConstructorWithMaximumValidMembershipLength(): void
+    {
+        // Arrange
+        $crew = new Crew(
+            key: CrewKey::fromString('johndoe'),
+            displayName: 'John Doe',
+            firstName: 'John',
+            lastName: 'Doe',
+            partnerKey: null,
+            mobile: null,
+            socialPreference: false,
+            membershipNumber: '123456789', // Maximum valid length
+            skill: SkillLevel::NOVICE,
+            experience: null
+        );
+
+        // Assert - 9 digits is valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testConstructorWithTooShortMembership(): void
+    {
+        // Arrange
+        $crew = new Crew(
+            key: CrewKey::fromString('johndoe'),
+            displayName: 'John Doe',
+            firstName: 'John',
+            lastName: 'Doe',
+            partnerKey: null,
+            mobile: null,
+            socialPreference: false,
+            membershipNumber: '123', // Too short
+            skill: SkillLevel::NOVICE,
+            experience: null
+        );
+
+        // Assert - 3 digits is invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testConstructorWithTooLongMembership(): void
+    {
+        // Arrange
+        $crew = new Crew(
+            key: CrewKey::fromString('johndoe'),
+            displayName: 'John Doe',
+            firstName: 'John',
+            lastName: 'Doe',
+            partnerKey: null,
+            mobile: null,
+            socialPreference: false,
+            membershipNumber: '1234567890', // Too long
+            skill: SkillLevel::NOVICE,
+            experience: null
+        );
+
+        // Assert - 10 digits is invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithLetters(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('12A45');
+
+        // Assert - contains letters, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithAllLetters(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('ABCD');
+
+        // Assert - all letters, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithDashesGetsCleaned(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('12-34-56');
+
+        // Assert - after removing dashes → "123456" (6 digits), valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithSpacesGetsCleaned(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('  12345  ');
+
+        // Assert - after removing spaces → "12345" (5 digits), valid, should get rank 1
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithOnlySpecialChars(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('----');
+
+        // Assert - after cleaning → "", empty, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithEmptyString(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('');
+
+        // Assert - empty string, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithMixedAlphanumeric(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('ABC-123');
+
+        // Assert - after removing dash → "ABC123", contains letters, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
+    }
+
+    public function testSetMembershipNumberWithOnlySpaces(): void
+    {
+        // Arrange
+        $crew = $this->createCrew();
+
+        // Act
+        $crew->setMembershipNumber('   ');
+
+        // Assert - after removing spaces → "", empty, invalid, should get rank 0
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::MEMBERSHIP));
     }
 }
