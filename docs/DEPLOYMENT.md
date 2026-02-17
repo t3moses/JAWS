@@ -72,9 +72,6 @@ Create Apache virtual host configuration to route requests to the JAWS applicati
         AllowOverride All
         Require all granted
     </Directory>
-
-    ErrorLog /opt/bitnami/apache/logs/jaws-error.log
-    CustomLog /opt/bitnami/apache/logs/jaws-access.log combined
 </VirtualHost>
 ```
 
@@ -95,7 +92,70 @@ Restart Apache:
 sudo /opt/bitnami/ctlscript.sh restart apache
 ```
 
-#### 3. Install Composer (if not already installed)
+#### 3. Configure SSL/HTTPS with Let's Encrypt
+
+Follow these steps to configure SSL after obtaining your Let's Encrypt certificate.
+
+##### Create SSL Certificate Symbolic Links
+
+Let's Encrypt stores certificates in `/etc/letsencrypt/live/your-domain.com/`. Apache expects certificates in `/opt/bitnami/apache/conf/`. Create symbolic links to point Apache to the Let's Encrypt certificates:
+
+```bash
+cd /opt/bitnami/apache/conf
+
+# Create symlinks to Let's Encrypt certificates
+sudo ln -sf /etc/letsencrypt/live/$DOMAIN/fullchain.pem server.crt
+sudo ln -sf /etc/letsencrypt/live/$DOMAIN/privkey.pem server.key
+
+# Verify symlinks created successfully
+ls -l server.crt server.key
+```
+
+**Expected output:**
+```
+lrwxrwxrwx 1 root root 57 Feb 16 12:00 server.crt -> /etc/letsencrypt/live/your-domain.com/fullchain.pem
+lrwxrwxrwx 1 root root 55 Feb 16 12:00 server.key -> /etc/letsencrypt/live/your-domain.com/privkey.pem
+```
+
+**Important Notes:**
+- Set the `$DOMAIN` environment variable with `DOMAIN=your-domain.com`
+- The `-f` flag forces creation, replacing any existing files
+- Symlinks automatically point to renewed certificates after Let's Encrypt renewal
+
+##### Configure HTTPS Virtual Host
+
+Create an HTTPS virtual host configuration for SSL traffic.
+
+**File:** `/opt/bitnami/apache/conf/vhosts/jaws-https-vhost.conf`
+
+```apache
+<VirtualHost 127.0.0.1:443 _default_:443>
+    ServerName your-domain.com
+    ServerAlias *
+    DocumentRoot /opt/bitnami/jaws/public
+
+    # SSL Configuration
+    SSLEngine on
+    SSLCertificateFile "/opt/bitnami/apache/conf/server.crt"
+    SSLCertificateKeyFile "/opt/bitnami/apache/conf/server.key"
+
+    <Directory /opt/bitnami/jaws/public>
+        Options -Indexes +FollowSymLinks -MultiViews
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    Include "/opt/bitnami/apache/conf/vhosts/htaccess/jaws-htaccess.conf"
+</VirtualHost>
+```
+
+**Configuration Notes:**
+- The SSL directives point to the symlinks created in the previous step
+- When Let's Encrypt renews certificates (every 90 days), the symlinks automatically reference the new certificates
+- No Apache configuration changes are needed during certificate renewal
+- Both HTTP (port 80) and HTTPS (port 443) virtual hosts can coexist
+
+#### 4. Install Composer (if not already installed)
 
 ```bash
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"

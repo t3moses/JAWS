@@ -112,4 +112,177 @@ class AdminApiTest extends TestCase
         // Cleanup
         $this->cleanupTestUser($testData['userId']);
     }
+
+    // =======================
+    // GET /api/admin/users
+    // =======================
+
+    public function testGetUsersRequiresAuthentication(): void
+    {
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/users");
+
+        $this->assertEquals(401, $response['status']);
+    }
+
+    public function testGetUsersRequiresAdminPrivileges(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/users", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(403, $response['status']);
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testGetUsersReturns200WithArray(): void
+    {
+        $testData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/users", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertIsArray($response['body']['data']);
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testGetUsersDoesNotExposePasswordHashes(): void
+    {
+        $testData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/users", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+
+        foreach ($response['body']['data'] as $user) {
+            $this->assertArrayNotHasKey('password_hash', $user);
+        }
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testGetUsersResponseContainsExpectedFields(): void
+    {
+        $testData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest('GET', "{$this->baseUrl}/admin/users", null, [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertNotEmpty($response['body']['data']);
+
+        $user = $response['body']['data'][0];
+        $this->assertArrayHasKey('id', $user);
+        $this->assertArrayHasKey('email', $user);
+        $this->assertArrayHasKey('account_type', $user);
+        $this->assertArrayHasKey('is_admin', $user);
+        $this->assertArrayHasKey('created_at', $user);
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    // =======================
+    // PATCH /api/admin/users/{userId}/admin
+    // =======================
+
+    public function testSetUserAdminRequiresAdminPrivileges(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+        $crewData  = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'PATCH',
+            "{$this->baseUrl}/admin/users/{$adminData['userId']}/admin",
+            ['is_admin' => false],
+            ["Authorization: Bearer {$crewData['token']}"]
+        );
+
+        $this->assertEquals(403, $response['status']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($crewData['userId']);
+    }
+
+    public function testSetUserAdminGrantsPrivileges(): void
+    {
+        $adminData  = $this->createTestAdmin($this->baseUrl);
+        $targetData = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'PATCH',
+            "{$this->baseUrl}/admin/users/{$targetData['userId']}/admin",
+            ['is_admin' => true],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertTrue($response['body']['data']['is_admin']);
+        $this->assertEquals($targetData['userId'], $response['body']['data']['id']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($targetData['userId']);
+    }
+
+    public function testSetUserAdminRevokesPrivileges(): void
+    {
+        $adminData  = $this->createTestAdmin($this->baseUrl);
+        $targetData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'PATCH',
+            "{$this->baseUrl}/admin/users/{$targetData['userId']}/admin",
+            ['is_admin' => false],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertFalse($response['body']['data']['is_admin']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($targetData['userId']);
+    }
+
+    public function testSetUserAdminReturnsBadRequestWhenTargetingSelf(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'PATCH',
+            "{$this->baseUrl}/admin/users/{$adminData['userId']}/admin",
+            ['is_admin' => false],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(400, $response['status']);
+        $this->assertFalse($response['body']['success']);
+
+        $this->cleanupTestUser($adminData['userId']);
+    }
+
+    public function testSetUserAdminReturnsNotFoundForUnknownUser(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'PATCH',
+            "{$this->baseUrl}/admin/users/999999/admin",
+            ['is_admin' => true],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(404, $response['status']);
+
+        $this->cleanupTestUser($adminData['userId']);
+    }
 }

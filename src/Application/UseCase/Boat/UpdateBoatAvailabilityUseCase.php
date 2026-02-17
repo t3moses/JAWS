@@ -63,12 +63,17 @@ class UpdateBoatAvailabilityUseCase
                 throw new EventNotFoundException($eventId);
             }
 
-            // Calculate berths: full capacity if available, 0 if not
-            $berths = $availability['isAvailable'] ? $maxBerths : 0;
-
-            // Validate capacity when setting available
-            if ($availability['isAvailable'] && $maxBerths <= 0) {
-                throw new ValidationException(['boat' => 'Boat has no capacity configured']);
+            // Use explicit berths if provided (from dropdown), else fall back to boolean
+            if (array_key_exists('berths', $availability)) {
+                $berths = (int) $availability['berths'];
+                if ($berths > $maxBerths) {
+                    throw new ValidationException(["boat" => "Berths cannot exceed maximum capacity ({$maxBerths})"]);
+                }
+            } else {
+                if ($availability['isAvailable'] && $maxBerths <= 0) {
+                    throw new ValidationException(['boat' => 'Boat has no capacity configured']);
+                }
+                $berths = $availability['isAvailable'] ? $maxBerths : 0;
             }
 
             // Use targeted update instead of loading, modifying, and saving entire entity

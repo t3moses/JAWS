@@ -671,6 +671,143 @@ class UpdateBoatAvailabilityUseCaseTest extends IntegrationTestCase
         $this->assertEquals(10, $response->availabilities['Fri May 15']);
     }
 
+    // ==================== EXPLICIT BERTHS TESTS ====================
+
+    public function testExplicitBerthsStoredDirectly(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser('berths1@example.com');
+        $boatKey = $this->createBoatProfileForUser($userId, ['maxBerths' => 4]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => 2]
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert - explicit berths (2) used, not maxBerths (4)
+        $this->assertEquals(2, $response->availabilities['Fri May 15']);
+        $this->assertEquals(2, $this->getBoatAvailability($boatKey, 'Fri May 15'));
+    }
+
+    public function testExplicitBerthsZeroStoresUnavailable(): void
+    {
+        // Arrange - berths: 0 should store 0 regardless of isAvailable
+        $userId = $this->createTestUser('berths2@example.com');
+        $boatKey = $this->createBoatProfileForUser($userId, ['maxBerths' => 4]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => 0]
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert - explicit 0 wins over isAvailable: true
+        $this->assertEquals(0, $response->availabilities['Fri May 15']);
+        $this->assertEquals(0, $this->getBoatAvailability($boatKey, 'Fri May 15'));
+    }
+
+    public function testExplicitBerthsAtMaxCapacityStored(): void
+    {
+        // This covers the bug: no DB row exists, dropdown left at maxBerths,
+        // frontend sends isAvailable: true + berths: 6 — row must be written.
+        $userId = $this->createTestUser('berths3@example.com');
+        $boatKey = $this->createBoatProfileForUser($userId, ['maxBerths' => 6]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => 6]
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert - maxBerths value stored even though it equals the max
+        $this->assertEquals(6, $response->availabilities['Fri May 15']);
+        $this->assertEquals(6, $this->getBoatAvailability($boatKey, 'Fri May 15'));
+    }
+
+    public function testExplicitBerthsPreferredOverIsAvailableBoolean(): void
+    {
+        // When berths is present, isAvailable is ignored for berth calculation.
+        // isAvailable: false with berths: 3 should store 3, not 0.
+        $userId = $this->createTestUser('berths4@example.com');
+        $boatKey = $this->createBoatProfileForUser($userId, ['maxBerths' => 4]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => false, 'berths' => 3]
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert - explicit berths (3) wins over boolean false (which would give 0)
+        $this->assertEquals(3, $response->availabilities['Fri May 15']);
+        $this->assertEquals(3, $this->getBoatAvailability($boatKey, 'Fri May 15'));
+    }
+
+    public function testExplicitBerthsMixedWithBooleanFallbackInBatch(): void
+    {
+        // Arrange - batch where some entries use explicit berths, others use boolean
+        $userId = $this->createTestUser('berths5@example.com');
+        $boatKey = $this->createBoatProfileForUser($userId, ['maxBerths' => 4]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => 2],  // explicit: 2
+            ['eventId' => 'Fri May 22', 'isAvailable' => true],                  // boolean fallback: maxBerths (4)
+            ['eventId' => 'Fri May 29', 'isAvailable' => false],                 // boolean fallback: 0
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert
+        $this->assertEquals(2, $response->availabilities['Fri May 15']); // explicit berths
+        $this->assertEquals(4, $response->availabilities['Fri May 22']); // boolean → maxBerths
+        $this->assertEquals(0, $response->availabilities['Fri May 29']); // boolean → 0
+
+        $this->assertEquals(2, $this->getBoatAvailability($boatKey, 'Fri May 15'));
+        $this->assertEquals(4, $this->getBoatAvailability($boatKey, 'Fri May 22'));
+        $this->assertEquals(0, $this->getBoatAvailability($boatKey, 'Fri May 29'));
+    }
+
+    public function testExplicitBerthsExceedingMaxThrowsValidationException(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser('berths6@example.com');
+        $this->createBoatProfileForUser($userId, ['maxBerths' => 4]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => 5]
+        ]);
+
+        // Assert
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Berths cannot exceed maximum capacity (4)');
+
+        // Act
+        $this->useCase->execute($userId, $request);
+    }
+
+    public function testNegativeBerthsFailsRequestValidation(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser('berths7@example.com');
+        $this->createBoatProfileForUser($userId);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true, 'berths' => -1]
+        ]);
+
+        // Assert
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('berths must be a non-negative integer');
+
+        // Act
+        $this->useCase->execute($userId, $request);
+    }
+
     /**
      * Test: Updating boat availability preserves flexibility rank
      *

@@ -7,8 +7,18 @@ namespace App\Presentation\Controller;
 use App\Application\UseCase\Admin\GetMatchingDataUseCase;
 use App\Application\UseCase\Admin\SendNotificationsUseCase;
 use App\Application\UseCase\Admin\GetConfigUseCase;
+use App\Application\UseCase\Admin\GetAllUsersUseCase;
+use App\Application\UseCase\Admin\SetUserAdminUseCase;
+use App\Application\UseCase\Admin\GetUserDetailUseCase;
+use App\Application\UseCase\Admin\GetAllCrewsUseCase;
+use App\Application\UseCase\Admin\GetAllBoatsUseCase;
+use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
+use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
+use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\DTO\Request\UpdateConfigRequest;
+use App\Application\Exception\BoatNotFoundException;
+use App\Application\Exception\CrewNotFoundException;
 use App\Application\Exception\EventNotFoundException;
 use App\Application\Exception\FlotillaNotFoundException;
 use App\Application\Exception\ValidationException;
@@ -27,6 +37,14 @@ class AdminController
         private SendNotificationsUseCase $sendNotificationsUseCase,
         private GetConfigUseCase $getConfigUseCase,
         private UpdateConfigUseCase $updateConfigUseCase,
+        private GetAllUsersUseCase $getAllUsersUseCase,
+        private SetUserAdminUseCase $setUserAdminUseCase,
+        private GetUserDetailUseCase $getUserDetailUseCase,
+        private GetAllCrewsUseCase $getAllCrewsUseCase,
+        private GetAllBoatsUseCase $getAllBoatsUseCase,
+        private UpdateCrewProfileUseCase $updateCrewProfileUseCase,
+        private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
+        private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
     ) {
     }
 
@@ -148,6 +166,213 @@ class AdminController
             return JsonResponse::success($result);
         } catch (ValidationException $e) {
             return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/users
+     *
+     * Returns a list of all registered users (no password hashes).
+     *
+     * @param array $auth Authentication context
+     */
+    public function getUsers(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getAllUsersUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * PATCH /api/admin/users/{userId}/admin
+     *
+     * Grants or revokes admin privileges for a user.
+     *
+     * @param array $params Route parameters (userId)
+     * @param array $body   Request body (is_admin boolean)
+     * @param array $auth   Authentication context
+     */
+    public function setUserAdmin(array $params, array $body, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $targetUserId = (int)$params['userId'];
+            $isAdmin = (bool)($body['is_admin'] ?? false);
+            $requestingUserId = (int)$auth['user_id'];
+
+            $result = $this->setUserAdminUseCase->execute($targetUserId, $isAdmin, $requestingUserId);
+
+            return JsonResponse::success($result);
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\RuntimeException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/users/{userId}
+     *
+     * Returns a single user's info together with their linked crew profile (if any).
+     *
+     * @param array $params Route parameters (userId)
+     * @param array $auth   Authentication context
+     */
+    public function getUser(array $params, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $userId = (int)$params['userId'];
+            $result = $this->getUserDetailUseCase->execute($userId);
+
+            return JsonResponse::success($result);
+        } catch (\RuntimeException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/crews
+     *
+     * Returns all crew members (for partner picker dropdowns).
+     *
+     * @param array $auth Authentication context
+     */
+    public function getAllCrews(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getAllCrewsUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/boats
+     *
+     * Returns all boats (for whitelist picker dropdowns).
+     *
+     * @param array $auth Authentication context
+     */
+    public function getAllBoats(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getAllBoatsUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * PATCH /api/admin/crews/{crewKey}
+     *
+     * Updates skill and/or partner assignment for a crew member.
+     *
+     * @param array $params Route parameters (crewKey)
+     * @param array $body   Request body (skill, partner_key)
+     * @param array $auth   Authentication context
+     */
+    public function updateCrewProfile(array $params, array $body, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $crewKey    = $params['crewKey'];
+            $skill      = isset($body['skill']) ? (int)$body['skill'] : null;
+            $partnerKey = array_key_exists('partner_key', $body) ? ($body['partner_key'] === '' ? null : $body['partner_key']) : null;
+            $clearPartner = array_key_exists('partner_key', $body) && ($body['partner_key'] === null || $body['partner_key'] === '');
+
+            $result = $this->updateCrewProfileUseCase->execute($crewKey, $skill, $partnerKey, $clearPartner);
+
+            return JsonResponse::success($result);
+        } catch (CrewNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /api/admin/crews/{crewKey}/whitelist/{boatKey}
+     *
+     * Adds a boat to a crew member's whitelist.
+     *
+     * @param array $params Route parameters (crewKey, boatKey)
+     * @param array $auth   Authentication context
+     */
+    public function addToWhitelist(array $params, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->addToCrewWhitelistUseCase->execute($params['crewKey'], $params['boatKey']);
+
+            return JsonResponse::success($result);
+        } catch (CrewNotFoundException | BoatNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * DELETE /api/admin/crews/{crewKey}/whitelist/{boatKey}
+     *
+     * Removes a boat from a crew member's whitelist.
+     *
+     * @param array $params Route parameters (crewKey, boatKey)
+     * @param array $auth   Authentication context
+     */
+    public function removeFromWhitelist(array $params, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->removeFromCrewWhitelistUseCase->execute($params['crewKey'], $params['boatKey']);
+
+            return JsonResponse::success($result);
+        } catch (CrewNotFoundException | BoatNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }
