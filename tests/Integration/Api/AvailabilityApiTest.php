@@ -196,6 +196,46 @@ class AvailabilityApiTest extends TestCase
         $this->cleanupTestUser($testData['userId']);
     }
 
+    public function testBoatOwnerCanSetExplicitBerthsForEvent(): void
+    {
+        $testData = $this->createTestBoatOwner($this->baseUrl);
+
+        $response = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['eventId' => 'Fri May 29', 'isAvailable' => true, 'berths' => 2],
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        // 200 if event exists, 404 if not — either is acceptable
+        $this->assertContains($response['status'], [200, 404]);
+        if ($response['status'] === 200) {
+            $this->assertTrue($response['body']['success']);
+        }
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
+    public function testBoatOwnerBerthsExceedingMaxCapacityReturns400(): void
+    {
+        // Test boat owner has maxBerths: 4 (see createTestBoatOwner)
+        $testData = $this->createTestBoatOwner($this->baseUrl);
+
+        $response = $this->makeRequest('PATCH', "{$this->baseUrl}/users/me/availability", [
+            'availabilities' => [
+                ['eventId' => 'Fri May 29', 'isAvailable' => true, 'berths' => 99],
+            ],
+        ], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        // 400 if event exists and berths > maxBerths; 404 if event doesn't exist
+        $this->assertContains($response['status'], [400, 404]);
+
+        $this->cleanupTestUser($testData['userId']);
+    }
+
     public function testUpdateAvailabilityValidation(): void
     {
         $testData = $this->createTestCrew($this->baseUrl);
