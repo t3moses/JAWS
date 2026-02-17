@@ -207,6 +207,14 @@ class RegisterUseCase
         // Link to user
         $crew->setUserId($user->getId());
 
+        // Populate whitelist with all existing boats
+        $allBoats = $this->boatRepository->findAll();
+        $whitelistedBoatKeys = array_map(
+            fn($boat) => $boat->getKey()->toString(),
+            $allBoats
+        );
+        $crew->setWhitelist($whitelistedBoatKeys);
+
         // Save crew
         $this->crewRepository->save($crew);
     }

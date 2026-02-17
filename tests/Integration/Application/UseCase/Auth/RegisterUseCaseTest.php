@@ -448,4 +448,103 @@ class RegisterUseCaseTest extends IntegrationTestCase
 
         $this->useCase->execute($request2);
     }
+
+    public function testRegisterCrewPopulatesWhitelistWithAllBoats(): void
+    {
+        // Create some boats first
+        $boat1Request = RegisterRequest::fromArray([
+            'email' => 'boat1@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'boat_owner',
+            'profile' => [
+                'ownerFirstName' => 'Alice',
+                'ownerLastName' => 'Anderson',
+                'minBerths' => 2,
+                'maxBerths' => 4,
+                'ownerMobile' => '555-0001',
+            ]
+        ]);
+        $this->useCase->execute($boat1Request);
+
+        $boat2Request = RegisterRequest::fromArray([
+            'email' => 'boat2@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'boat_owner',
+            'profile' => [
+                'ownerFirstName' => 'Bob',
+                'ownerLastName' => 'Builder',
+                'minBerths' => 4,
+                'maxBerths' => 6,
+                'ownerMobile' => '555-0002',
+            ]
+        ]);
+        $this->useCase->execute($boat2Request);
+
+        $boat3Request = RegisterRequest::fromArray([
+            'email' => 'boat3@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'boat_owner',
+            'profile' => [
+                'ownerFirstName' => 'Carol',
+                'ownerLastName' => 'Captain',
+                'minBerths' => 2,
+                'maxBerths' => 6,
+                'ownerMobile' => '555-0003',
+            ]
+        ]);
+        $this->useCase->execute($boat3Request);
+
+        // Now register a crew member
+        $crewRequest = RegisterRequest::fromArray([
+            'email' => 'newcrew@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'crew',
+            'profile' => [
+                'firstName' => 'New',
+                'lastName' => 'Crew',
+                'skill' => SkillLevel::NOVICE->value,
+            ]
+        ]);
+        $this->useCase->execute($crewRequest);
+
+        // Verify crew's whitelist was populated with all boats
+        $crew = $this->crewRepository->findByName('New', 'Crew');
+        $this->assertNotNull($crew);
+
+        $whitelist = $crew->getWhitelist();
+        $this->assertCount(3, $whitelist, 'Whitelist should contain all 3 boats');
+
+        // Verify each boat is in the whitelist
+        $boat1 = $this->boatRepository->findByOwnerName('Alice', 'Anderson');
+        $boat2 = $this->boatRepository->findByOwnerName('Bob', 'Builder');
+        $boat3 = $this->boatRepository->findByOwnerName('Carol', 'Captain');
+
+        $this->assertContains($boat1->getKey()->toString(), $whitelist);
+        $this->assertContains($boat2->getKey()->toString(), $whitelist);
+        $this->assertContains($boat3->getKey()->toString(), $whitelist);
+    }
+
+    public function testRegisterCrewWithNoBoatsHasEmptyWhitelist(): void
+    {
+        // Register a crew member when no boats exist
+        $crewRequest = RegisterRequest::fromArray([
+            'email' => 'earlybird@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'crew',
+            'profile' => [
+                'firstName' => 'Early',
+                'lastName' => 'Bird',
+                'skill' => SkillLevel::NOVICE->value,
+            ]
+        ]);
+        $this->useCase->execute($crewRequest);
+
+        // Verify crew's whitelist is empty
+        $crew = $this->crewRepository->findByName('Early', 'Bird');
+        $this->assertNotNull($crew);
+
+        $whitelist = $crew->getWhitelist();
+        $this->assertIsArray($whitelist);
+        $this->assertCount(0, $whitelist, 'Whitelist should be empty when no boats exist');
+    }
 }
