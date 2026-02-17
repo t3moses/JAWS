@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - NSC Social Day Cruising</title>
+    <title>Admin Rights - NSC Social Day Cruising</title>
     <!-- Auth init MUST run before page renders to prevent navigation jump -->
     <script src="js/auth-init.js"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -50,43 +50,21 @@
 
     <section class="hero">
         <div class="hero-content">
-            <h1>Admin Dashboard<span class="admin-badge">Admin</span></h1>
-            <p>Manage season configuration, events, and notifications</p>
+            <h1>Admin Rights Management<span class="admin-badge">Admin</span></h1>
+            <p>Grant or withdraw admin privileges for registered users</p>
         </div>
     </section>
 
     <main>
         <div class="form-container">
-            <div class="admin-actions">
-                <a href="admin-matching.html" class="admin-card">
-                    <span class="card-icon">📊</span>
-                    <h3>Event Matching Analysis</h3>
-                    <p>View capacity analysis, available boats and crews for each event. Analyze matching scenarios and identify capacity issues.</p>
-                </a>
+            <div class="form-section">
+                <p class="help-text">
+                    <strong>Note:</strong> Admin changes take effect on the user's next login.
+                </p>
+            </div>
 
-                <a href="admin-notifications.html" class="admin-card">
-                    <span class="card-icon">✉️</span>
-                    <h3>Send Notifications</h3>
-                    <p>Send email notifications and calendar invites to participants for upcoming events. Preview participant lists before sending.</p>
-                </a>
-
-                <a href="admin-config.html" class="admin-card">
-                    <span class="card-icon">⚙️</span>
-                    <h3>Season Configuration</h3>
-                    <p>Manage season-wide settings including year, event times, blackout windows, and time source configuration.</p>
-                </a>
-
-                <a href="event-report.html" class="admin-card">
-                    <span class="card-icon">📋</span>
-                    <h3>Event Reports</h3>
-                    <p>Generate printable crew assignment reports for any event. View detailed flotilla assignments and waitlists in a print-friendly format.</p>
-                </a>
-
-                <a href="admin-users.html" class="admin-card">
-                    <span class="card-icon">👤</span>
-                    <h3>Admin Rights</h3>
-                    <p>Grant or withdraw admin privileges for registered users.</p>
-                </a>
+            <div id="users-container">
+                <p>Loading users...</p>
             </div>
         </div>
     </main>
@@ -97,6 +75,7 @@
         </div>
     </footer>
 
-    <script type="module" src="js/pages/admin-page.js"></script>
+    <div id="toast-container"></div>
+    <script type="module" src="js/pages/admin-users-page.js"></script>
 </body>
 </html>

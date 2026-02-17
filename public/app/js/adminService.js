@@ -87,3 +87,43 @@ export async function updateSeasonConfig(configData) {
         throw error;
     }
 }
+
+/**
+ * Get all registered users
+ * @returns {Promise<Object[]>} Array of user summaries
+ */
+export async function getAllUsers() {
+    try {
+        const response = await apiService.get(API_CONFIG.ENDPOINTS.ADMIN_USERS);
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to load users');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to get users:', error);
+        throw error;
+    }
+}
+
+/**
+ * Grant or revoke admin privileges for a user
+ * @param {number} userId - Target user ID
+ * @param {boolean} isAdmin - Whether to grant (true) or revoke (false) admin
+ * @returns {Promise<Object>} Updated user summary
+ */
+export async function setUserAdmin(userId, isAdmin) {
+    try {
+        const response = await apiService.patch(API_CONFIG.ENDPOINTS.ADMIN_USER_ADMIN, { is_admin: isAdmin }, { id: userId });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to update admin status');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to set user admin:', error);
+        throw error;
+    }
+}

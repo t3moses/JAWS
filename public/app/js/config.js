@@ -29,7 +29,9 @@ export const API_CONFIG = {
         // Admin endpoints
         ADMIN_MATCHING: '/admin/matching/:eventId',
         ADMIN_NOTIFICATIONS: '/admin/notifications/:eventId',
-        ADMIN_CONFIG: '/admin/config'
+        ADMIN_CONFIG: '/admin/config',
+        ADMIN_USERS: '/admin/users',
+        ADMIN_USER_ADMIN: '/admin/users/:id/admin'
     }
 };
 

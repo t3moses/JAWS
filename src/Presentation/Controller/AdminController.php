@@ -7,6 +7,8 @@ namespace App\Presentation\Controller;
 use App\Application\UseCase\Admin\GetMatchingDataUseCase;
 use App\Application\UseCase\Admin\SendNotificationsUseCase;
 use App\Application\UseCase\Admin\GetConfigUseCase;
+use App\Application\UseCase\Admin\GetAllUsersUseCase;
+use App\Application\UseCase\Admin\SetUserAdminUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\DTO\Request\UpdateConfigRequest;
 use App\Application\Exception\EventNotFoundException;
@@ -27,6 +29,8 @@ class AdminController
         private SendNotificationsUseCase $sendNotificationsUseCase,
         private GetConfigUseCase $getConfigUseCase,
         private UpdateConfigUseCase $updateConfigUseCase,
+        private GetAllUsersUseCase $getAllUsersUseCase,
+        private SetUserAdminUseCase $setUserAdminUseCase,
     ) {
     }
 
@@ -148,6 +152,60 @@ class AdminController
             return JsonResponse::success($result);
         } catch (ValidationException $e) {
             return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/users
+     *
+     * Returns a list of all registered users (no password hashes).
+     *
+     * @param array $auth Authentication context
+     */
+    public function getUsers(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getAllUsersUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * PATCH /api/admin/users/{userId}/admin
+     *
+     * Grants or revokes admin privileges for a user.
+     *
+     * @param array $params Route parameters (userId)
+     * @param array $body   Request body (is_admin boolean)
+     * @param array $auth   Authentication context
+     */
+    public function setUserAdmin(array $params, array $body, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $targetUserId = (int)$params['userId'];
+            $isAdmin = (bool)($body['is_admin'] ?? false);
+            $requestingUserId = (int)$auth['user_id'];
+
+            $result = $this->setUserAdminUseCase->execute($targetUserId, $isAdmin, $requestingUserId);
+
+            return JsonResponse::success($result);
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\RuntimeException $e) {
+            return JsonResponse::notFound($e->getMessage());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }

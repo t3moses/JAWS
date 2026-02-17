@@ -188,4 +188,22 @@ return [
         'action' => 'updateConfig',
         'auth' => true,
     ],
+
+    // Get All Users
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/users',
+        'controller' => AdminController::class,
+        'action' => 'getUsers',
+        'auth' => true,
+    ],
+
+    // Set User Admin Status
+    [
+        'method' => 'PATCH',
+        'path' => '/api/admin/users/{userId}/admin',
+        'controller' => AdminController::class,
+        'action' => 'setUserAdmin',
+        'auth' => true,
+    ],
 ];

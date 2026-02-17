@@ -262,6 +262,18 @@ $container->set(\App\Application\UseCase\Admin\GetConfigUseCase::class, function
     );
 });
 
+$container->set(\App\Application\UseCase\Admin\GetAllUsersUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\GetAllUsersUseCase(
+        $c->get(UserRepositoryInterface::class)
+    );
+});
+
+$container->set(\App\Application\UseCase\Admin\SetUserAdminUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\SetUserAdminUseCase(
+        $c->get(UserRepositoryInterface::class)
+    );
+});
+
 // Auth Use Cases
 $container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function ($c) use ($config) {
     return new \App\Application\UseCase\Auth\RegisterUseCase(
@@ -358,7 +370,9 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\GetMatchingDataUseCase::class),
         $c->get(\App\Application\UseCase\Admin\SendNotificationsUseCase::class),
         $c->get(\App\Application\UseCase\Admin\GetConfigUseCase::class),
-        $c->get(\App\Application\UseCase\Season\UpdateConfigUseCase::class)
+        $c->get(\App\Application\UseCase\Season\UpdateConfigUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\GetAllUsersUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\SetUserAdminUseCase::class)
     );
 });
 
