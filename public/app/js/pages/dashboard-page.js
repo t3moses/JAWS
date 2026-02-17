@@ -6,7 +6,7 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateAuthenticatedNavigation } from '../navigationService.js';
 import { getAllEvents, isDeadlinePassed } from '../eventService.js';
-import { updateEventAvailability } from '../userService.js';
+import { updateEventAvailability, updateBoatBerths } from '../userService.js';
 import { get } from '../apiService.js';
 import { API_CONFIG } from '../config.js';
 import { showSuccess, showError, showInfo } from '../toastService.js';
@@ -209,33 +209,58 @@ function formatTime(timeString) {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
-// Populate event availability checkboxes
-async function populateEventCheckboxes() {
+// Populate event availability controls (dropdown for boat owners, checkbox for crew)
+async function populateEventAvailability() {
     const availabilityList = document.getElementById('availability-list');
 
     try {
         const events = await getAllEvents();
+        const isBoatOwner = user.accountType !== 'crew';
 
         events.forEach(event => {
-            // Use event.eventId (display name format like "Fri Jun 12") to match availabilities
-            const isAvailable = user.eventAvailability[event.eventId] || false;
             const deadlinePassed = isDeadlinePassed(event.date);
-
             const itemDiv = document.createElement('div');
             itemDiv.className = 'availability-item' + (deadlinePassed ? ' disabled' : '');
 
-            itemDiv.innerHTML = `
-                <input type="checkbox"
-                       id="event-${event.eventId}"
-                       data-event-date="${event.eventId}"
-                       data-original="${isAvailable}"
-                       ${isAvailable ? 'checked' : ''}
-                       ${deadlinePassed ? 'disabled' : ''}>
-                <label for="event-${event.eventId}" class="availability-date">
-                    ${event.displayDate || event.eventId}
-                </label>
-                ${deadlinePassed ? '<span class="deadline-warning">Deadline Passed</span>' : ''}
-            `;
+            if (isBoatOwner) {
+                const maxBerths = parseInt(user.profile.maxCrew, 10) || 0;
+                // persistedBerths is undefined when no DB row exists yet
+                const persistedBerths = user.eventBerths[event.eventId];
+                const displayBerths = persistedBerths ?? maxBerths;
+
+                // Build options 0..maxBerths
+                let options = `<option value="0"${displayBerths === 0 ? ' selected' : ''}>Not available</option>`;
+                for (let i = 1; i <= maxBerths; i++) {
+                    options += `<option value="${i}"${displayBerths === i ? ' selected' : ''}>${i} berth${i !== 1 ? 's' : ''}</option>`;
+                }
+
+                // data-original is '' when no row exists so any save triggers a write
+                itemDiv.innerHTML = `
+                    <select class="berths-select"
+                            data-event-date="${event.eventId}"
+                            data-original="${persistedBerths ?? ''}"
+                            ${deadlinePassed ? 'disabled' : ''}>
+                        ${options}
+                    </select>
+                    <label class="availability-date">${event.displayDate || event.eventId}</label>
+                    ${deadlinePassed ? '<span class="deadline-warning">Deadline Passed</span>' : ''}
+                `;
+            } else {
+                const isAvailable = user.eventAvailability[event.eventId] || false;
+
+                itemDiv.innerHTML = `
+                    <input type="checkbox"
+                           id="event-${event.eventId}"
+                           data-event-date="${event.eventId}"
+                           data-original="${isAvailable}"
+                           ${isAvailable ? 'checked' : ''}
+                           ${deadlinePassed ? 'disabled' : ''}>
+                    <label for="event-${event.eventId}" class="availability-date">
+                        ${event.displayDate || event.eventId}
+                    </label>
+                    ${deadlinePassed ? '<span class="deadline-warning">Deadline Passed</span>' : ''}
+                `;
+            }
 
             availabilityList.appendChild(itemDiv);
         });
@@ -246,15 +271,14 @@ async function populateEventCheckboxes() {
 }
 
 // Call the async function
-populateEventCheckboxes();
+populateEventAvailability();
 
 // Load user's boat assignments
 populateAssignments();
 
 // Handle save availability button
 document.getElementById('save-availability').addEventListener('click', async function() {
-    // Get all checkboxes
-    const checkboxes = document.querySelectorAll('.availability-item input[type="checkbox"]');
+    const isBoatOwner = user.accountType !== 'crew';
     let hasError = false;
     let hasChanges = false;
     const failedEvents = [];
@@ -264,32 +288,72 @@ document.getElementById('save-availability').addEventListener('click', async fun
     saveButton.disabled = true;
     saveButton.textContent = 'Saving...';
 
-    // Use for...of to properly handle async operations
-    for (const checkbox of checkboxes) {
-        if (checkbox.disabled) {
-            continue;
+    if (isBoatOwner) {
+        // Boat owner path: iterate berths dropdowns
+        const selects = document.querySelectorAll('.availability-item select.berths-select');
+
+        for (const select of selects) {
+            if (select.disabled) {
+                continue;
+            }
+
+            const eventDate = select.getAttribute('data-event-date');
+            const newBerths = parseInt(select.value, 10);
+            // '' means no row in DB yet; treat as always-dirty so saving at max still persists
+            const originalRaw = select.dataset.original;
+            const originalBerths = originalRaw === '' ? null : parseInt(originalRaw, 10);
+
+            if (originalBerths !== null && newBerths === originalBerths) {
+                continue;
+            }
+
+            hasChanges = true;
+
+            const result = await updateBoatBerths(user.userId, eventDate, newBerths);
+
+            if (!result.success) {
+                showError(result.error || 'Failed to update availability');
+                hasError = true;
+                failedEvents.push(eventDate);
+                if (originalBerths !== null) {
+                    select.value = String(originalBerths); // revert on error only if there was a prior value
+                }
+            } else {
+                select.dataset.original = String(newBerths);
+                user.eventBerths[eventDate] = newBerths;
+                user.eventAvailability[eventDate] = newBerths > 0;
+            }
         }
+    } else {
+        // Crew path: iterate checkboxes (unchanged)
+        const checkboxes = document.querySelectorAll('.availability-item input[type="checkbox"]');
 
-        const eventDate = checkbox.getAttribute('data-event-date');
-        const isAvailable = checkbox.checked;
-        const originalValue = checkbox.dataset.original === 'true';
+        for (const checkbox of checkboxes) {
+            if (checkbox.disabled) {
+                continue;
+            }
 
-        if (originalValue === isAvailable) {
-            continue;
-        }
+            const eventDate = checkbox.getAttribute('data-event-date');
+            const isAvailable = checkbox.checked;
+            const originalValue = checkbox.dataset.original === 'true';
 
-        hasChanges = true;
+            if (originalValue === isAvailable) {
+                continue;
+            }
 
-        const result = await updateEventAvailability(user.userId, eventDate, isAvailable);
+            hasChanges = true;
 
-        if (!result.success) {
-            showError(result.error || 'Failed to update availability');
-            hasError = true;
-            failedEvents.push(eventDate);
-            checkbox.checked = originalValue; // Revert checkbox on error
-        } else {
-            checkbox.dataset.original = String(isAvailable);
-            user.eventAvailability[eventDate] = isAvailable;
+            const result = await updateEventAvailability(user.userId, eventDate, isAvailable);
+
+            if (!result.success) {
+                showError(result.error || 'Failed to update availability');
+                hasError = true;
+                failedEvents.push(eventDate);
+                checkbox.checked = originalValue; // Revert checkbox on error
+            } else {
+                checkbox.dataset.original = String(isAvailable);
+                user.eventAvailability[eventDate] = isAvailable;
+            }
         }
     }
 
