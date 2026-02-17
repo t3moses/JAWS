@@ -981,6 +981,31 @@ footer {
   cursor: not-allowed;
 }
 
+.availability-item select.berths-select {
+  width: auto;
+  min-width: 140px;
+  padding: 0.5rem 0.75rem;
+  margin-right: 1rem;
+  border: 2px solid var(--light-gray);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--dark);
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.availability-item select.berths-select:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.availability-item.disabled select.berths-select {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .availability-date {
   flex: 1;
   font-weight: 600;

@@ -73,3 +73,39 @@ export async function updateEventAvailability(userId, eventDate, isAvailable) {
         return { success: false, error: error.message || 'Failed to update availability' };
     }
 }
+
+/**
+ * Update boat berths for a specific event
+ * @param {string} userId - User ID (ignored - backend uses JWT token from request)
+ * @param {string} eventDate - Event date string (e.g. "Fri Jun 12")
+ * @param {number} berths - Number of berths to offer (0 = unavailable)
+ * @returns {Promise<Object>} Result object with success status
+ */
+export async function updateBoatBerths(userId, eventDate, berths) {
+    try {
+        if (isDeadlinePassed(eventDate)) {
+            return { success: false, error: 'Registration deadline has passed' };
+        }
+
+        console.log(`Updating boat berths for ${eventDate}: ${berths}`);
+
+        const response = await patch(API_CONFIG.ENDPOINTS.USER_AVAILABILITY, {
+            availabilities: [{
+                eventId: eventDate,
+                isAvailable: berths > 0,   // keeps crew path working for flex members
+                berths: berths             // explicit integer for boat use case
+            }]
+        });
+
+        if (response?.success === false) {
+            console.error('Boat berths update failed:', response.error);
+            return { success: false, error: response.error || 'Failed to update availability' };
+        }
+
+        console.log('Boat berths updated successfully');
+        return { success: true, data: response?.data };
+    } catch (error) {
+        console.error('Error updating boat berths:', error);
+        return { success: false, error: error.message || 'Failed to update availability' };
+    }
+}

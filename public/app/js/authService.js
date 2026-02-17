@@ -161,6 +161,9 @@ function transformUserMeResponse(apiResponse) {
         // Transform availabilities array to eventAvailability object
         eventAvailability: transformAvailabilities(profileData?.availabilities, user.accountType),
 
+        // Raw integer berths per event for boat owners (e.g. { "Fri Jun 12": 3 })
+        eventBerths: user.accountType !== 'crew' ? (profileData?.availabilities || {}) : {},
+
         // Map timestamp field names
         createdAt: user.createdAt,
         lastSignIn: user.lastLogin,

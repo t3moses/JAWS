@@ -12,7 +12,7 @@ namespace App\Application\DTO\Request;
 final readonly class UpdateAvailabilityRequest
 {
     /**
-     * @param array<int, array{eventId: string, isAvailable: bool}> $availabilities Array of availability objects
+     * @param array<int, array{eventId: string, isAvailable: bool, berths?: int}> $availabilities Array of availability objects
      */
     public function __construct(
         public array $availabilities,
@@ -58,6 +58,10 @@ final readonly class UpdateAvailabilityRequest
 
             if (!isset($availability['isAvailable']) || !is_bool($availability['isAvailable'])) {
                 $errors["availabilities[$index].isAvailable"] = 'isAvailable is required and must be a boolean';
+            }
+
+            if (isset($availability['berths']) && (!is_int($availability['berths']) || $availability['berths'] < 0)) {
+                $errors["availabilities[$index].berths"] = 'berths must be a non-negative integer';
             }
         }
 
