@@ -293,6 +293,14 @@ function refreshWhitelistAddDropdown(crew) {
     }
 
     const available = allBoats.filter(b => !whitelist.includes(b.key));
+
+    if (available.length > 1) {
+        const allOpt = document.createElement('option');
+        allOpt.value = '__all__';
+        allOpt.textContent = 'All Boats';
+        select.appendChild(allOpt);
+    }
+
     available.forEach(boat => {
         const opt = document.createElement('option');
         opt.value = boat.key;
@@ -318,11 +326,24 @@ async function handleWhitelistAdd() {
     btn.disabled = true;
 
     try {
-        const updated = await adminService.addToCrewWhitelist(targetUserData.crew.key, boatKey);
-        targetUserData.crew = updated;
-        refreshWhitelistTable(updated);
-        refreshWhitelistAddDropdown(updated);
-        showToast('Boat added to whitelist.', 'success');
+        if (boatKey === '__all__') {
+            const whitelist = targetUserData.crew.whitelist || [];
+            const available = allBoats.filter(b => !whitelist.includes(b.key));
+            let updated = targetUserData.crew;
+            for (const boat of available) {
+                updated = await adminService.addToCrewWhitelist(targetUserData.crew.key, boat.key);
+            }
+            targetUserData.crew = updated;
+            refreshWhitelistTable(updated);
+            refreshWhitelistAddDropdown(updated);
+            showToast(`All boats added to whitelist.`, 'success');
+        } else {
+            const updated = await adminService.addToCrewWhitelist(targetUserData.crew.key, boatKey);
+            targetUserData.crew = updated;
+            refreshWhitelistTable(updated);
+            refreshWhitelistAddDropdown(updated);
+            showToast('Boat added to whitelist.', 'success');
+        }
     } catch (error) {
         console.error('Failed to add to whitelist:', error);
         showToast(error.message || 'Failed to add boat to whitelist', 'error');
