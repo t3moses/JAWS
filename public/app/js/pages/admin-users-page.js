@@ -68,7 +68,6 @@ function renderUsersTable(container, users) {
                 <tr>
                     <th>Email</th>
                     <th>Account Type</th>
-                    <th>Admin</th>
                     <th></th>
                 </tr>
             </thead>
@@ -86,13 +85,12 @@ function renderUsersTable(container, users) {
  */
 function renderUserRow(user) {
     const accountLabel = user.account_type === 'boat_owner' ? 'Boat Owner' : 'Crew';
-    const adminLabel = user.is_admin ? 'Yes' : 'No';
+    const adminBadge = user.is_admin ? ' <span class="admin-badge">Admin</span>' : '';
 
     return `
         <tr>
-            <td>${escapeHtml(user.email)}</td>
+            <td>${escapeHtml(user.email)}${adminBadge}</td>
             <td>${accountLabel}</td>
-            <td>${adminLabel}</td>
             <td><a href="admin-user-edit.html?userId=${user.id}" class="btn btn-sm btn-secondary">Edit</a></td>
         </tr>
     `;
