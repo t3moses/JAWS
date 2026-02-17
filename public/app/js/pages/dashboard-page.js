@@ -224,18 +224,21 @@ async function populateEventAvailability() {
 
             if (isBoatOwner) {
                 const maxBerths = parseInt(user.profile.maxCrew, 10) || 0;
-                const currentBerths = user.eventBerths[event.eventId] ?? maxBerths;
+                // persistedBerths is undefined when no DB row exists yet
+                const persistedBerths = user.eventBerths[event.eventId];
+                const displayBerths = persistedBerths ?? maxBerths;
 
                 // Build options 0..maxBerths
-                let options = `<option value="0"${currentBerths === 0 ? ' selected' : ''}>Not available</option>`;
+                let options = `<option value="0"${displayBerths === 0 ? ' selected' : ''}>Not available</option>`;
                 for (let i = 1; i <= maxBerths; i++) {
-                    options += `<option value="${i}"${currentBerths === i ? ' selected' : ''}>${i} berth${i !== 1 ? 's' : ''}</option>`;
+                    options += `<option value="${i}"${displayBerths === i ? ' selected' : ''}>${i} berth${i !== 1 ? 's' : ''}</option>`;
                 }
 
+                // data-original is '' when no row exists so any save triggers a write
                 itemDiv.innerHTML = `
                     <select class="berths-select"
                             data-event-date="${event.eventId}"
-                            data-original="${currentBerths}"
+                            data-original="${persistedBerths ?? ''}"
                             ${deadlinePassed ? 'disabled' : ''}>
                         ${options}
                     </select>
@@ -296,9 +299,11 @@ document.getElementById('save-availability').addEventListener('click', async fun
 
             const eventDate = select.getAttribute('data-event-date');
             const newBerths = parseInt(select.value, 10);
-            const originalBerths = parseInt(select.dataset.original, 10);
+            // '' means no row in DB yet; treat as always-dirty so saving at max still persists
+            const originalRaw = select.dataset.original;
+            const originalBerths = originalRaw === '' ? null : parseInt(originalRaw, 10);
 
-            if (newBerths === originalBerths) {
+            if (originalBerths !== null && newBerths === originalBerths) {
                 continue;
             }
 
@@ -310,7 +315,9 @@ document.getElementById('save-availability').addEventListener('click', async fun
                 showError(result.error || 'Failed to update availability');
                 hasError = true;
                 failedEvents.push(eventDate);
-                select.value = String(originalBerths); // revert on error
+                if (originalBerths !== null) {
+                    select.value = String(originalBerths); // revert on error only if there was a prior value
+                }
             } else {
                 select.dataset.original = String(newBerths);
                 user.eventBerths[eventDate] = newBerths;
