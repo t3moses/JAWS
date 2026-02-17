@@ -69,7 +69,8 @@ function renderUsersTable(container, users) {
                 <tr>
                     <th>Email</th>
                     <th>Account Type</th>
-                    <th>Action</th>
+                    <th>Admin</th>
+                    <th>Edit</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,20 +94,23 @@ function renderUserRow(user) {
     const isSelf = user.id === currentUser.id;
     const accountLabel = user.account_type === 'boat_owner' ? 'Boat Owner' : 'Crew';
 
-    let actionCell;
+    let adminCell;
     if (isSelf) {
-        actionCell = '<span class="text-muted">You</span>';
+        adminCell = '<span class="text-muted">You</span>';
     } else if (user.is_admin) {
-        actionCell = `<button class="btn btn-sm btn-danger" data-user-id="${user.id}" data-is-admin="true">Revoke Admin</button>`;
+        adminCell = `<button class="btn btn-sm btn-danger" data-user-id="${user.id}" data-is-admin="true">Revoke Admin</button>`;
     } else {
-        actionCell = `<button class="btn btn-sm btn-primary" data-user-id="${user.id}" data-is-admin="false">Grant Admin</button>`;
+        adminCell = `<button class="btn btn-sm btn-primary" data-user-id="${user.id}" data-is-admin="false">Grant Admin</button>`;
     }
+
+    const editCell = `<a href="admin-user-edit.html?userId=${user.id}" class="btn btn-sm btn-secondary">Edit</a>`;
 
     return `
         <tr id="user-row-${user.id}">
             <td>${escapeHtml(user.email)}</td>
             <td>${accountLabel}</td>
-            <td>${actionCell}</td>
+            <td>${adminCell}</td>
+            <td>${editCell}</td>
         </tr>
     `;
 }

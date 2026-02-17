@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - NSC Social Day Cruising</title>
+    <!-- Auth init MUST run before page renders to prevent navigation jump -->
+    <script src="js/auth-init.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="index.html" class="logo">NSC Social Day Cruising</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav id="nav">
+                <ul id="main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="events.html">Events</a></li>
+
+                    <!-- Unauthenticated nav -->
+                    <li class="nav-unauthenticated">
+                        <a href="signin.html" class="nav-btn nav-btn-secondary">Sign In</a>
+                    </li>
+                    <li class="nav-unauthenticated">
+                        <a href="account.html" class="nav-btn nav-btn-primary">Join Now</a>
+                    </li>
+
+                    <!-- Authenticated nav -->
+                    <li class="nav-authenticated" id="nav-account">
+                        <a href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-authenticated user-greeting">
+                        <span>Hi, <span class="user-name">...</span>!</span>
+                    </li>
+                    <li class="nav-authenticated">
+                        <a href="#" class="sign-out-btn">Sign Out</a>
+                    </li>
+
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Edit User<span class="admin-badge">Admin</span></h1>
+            <p id="hero-subtitle">Loading user...</p>
+        </div>
+    </section>
+
+    <main>
+        <div class="form-container">
+
+            <div class="form-section">
+                <a href="admin-users.html" class="btn btn-secondary">&larr; Back to User List</a>
+            </div>
+
+            <!-- Loading / error state -->
+            <div id="page-loading" class="form-section">
+                <p>Loading user details...</p>
+            </div>
+            <div id="page-error" class="form-section" style="display:none;">
+                <p class="error-message" id="page-error-message"></p>
+            </div>
+
+            <!-- User Info (read-only) -->
+            <div id="section-user-info" class="form-section" style="display:none;">
+                <h2>User Information</h2>
+                <table class="data-table">
+                    <tbody>
+                        <tr><th>Email</th><td id="info-email"></td></tr>
+                        <tr><th>Account Type</th><td id="info-account-type"></td></tr>
+                        <tr><th>Member Since</th><td id="info-created-at"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Admin Rights -->
+            <div id="section-admin-rights" class="form-section" style="display:none;">
+                <h2>Admin Rights</h2>
+                <div class="field-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="admin-toggle" class="toggle-input">
+                        <span class="toggle-text">Grant admin privileges</span>
+                    </label>
+                    <p class="help-text">Changes take effect on the user's next login. You cannot change your own admin status.</p>
+                    <button id="admin-save-btn" class="btn btn-primary">Save Admin Status</button>
+                </div>
+            </div>
+
+            <!-- Skill Level (crew only) -->
+            <div id="section-skill" class="form-section" style="display:none;">
+                <h2>Skill Level</h2>
+                <div class="field-group">
+                    <label for="skill-select">Skill Level</label>
+                    <select id="skill-select" class="form-control">
+                        <option value="0">Novice</option>
+                        <option value="1">Intermediate</option>
+                        <option value="2">Advanced</option>
+                    </select>
+                    <button id="skill-save-btn" class="btn btn-primary">Save Skill</button>
+                </div>
+            </div>
+
+            <!-- Partner Assignment (crew only) -->
+            <div id="section-partner" class="form-section" style="display:none;">
+                <h2>Partner Assignment</h2>
+                <div class="field-group">
+                    <label for="partner-select">Preferred Sailing Partner</label>
+                    <select id="partner-select" class="form-control">
+                        <option value="">None</option>
+                    </select>
+                    <button id="partner-save-btn" class="btn btn-primary">Save Partner</button>
+                </div>
+            </div>
+
+            <!-- Whitelist Management (crew only) -->
+            <div id="section-whitelist" class="form-section" style="display:none;">
+                <h2>Boat Whitelist</h2>
+                <p class="help-text">Boats this crew member has expressed a preference for.</p>
+
+                <div id="whitelist-table-container">
+                    <p class="text-muted">No boats whitelisted.</p>
+                </div>
+
+                <div class="field-group" id="whitelist-add-group" style="margin-top: 1rem;">
+                    <label for="whitelist-add-select">Add a boat</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="whitelist-add-select" class="form-control" style="flex: 1;">
+                            <option value="">— Select a boat —</option>
+                        </select>
+                        <button id="whitelist-add-btn" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2025 Nepean Sailing Club. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/pages/admin-user-edit-page.js"></script>
+</body>
+</html>

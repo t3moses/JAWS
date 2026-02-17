@@ -206,4 +206,58 @@ return [
         'action' => 'setUserAdmin',
         'auth' => true,
     ],
+
+    // Get Single User Detail (with crew profile)
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/users/{userId}',
+        'controller' => AdminController::class,
+        'action' => 'getUser',
+        'auth' => true,
+    ],
+
+    // Get All Crews (for partner picker)
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/crews',
+        'controller' => AdminController::class,
+        'action' => 'getAllCrews',
+        'auth' => true,
+    ],
+
+    // Get All Boats (for whitelist picker)
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/boats',
+        'controller' => AdminController::class,
+        'action' => 'getAllBoats',
+        'auth' => true,
+    ],
+
+    // Update Crew Profile (skill and/or partner)
+    [
+        'method' => 'PATCH',
+        'path' => '/api/admin/crews/{crewKey}',
+        'controller' => AdminController::class,
+        'action' => 'updateCrewProfile',
+        'auth' => true,
+    ],
+
+    // Add Boat to Crew Whitelist
+    [
+        'method' => 'POST',
+        'path' => '/api/admin/crews/{crewKey}/whitelist/{boatKey}',
+        'controller' => AdminController::class,
+        'action' => 'addToWhitelist',
+        'auth' => true,
+    ],
+
+    // Remove Boat from Crew Whitelist
+    [
+        'method' => 'DELETE',
+        'path' => '/api/admin/crews/{crewKey}/whitelist/{boatKey}',
+        'controller' => AdminController::class,
+        'action' => 'removeFromWhitelist',
+        'auth' => true,
+    ],
 ];

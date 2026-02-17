@@ -127,3 +127,124 @@ export async function setUserAdmin(userId, isAdmin) {
         throw error;
     }
 }
+
+/**
+ * Get a single user's detail including linked crew profile
+ * @param {number} userId - Target user ID
+ * @returns {Promise<{user: Object, crew: Object|null}>}
+ */
+export async function getUserDetail(userId) {
+    try {
+        const response = await apiService.get(API_CONFIG.ENDPOINTS.ADMIN_USER_DETAIL, { userId });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to load user detail');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to get user detail:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get all crew members (for partner picker)
+ * @returns {Promise<Object[]>} Array of crew summaries
+ */
+export async function getAllCrews() {
+    try {
+        const response = await apiService.get(API_CONFIG.ENDPOINTS.ADMIN_CREWS);
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to load crews');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to get crews:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get all boats (for whitelist picker)
+ * @returns {Promise<Object[]>} Array of boat summaries
+ */
+export async function getAllBoats() {
+    try {
+        const response = await apiService.get(API_CONFIG.ENDPOINTS.ADMIN_BOATS);
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to load boats');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to get boats:', error);
+        throw error;
+    }
+}
+
+/**
+ * Update crew profile (skill and/or partner)
+ * @param {string} crewKey - Crew key
+ * @param {Object} data - { skill?: number, partner_key?: string|null }
+ * @returns {Promise<Object>} Updated crew summary
+ */
+export async function updateCrewProfile(crewKey, data) {
+    try {
+        const response = await apiService.patch(API_CONFIG.ENDPOINTS.ADMIN_CREW_PROFILE, data, { crewKey });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to update crew profile');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to update crew profile:', error);
+        throw error;
+    }
+}
+
+/**
+ * Add a boat to a crew member's whitelist
+ * @param {string} crewKey - Crew key
+ * @param {string} boatKey - Boat key
+ * @returns {Promise<Object>} Updated crew summary
+ */
+export async function addToCrewWhitelist(crewKey, boatKey) {
+    try {
+        const response = await apiService.post(API_CONFIG.ENDPOINTS.ADMIN_CREW_WHITELIST_ENTRY, {}, { crewKey, boatKey });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to add boat to whitelist');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to add to whitelist:', error);
+        throw error;
+    }
+}
+
+/**
+ * Remove a boat from a crew member's whitelist
+ * @param {string} crewKey - Crew key
+ * @param {string} boatKey - Boat key
+ * @returns {Promise<Object>} Updated crew summary
+ */
+export async function removeFromCrewWhitelist(crewKey, boatKey) {
+    try {
+        const response = await apiService.deleteRequest(API_CONFIG.ENDPOINTS.ADMIN_CREW_WHITELIST_ENTRY, { crewKey, boatKey });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to remove boat from whitelist');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to remove from whitelist:', error);
+        throw error;
+    }
+}
