@@ -1,13 +1,12 @@
 /**
  * Admin Users Page
- * Manage admin privileges for registered users
+ * List all registered users with a link to the per-user edit page
  */
 
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 import { initHamburgerMenu } from '../hamburger.js';
 import * as adminService from '../adminService.js';
-import { showToast } from '../toast.js';
 
 let currentUser = null;
 
@@ -70,7 +69,7 @@ function renderUsersTable(container, users) {
                     <th>Email</th>
                     <th>Account Type</th>
                     <th>Admin</th>
-                    <th>Edit</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -78,11 +77,6 @@ function renderUsersTable(container, users) {
             </tbody>
         </table>
     `;
-
-    // Attach button listeners
-    container.querySelectorAll('[data-user-id]').forEach(btn => {
-        btn.addEventListener('click', () => handleAdminToggle(btn));
-    });
 }
 
 /**
@@ -91,57 +85,17 @@ function renderUsersTable(container, users) {
  * @returns {string} HTML string
  */
 function renderUserRow(user) {
-    const isSelf = user.id === currentUser.id;
     const accountLabel = user.account_type === 'boat_owner' ? 'Boat Owner' : 'Crew';
-
-    let adminCell;
-    if (isSelf) {
-        adminCell = '<span class="text-muted">You</span>';
-    } else if (user.is_admin) {
-        adminCell = `<button class="btn btn-sm btn-danger" data-user-id="${user.id}" data-is-admin="true">Revoke Admin</button>`;
-    } else {
-        adminCell = `<button class="btn btn-sm btn-primary" data-user-id="${user.id}" data-is-admin="false">Grant Admin</button>`;
-    }
-
-    const editCell = `<a href="admin-user-edit.html?userId=${user.id}" class="btn btn-sm btn-secondary">Edit</a>`;
+    const adminLabel = user.is_admin ? 'Yes' : 'No';
 
     return `
-        <tr id="user-row-${user.id}">
+        <tr>
             <td>${escapeHtml(user.email)}</td>
             <td>${accountLabel}</td>
-            <td>${adminCell}</td>
-            <td>${editCell}</td>
+            <td>${adminLabel}</td>
+            <td><a href="admin-user-edit.html?userId=${user.id}" class="btn btn-sm btn-secondary">Edit</a></td>
         </tr>
     `;
-}
-
-/**
- * Handle admin toggle button click
- * @param {HTMLButtonElement} btn
- */
-async function handleAdminToggle(btn) {
-    const userId = parseInt(btn.dataset.userId, 10);
-    const currentIsAdmin = btn.dataset.isAdmin === 'true';
-    const newIsAdmin = !currentIsAdmin;
-
-    const action = newIsAdmin ? 'grant admin privileges to' : 'revoke admin privileges from';
-    if (!confirm(`Are you sure you want to ${action} this user?`)) {
-        return;
-    }
-
-    btn.disabled = true;
-    btn.classList.add('loading');
-
-    try {
-        await adminService.setUserAdmin(userId, newIsAdmin);
-        showToast(`Admin status updated successfully. Changes take effect on the user's next login.`, 'success');
-        await loadUsers();
-    } catch (error) {
-        console.error('Failed to update admin status:', error);
-        showToast(error.message || 'Failed to update admin status', 'error');
-        btn.disabled = false;
-        btn.classList.remove('loading');
-    }
 }
 
 /**
