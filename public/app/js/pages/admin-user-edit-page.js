@@ -105,8 +105,10 @@ function renderPage() {
 
 function renderUserInfo(user) {
     document.getElementById('info-email').textContent = user.email;
-    document.getElementById('info-account-type').textContent =
-        user.account_type === 'boat_owner' ? 'Boat Owner' : 'Crew';
+    const isBoatOwner = user.account_type === 'boat_owner';
+    document.getElementById('info-account-type').innerHTML = isBoatOwner
+        ? '<span class="user-badge boat-owner">⛵ Boat Owner</span>'
+        : '<span class="user-badge">🌊 Crew Member</span>';
     document.getElementById('info-created-at').textContent =
         new Date(user.created_at).toLocaleDateString();
 
