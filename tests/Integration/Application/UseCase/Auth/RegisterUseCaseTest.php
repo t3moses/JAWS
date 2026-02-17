@@ -547,4 +547,97 @@ class RegisterUseCaseTest extends IntegrationTestCase
         $this->assertIsArray($whitelist);
         $this->assertCount(0, $whitelist, 'Whitelist should be empty when no boats exist');
     }
+
+    public function testRegisterBoatAddsToAllExistingCrewWhitelists(): void
+    {
+        // First, register several crew members
+        $crew1Request = RegisterRequest::fromArray([
+            'email' => 'crew1@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'crew',
+            'profile' => [
+                'firstName' => 'Alice',
+                'lastName' => 'Crew',
+                'skill' => SkillLevel::INTERMEDIATE->value,
+            ]
+        ]);
+        $this->useCase->execute($crew1Request);
+
+        $crew2Request = RegisterRequest::fromArray([
+            'email' => 'crew2@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'crew',
+            'profile' => [
+                'firstName' => 'Bob',
+                'lastName' => 'Sailor',
+                'skill' => SkillLevel::ADVANCED->value,
+            ]
+        ]);
+        $this->useCase->execute($crew2Request);
+
+        $crew3Request = RegisterRequest::fromArray([
+            'email' => 'crew3@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'crew',
+            'profile' => [
+                'firstName' => 'Carol',
+                'lastName' => 'Mate',
+                'skill' => SkillLevel::NOVICE->value,
+            ]
+        ]);
+        $this->useCase->execute($crew3Request);
+
+        // Verify crews have empty whitelists initially
+        $crew1 = $this->crewRepository->findByName('Alice', 'Crew');
+        $crew2 = $this->crewRepository->findByName('Bob', 'Sailor');
+        $crew3 = $this->crewRepository->findByName('Carol', 'Mate');
+
+        $this->assertNotNull($crew1);
+        $this->assertNotNull($crew2);
+        $this->assertNotNull($crew3);
+
+        $this->assertCount(0, $crew1->getWhitelist());
+        $this->assertCount(0, $crew2->getWhitelist());
+        $this->assertCount(0, $crew3->getWhitelist());
+
+        // Now register a new boat
+        $boatRequest = RegisterRequest::fromArray([
+            'email' => 'newboat@example.com',
+            'password' => 'SecurePassword123',
+            'accountType' => 'boat_owner',
+            'profile' => [
+                'ownerFirstName' => 'David',
+                'ownerLastName' => 'Captain',
+                'assistanceRequired' => 'no',
+                'socialPreference' => 'yes',
+                'minBerths' => 2,
+                'maxBerths' => 6,
+                'ownerMobile' => '555-0100',
+            ]
+        ]);
+        $this->useCase->execute($boatRequest);
+
+        // Fetch the newly registered boat
+        $boat = $this->boatRepository->findByOwnerName('David', 'Captain');
+        $this->assertNotNull($boat);
+
+        // Re-fetch all crews to get updated whitelists
+        $crew1 = $this->crewRepository->findByName('Alice', 'Crew');
+        $crew2 = $this->crewRepository->findByName('Bob', 'Sailor');
+        $crew3 = $this->crewRepository->findByName('Carol', 'Mate');
+
+        // Verify all crew whitelists now contain the new boat
+        $whitelist1 = $crew1->getWhitelist();
+        $whitelist2 = $crew2->getWhitelist();
+        $whitelist3 = $crew3->getWhitelist();
+
+        $this->assertCount(1, $whitelist1, 'Crew 1 whitelist should contain the new boat');
+        $this->assertCount(1, $whitelist2, 'Crew 2 whitelist should contain the new boat');
+        $this->assertCount(1, $whitelist3, 'Crew 3 whitelist should contain the new boat');
+
+        $boatKeyString = $boat->getKey()->toString();
+        $this->assertContains($boatKeyString, $whitelist1);
+        $this->assertContains($boatKeyString, $whitelist2);
+        $this->assertContains($boatKeyString, $whitelist3);
+    }
 }

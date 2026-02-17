@@ -270,6 +270,12 @@ class RegisterUseCase
 
         // Save boat
         $this->boatRepository->save($boat);
+
+        // Add new boat to all existing crew whitelists
+        $allCrews = $this->crewRepository->findAll();
+        foreach ($allCrews as $crew) {
+            $this->crewRepository->addToWhitelist($crew->getKey(), $boatKey);
+        }
     }
 
     /**
