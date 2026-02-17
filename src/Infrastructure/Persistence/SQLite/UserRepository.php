@@ -126,6 +126,19 @@ class UserRepository implements UserRepositoryInterface
     }
 
     /**
+     * Find all users ordered by email
+     *
+     * @return User[] Array of all user entities
+     */
+    public function findAll(): array
+    {
+        $stmt = $this->pdo->query('SELECT * FROM users ORDER BY email ASC');
+        $rows = $stmt->fetchAll();
+
+        return array_map(fn($row) => $this->hydrate($row), $rows);
+    }
+
+    /**
      * Insert new user
      *
      * @param User $user User entity to insert

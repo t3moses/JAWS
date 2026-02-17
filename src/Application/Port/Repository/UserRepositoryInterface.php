@@ -61,4 +61,11 @@ interface UserRepositoryInterface
      * @return int Number of users
      */
     public function count(): int;
+
+    /**
+     * Find all users ordered by email
+     *
+     * @return User[] Array of all user entities
+     */
+    public function findAll(): array;
 }

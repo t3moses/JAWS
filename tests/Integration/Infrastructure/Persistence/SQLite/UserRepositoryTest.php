@@ -429,4 +429,60 @@ class UserRepositoryTest extends IntegrationTestCase
             $updatedUser->getCreatedAt()->format('Y-m-d H:i:s')
         );
     }
+
+    // =======================
+    // findAll() Tests
+    // =======================
+
+    public function testFindAllReturnsEmptyArrayWhenNoUsers(): void
+    {
+        $result = $this->repository->findAll();
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    public function testFindAllReturnsAllUsers(): void
+    {
+        $this->repository->save(new User(email: 'alpha@example.com', passwordHash: 'hash', accountType: 'crew'));
+        $this->repository->save(new User(email: 'beta@example.com',  passwordHash: 'hash', accountType: 'crew'));
+        $this->repository->save(new User(email: 'gamma@example.com', passwordHash: 'hash', accountType: 'crew'));
+
+        $result = $this->repository->findAll();
+
+        $this->assertCount(3, $result);
+    }
+
+    public function testFindAllReturnsUsersOrderedByEmail(): void
+    {
+        $this->repository->save(new User(email: 'charlie@example.com', passwordHash: 'hash', accountType: 'crew'));
+        $this->repository->save(new User(email: 'alice@example.com',   passwordHash: 'hash', accountType: 'crew'));
+        $this->repository->save(new User(email: 'bob@example.com',     passwordHash: 'hash', accountType: 'crew'));
+
+        $result = $this->repository->findAll();
+
+        $this->assertEquals('alice@example.com',   $result[0]->getEmail());
+        $this->assertEquals('bob@example.com',     $result[1]->getEmail());
+        $this->assertEquals('charlie@example.com', $result[2]->getEmail());
+    }
+
+    public function testFindAllReturnsFullyHydratedEntities(): void
+    {
+        $this->repository->save(new User(
+            email: 'hydrate@example.com',
+            passwordHash: 'hashed_pw',
+            accountType: 'boat_owner',
+            isAdmin: true,
+        ));
+
+        $result = $this->repository->findAll();
+
+        $this->assertCount(1, $result);
+        $user = $result[0];
+        $this->assertNotNull($user->getId());
+        $this->assertEquals('hydrate@example.com', $user->getEmail());
+        $this->assertEquals('boat_owner', $user->getAccountType());
+        $this->assertTrue($user->isAdmin());
+        $this->assertNotNull($user->getCreatedAt());
+    }
 }

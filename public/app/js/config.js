@@ -29,7 +29,14 @@ export const API_CONFIG = {
         // Admin endpoints
         ADMIN_MATCHING: '/admin/matching/:eventId',
         ADMIN_NOTIFICATIONS: '/admin/notifications/:eventId',
-        ADMIN_CONFIG: '/admin/config'
+        ADMIN_CONFIG: '/admin/config',
+        ADMIN_USERS: '/admin/users',
+        ADMIN_USER_ADMIN: '/admin/users/:id/admin',
+        ADMIN_USER_DETAIL: '/admin/users/:userId',
+        ADMIN_CREWS: '/admin/crews',
+        ADMIN_BOATS: '/admin/boats',
+        ADMIN_CREW_PROFILE: '/admin/crews/:crewKey',
+        ADMIN_CREW_WHITELIST_ENTRY: '/admin/crews/:crewKey/whitelist/:boatKey'
     }
 };
 
