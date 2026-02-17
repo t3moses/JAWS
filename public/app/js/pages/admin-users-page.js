@@ -84,13 +84,16 @@ function renderUsersTable(container, users) {
  * @returns {string} HTML string
  */
 function renderUserRow(user) {
-    const accountLabel = user.account_type === 'boat_owner' ? 'Boat Owner' : 'Crew';
+    const isBoatOwner = user.account_type === 'boat_owner';
+    const accountBadge = isBoatOwner
+        ? '<span class="user-badge boat-owner">⛵ Boat Owner</span>'
+        : '<span class="user-badge">🌊 Crew Member</span>';
     const adminBadge = user.is_admin ? ' <span class="admin-badge">Admin</span>' : '';
 
     return `
         <tr>
             <td>${escapeHtml(user.email)}${adminBadge}</td>
-            <td>${accountLabel}</td>
+            <td>${accountBadge}</td>
             <td><a href="admin-user-edit.html?userId=${user.id}" class="btn btn-sm btn-secondary">Edit</a></td>
         </tr>
     `;
