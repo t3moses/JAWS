@@ -9,7 +9,7 @@ namespace App\Domain\Enum;
  *
  * Defines the dimensions used in multi-dimensional ranking for boats.
  * Rankings are compared lexicographically (left to right) during sorting.
- * Lower rank values = higher priority.
+ * Higher rank values = higher priority.
  */
 enum BoatRankDimension: int
 {

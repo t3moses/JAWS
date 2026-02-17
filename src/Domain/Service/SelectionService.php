@@ -60,6 +60,7 @@ class SelectionService
 
         // Cut boats or crews to fit, then distribute
         $this->cut($sortedBoats, $sortedCrews);
+
     }
 
     /**
@@ -156,22 +157,23 @@ class SelectionService
      * Lexicographic rank comparison
      *
      * CRITICAL: Compares ranks dimension by dimension (left to right).
-     * Returns true if rank1 > rank2 (rank1 has LOWER priority).
+     * Returns true if rank1 < rank2 (rank1 has LOWER priority).
      *
      * @param Rank $rank1
      * @param Rank $rank2
      * @return bool
      */
-    private function isGreater(Rank $rank1, Rank $rank2): bool
+
+private function isLess(Rank $rank1, Rank $rank2): bool
     {
         $values1 = $rank1->toArray();
         $values2 = $rank2->toArray();
 
         $dimensions = count($values1);
         for ($i = 0; $i < $dimensions; $i++) {
-            if ((int)$values1[$i] > (int)$values2[$i]) {
+            if ((int)$values1[$i] < (int)$values2[$i]) {
                 return true;
-            } elseif ((int)$values1[$i] < (int)$values2[$i]) {
+            } elseif ((int)$values1[$i] > (int)$values2[$i]) {
                 return false;
             }
         }
@@ -183,7 +185,7 @@ class SelectionService
      * Bubble sort based on rank
      *
      * CRITICAL: Uses optimized bubble sort with early termination.
-     * Sorts in ascending rank order (lowest rank = highest priority first).
+     * Sorts in descending rank order (highest rank = highest priority first).
      *
      * @param array<Boat|Crew> $list
      * @return array<Boat|Crew>
@@ -199,8 +201,8 @@ class SelectionService
             // Last i elements are already in place
             for ($j = 0; $j < $n - $i - 1; $j++) {
                 // Traverse the list from 0 to n-i-1. Swap if the element
-                // found is greater than the next element
-                if ($this->isGreater($list[$j]->getRank(), $list[$j + 1]->getRank())) {
+                // found is less than the next element
+                if ($this->isLess($list[$j]->getRank(), $list[$j + 1]->getRank())) {
                     $temp = $list[$j];
                     $list[$j] = $list[$j + 1];
                     $list[$j + 1] = $temp;
@@ -213,7 +215,6 @@ class SelectionService
                 break;
             }
         }
-
         return $list;
     }
 
@@ -268,7 +269,7 @@ class SelectionService
         $crewCount = count($crews);
         $waitlistBoats = [];
 
-        // Cut boats from the end (highest rank = lowest priority) until we have enough berths
+        // Cut boats from the end (lowest rank = lowest priority) until we have enough berths
         while ($allBerths > $crewCount) {
             $cutBoat = array_pop($boats);
             $allBerths -= $cutBoat->getMinBerths();
@@ -277,9 +278,9 @@ class SelectionService
 
         if ($allBerths === $crewCount) {
             // Perfect fit after cutting boats
-            $this->selectedBoats = array_reverse($boats);
-            $this->selectedCrews = array_reverse($crews);
-            $this->waitlistBoats = array_reverse($waitlistBoats);
+            $this->selectedBoats = $boats;
+            $this->selectedCrews = $crews;
+            $this->waitlistBoats = $waitlistBoats;
             $this->waitlistCrews = [];
             return;
         }
@@ -294,11 +295,8 @@ class SelectionService
         } else {
             // Even with maximum berths, we can't fit all crews
             // This should not happen in normal flow, but handle gracefully
-            // by reverting to the boats we have and selecting no crews
-            $this->selectedBoats = array_reverse($boats);
-            $this->selectedCrews = [];
-            $this->waitlistBoats = array_reverse($waitlistBoats);
-            $this->waitlistCrews = array_reverse($crews);
+            // by executing case 2 and cutting crew.
+            $this->case2($boats, $crews);
         }
     }
 
@@ -321,15 +319,14 @@ class SelectionService
         $allBerths = $this->getMaxBerths($boats);
         $excessCrews = count($crews) - $allBerths;
 
-        // Cut crews from the end (highest rank = lowest priority)
+        // Cut crews from the end (lowest rank = lowest priority)
         $waitlistCrews = array_slice($crews, -$excessCrews);
         $crews = array_slice($crews, 0, -$excessCrews);
-
-        $this->selectedBoats = array_reverse($boats);
-        $this->selectedCrews = array_reverse($crews);
+        $this->selectedBoats = $boats;
+        $this->selectedCrews = $crews;
         $this->waitlistBoats = [];
-        $this->waitlistCrews = array_reverse($waitlistCrews);
-    }
+        $this->waitlistCrews = $waitlistCrews;
+        }
 
     /**
      * Case 3: Perfect fit
@@ -369,9 +366,8 @@ class SelectionService
                 $allBerths++;
             }
         }
-
-        $this->selectedBoats = array_reverse($boats);
-        $this->selectedCrews = array_reverse($crews);
+        $this->selectedBoats = $boats;
+        $this->selectedCrews = $crews;
         $this->waitlistBoats = [];
         $this->waitlistCrews = [];
     }

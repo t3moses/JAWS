@@ -9,7 +9,7 @@ namespace App\Domain\Enum;
  *
  * Defines the dimensions used in multi-dimensional ranking for crews.
  * Rankings are compared lexicographically (left to right) during sorting.
- * Lower rank values = higher priority.
+ * Higher rank values = higher priority.
  */
 enum CrewRankDimension: int
 {

@@ -342,6 +342,7 @@ class AssignmentService
             }
         }
 
+
         $this->debugWrite("No valid swap found\n\n");
         return null; // No valid swap found
     }
@@ -504,6 +505,7 @@ class AssignmentService
     {
         foreach ($flotilla['crewed_boats'] as $crewedBoat) {
             $boat = $crewedBoat['boat'];
+
             $this->debugWrite("Boat: " . $boat->getKey()->toString() . " " .
                 ($boat->requiresAssistance() ? 'Yes' : 'No') . "\n");
 
