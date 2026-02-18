@@ -13,6 +13,7 @@ use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\EventRepositoryInterface;
 use App\Domain\ValueObject\EventId;
 use App\Domain\Enum\AvailabilityStatus;
+use App\Domain\Enum\CrewRankDimension;
 
 /**
  * Update Crew Availability Use Case
@@ -69,6 +70,20 @@ class UpdateCrewAvailabilityUseCase
 
             // Use targeted update instead of loading, modifying, and saving entire entity
             $this->crewRepository->updateAvailability($crewKey, $eventId, $status);
+        }
+
+        // Update commitment rank immediately if the next event was included in the request.
+        // Re-registering as available (rank=2) clears any admin penalty (rank=1).
+        $nextEventIdStr = $this->eventRepository->findNextEvent();
+        if ($nextEventIdStr !== null) {
+            foreach ($request->availabilities as $availability) {
+                if ($availability['eventId'] === $nextEventIdStr) {
+                    $commitmentRank = $availability['isAvailable'] ? 2 : 0;
+                    $crew->setRankDimension(CrewRankDimension::COMMITMENT, $commitmentRank);
+                    $this->crewRepository->updateRankCommitment($crew);
+                    break;
+                }
+            }
         }
 
         // Reload crew to get updated availability for response

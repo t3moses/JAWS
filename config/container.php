@@ -220,7 +220,8 @@ $container->set(\App\Application\UseCase\Season\ProcessSeasonUpdateUseCase::clas
         $c->get(SeasonRepositoryInterface::class),
         $c->get(SelectionService::class),
         $c->get(AssignmentService::class),
-        $c->get(FlexService::class)
+        $c->get(FlexService::class),
+        $c->get(RankingService::class)
     );
 });
 
@@ -310,6 +311,12 @@ $container->set(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::c
     return new \App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase(
         $c->get(CrewRepositoryInterface::class),
         $c->get(BoatRepositoryInterface::class)
+    );
+});
+
+$container->set(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase(
+        $c->get(CrewRepositoryInterface::class)
     );
 });
 
@@ -417,7 +424,8 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\GetAllBoatsUseCase::class),
         $c->get(\App\Application\UseCase\Admin\UpdateCrewProfileUseCase::class),
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
-        $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class)
+        $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::class)
     );
 });
 
