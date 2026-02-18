@@ -56,7 +56,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
             $this->seasonRepository,
             $selectionService,
             $assignmentService,
-            $flexService
+            $flexService,
+            $rankingService
         );
     }
 

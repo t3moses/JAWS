@@ -176,7 +176,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew2->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
-    // Tests that crew with guaranteed availability receives commitment rank of 0
+    // Tests that crew with guaranteed availability receives commitment rank of 3 (high priority)
     public function testUpdateCrewCommitmentRanksWithGuaranteed(): void
     {
         // Arrange
@@ -188,10 +188,10 @@ class RankingServiceTest extends TestCase
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
         // Assert
-        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
-    // Tests that crew with available status receives commitment rank of 1
+    // Tests that crew with available status receives commitment rank of 2 (normal priority)
     public function testUpdateCrewCommitmentRanksWithAvailable(): void
     {
         // Arrange
@@ -203,10 +203,10 @@ class RankingServiceTest extends TestCase
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
         // Assert
-        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
-    // Tests that crew with withdrawn status receives commitment rank of 2
+    // Tests that crew with withdrawn status receives commitment rank of 0 (no priority)
     public function testUpdateCrewCommitmentRanksWithWithdrawn(): void
     {
         // Arrange
@@ -218,10 +218,10 @@ class RankingServiceTest extends TestCase
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
         // Assert
-        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
-    // Tests that crew with unavailable status receives commitment rank of 3
+    // Tests that crew with unavailable status receives commitment rank of 0 (no priority)
     public function testUpdateCrewCommitmentRanksWithUnavailable(): void
     {
         // Arrange
@@ -233,7 +233,7 @@ class RankingServiceTest extends TestCase
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
         // Assert
-        $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests commitment ranking calculation across multiple crews with different availability
@@ -251,8 +251,59 @@ class RankingServiceTest extends TestCase
         $this->service->updateCrewCommitmentRanks([$crew1, $crew2], $eventId);
 
         // Assert
-        $this->assertEquals(0, $crew1->getRank()->getDimension(CrewRankDimension::COMMITMENT));
-        $this->assertEquals(3, $crew2->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(3, $crew1->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(0, $crew2->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+    }
+
+    // Tests that admin penalty (rank=1) is preserved when crew is not assigned and doesn't re-register
+    public function testAdminPenaltyPreserved(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $eventId = EventId::fromString('Fri May 29');
+        $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
+        // Simulate stored admin penalty
+        $crew->setRankDimension(CrewRankDimension::COMMITMENT, 1);
+
+        // Act — crew not in assignedCrewKeys
+        $this->service->updateCrewCommitmentRanks([$crew], $eventId, []);
+
+        // Assert — admin penalty persists
+        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+    }
+
+    // Tests that a crew included in assignedCrewKeys receives rank=3 regardless of stored rank
+    public function testAssignmentSetsRankThree(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $eventId = EventId::fromString('Fri May 29');
+        $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
+        // Crew has admin penalty stored
+        $crew->setRankDimension(CrewRankDimension::COMMITMENT, 1);
+
+        // Act — crew key is in assignedCrewKeys
+        $this->service->updateCrewCommitmentRanks([$crew], $eventId, ['johndoe']);
+
+        // Assert — assignment overrides penalty
+        $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+    }
+
+    // Tests that previously assigned crew (rank=3) not reassigned resets to normal priority (rank=2)
+    public function testPreviouslyAssignedResetsToTwo(): void
+    {
+        // Arrange
+        $crew = $this->createCrew('johndoe');
+        $eventId = EventId::fromString('Fri May 29');
+        $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
+        // Crew had rank=3 from previous assignment run
+        $crew->setRankDimension(CrewRankDimension::COMMITMENT, 3);
+
+        // Act — crew is NOT in assignedCrewKeys this time
+        $this->service->updateCrewCommitmentRanks([$crew], $eventId, []);
+
+        // Assert — resets to normal available priority
+        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that crew with membership number receives membership rank of 1
@@ -311,7 +362,7 @@ class RankingServiceTest extends TestCase
 
         // Assert
         $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::ABSENCE));
-        $this->assertEquals(1, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that absence ranking handles empty past events list without errors

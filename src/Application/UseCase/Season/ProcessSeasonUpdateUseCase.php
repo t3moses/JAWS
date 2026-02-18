@@ -15,6 +15,7 @@ use App\Domain\Entity\Crew;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
 use App\Domain\Service\FlexService;
+use App\Domain\Service\RankingService;
 use App\Domain\ValueObject\EventId;
 use App\Domain\Enum\AvailabilityStatus;
 
@@ -45,6 +46,7 @@ class ProcessSeasonUpdateUseCase
         private SelectionService $selectionService,
         private AssignmentService $assignmentService,
         private FlexService $flexService,
+        private RankingService $rankingService,
     ) {
     }
 
@@ -91,6 +93,16 @@ class ProcessSeasonUpdateUseCase
             // Phase 3: Assignment optimization (next event only)
             if ($eventIdString === $nextEventId) {
                 $flotilla = $this->runAssignment($flotilla);
+
+                // Update commitment ranks for all crew based on assignment result
+                // Assigned crew get rank=3; others are set by availability; admin penalties (rank=1) persist
+                $assignedCrewKeys = array_map(
+                    fn(Crew $crew) => $crew->getKey()->toString(),
+                    $selectionResult['selected_crews']
+                );
+                $allCrews = $squad->all();
+                $this->rankingService->updateCrewCommitmentRanks($allCrews, $eventId, $assignedCrewKeys);
+                $this->persistCommitmentRanks($allCrews);
             }
 
             // Phase 4: Update availability statuses
@@ -365,6 +377,18 @@ class ProcessSeasonUpdateUseCase
         // Update only crew rank_flexibility column directly
         foreach ($squad->all() as $crew) {
             $this->crewRepository->updateRankFlexibility($crew);
+        }
+    }
+
+    /**
+     * Persist updated commitment ranks to database (ONLY rank_commitment column)
+     *
+     * @param array<Crew> $crews Crews with updated commitment ranks
+     */
+    private function persistCommitmentRanks(array $crews): void
+    {
+        foreach ($crews as $crew) {
+            $this->crewRepository->updateRankCommitment($crew);
         }
     }
 }

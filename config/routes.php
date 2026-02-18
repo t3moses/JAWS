@@ -260,4 +260,13 @@ return [
         'action' => 'removeFromWhitelist',
         'auth' => true,
     ],
+
+    // Set Crew Commitment Rank (admin override)
+    [
+        'method' => 'PATCH',
+        'path' => '/api/admin/crews/{crewKey}/commitment-rank',
+        'controller' => AdminController::class,
+        'action' => 'setCrewCommitmentRank',
+        'auth' => true,
+    ],
 ];
