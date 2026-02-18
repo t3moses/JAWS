@@ -46,12 +46,13 @@ class GetUserDetailUseCase
                 'created_at'   => $user->getCreatedAt()->format('Y-m-d H:i:s'),
             ],
             'crew' => $crew ? [
-                'key'         => $crew->getKey()->toString(),
-                'first_name'  => $crew->getFirstName(),
-                'last_name'   => $crew->getLastName(),
-                'skill'       => $crew->getSkill()->value,
-                'partner_key' => $crew->getPartnerKey()?->toString(),
-                'whitelist'   => $crew->getWhitelist(),
+                'key'             => $crew->getKey()->toString(),
+                'first_name'      => $crew->getFirstName(),
+                'last_name'       => $crew->getLastName(),
+                'skill'           => $crew->getSkill()->value,
+                'partner_key'     => $crew->getPartnerKey()?->toString(),
+                'whitelist'       => $crew->getWhitelist(),
+                'rank_commitment' => $crew->getRank()->toArray()[0],
             ] : null,
         ];
     }

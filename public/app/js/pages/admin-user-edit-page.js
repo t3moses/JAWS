@@ -96,6 +96,7 @@ function renderPage() {
 
     if (crew) {
         renderSkill(crew);
+        renderCommitment(crew);
         renderPartner(crew);
         renderWhitelist(crew);
     }
@@ -186,6 +187,41 @@ async function handleSkillSave(select) {
         console.error('Failed to update skill:', error);
         showToast(error.message || 'Failed to update skill', 'error');
         select.value = String(targetUserData.crew.skill);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ==================== Commitment Rank ====================
+
+function renderCommitment(crew) {
+    const section = document.getElementById('section-commitment');
+    const select = document.getElementById('commitment-select');
+    const saveBtn = document.getElementById('commitment-save-btn');
+
+    // Only allow setting penalty (1) or restoring normal (2)
+    const rank = crew.rank_commitment ?? 2;
+    select.value = String(rank === 1 ? 1 : 2);
+
+    saveBtn.addEventListener('click', () => handleCommitmentSave(select));
+
+    section.style.display = '';
+}
+
+async function handleCommitmentSave(select) {
+    const btn = document.getElementById('commitment-save-btn');
+    btn.disabled = true;
+
+    try {
+        const result = await adminService.setCrewCommitmentRank(targetUserData.crew.key, parseInt(select.value, 10));
+        targetUserData.crew.rank_commitment = result.rank_commitment;
+        select.value = String(result.rank_commitment === 1 ? 1 : 2);
+        showToast('Commitment rank updated successfully.', 'success');
+    } catch (error) {
+        console.error('Failed to update commitment rank:', error);
+        showToast(error.message || 'Failed to update commitment rank', 'error');
+        const rank = targetUserData.crew.rank_commitment ?? 2;
+        select.value = String(rank === 1 ? 1 : 2);
     } finally {
         btn.disabled = false;
     }

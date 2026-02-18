@@ -229,6 +229,27 @@ export async function addToCrewWhitelist(crewKey, boatKey) {
 }
 
 /**
+ * Set the commitment rank for a crew member (admin override)
+ * @param {string} crewKey - Crew key
+ * @param {number} commitmentRank - 0=unavailable, 1=penalty, 2=normal, 3=assigned
+ * @returns {Promise<Object>} Updated crew summary
+ */
+export async function setCrewCommitmentRank(crewKey, commitmentRank) {
+    try {
+        const response = await apiService.patch(API_CONFIG.ENDPOINTS.ADMIN_CREW_COMMITMENT_RANK, { commitment_rank: commitmentRank }, { crewKey });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to update commitment rank');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to set commitment rank:', error);
+        throw error;
+    }
+}
+
+/**
  * Remove a boat from a crew member's whitelist
  * @param {string} crewKey - Crew key
  * @param {string} boatKey - Boat key
