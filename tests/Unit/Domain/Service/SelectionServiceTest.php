@@ -441,9 +441,10 @@ class SelectionServiceTest extends TestCase
         // Assert
         $selectedBoats = $this->service->getSelectedBoats();
 
-        // Boats should be sorted: [1,2,3] < [1,3,2] < [2,1,1]
-        // So boat1 should be first
-        $this->assertEquals('sailaway', $selectedBoats[0]->getKey()->toString());
+        // Higher rank = higher priority. Sorted descending: [2,1] > [1,3] > [1,2]
+        // So windseeker (rank [2,1]) is highest priority and the only selected boat
+        // (case1: 2 crews < 6 min berths → cut sailaway then seabreeze from the end)
+        $this->assertEquals('windseeker', $selectedBoats[0]->getKey()->toString());
     }
 
     // Tests scenario where cutting one boat results in perfect crew-to-berth fit
