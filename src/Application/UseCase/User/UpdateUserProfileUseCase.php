@@ -111,6 +111,12 @@ class UpdateUserProfileUseCase
         $originalRank = $crew->getRank();
 
         // Update allowed fields
+        if (isset($profile['firstName'])) {
+            $crew->setFirstName($profile['firstName']);
+        }
+        if (isset($profile['lastName'])) {
+            $crew->setLastName($profile['lastName']);
+        }
         if (isset($profile['displayName'])) {
             $crew->setDisplayName($profile['displayName']);
         }
@@ -154,6 +160,12 @@ class UpdateUserProfileUseCase
         $originalRank = $boat->getRank();
 
         // Update allowed fields
+        if (isset($profile['ownerFirstName'])) {
+            $boat->setOwnerFirstName($profile['ownerFirstName']);
+        }
+        if (isset($profile['ownerLastName'])) {
+            $boat->setOwnerLastName($profile['ownerLastName']);
+        }
         if (isset($profile['displayName'])) {
             $boat->setDisplayName($profile['displayName']);
         }
