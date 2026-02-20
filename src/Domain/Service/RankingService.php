@@ -184,10 +184,12 @@ class RankingService
 
             // Map availability to commitment rank
             // Higher value = higher priority (SelectionService sorts descending)
+            // Note: GUARANTEED here means stale from a previous run (crew is NOT in
+            // $assignedCrewKeys), so it should rank the same as AVAILABLE (rank=2).
             $availability = $crew->getAvailability($nextEventId);
             $commitmentRank = match ($availability) {
-                AvailabilityStatus::GUARANTEED => 3,    // Currently assigned for this event
-                AvailabilityStatus::AVAILABLE => 2,     // Normal priority
+                AvailabilityStatus::GUARANTEED,
+                AvailabilityStatus::AVAILABLE => 2,     // Normal priority (stale GUARANTEED = AVAILABLE)
                 default => 0,                           // UNAVAILABLE or WITHDRAWN
             };
 
