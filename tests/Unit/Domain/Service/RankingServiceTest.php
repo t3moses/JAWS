@@ -176,9 +176,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(1, $crew2->getRank()->getDimension(CrewRankDimension::ABSENCE));
     }
 
-    // Tests that stale GUARANTEED (not in assignedCrewKeys) receives commitment rank of 2 (normal priority)
-    // Stale GUARANTEED arises when crew was assigned in a prior run but has since been dropped from
-    // selection (e.g. berths reduced). They should rank the same as AVAILABLE, not as truly-assigned crew.
+    // Tests that crew with guaranteed availability receives commitment rank of 3 (high priority)
     public function testUpdateCrewCommitmentRanksWithGuaranteed(): void
     {
         // Arrange
@@ -186,11 +184,11 @@ class RankingServiceTest extends TestCase
         $eventId = EventId::fromString('Fri May 29');
         $crew->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
 
-        // Act — crew is NOT in assignedCrewKeys (stale GUARANTEED)
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew], $eventId);
 
-        // Assert — stale GUARANTEED treated as AVAILABLE (rank=2), not as assigned (rank=3)
-        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        // Assert
+        $this->assertEquals(3, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
     // Tests that crew with available status receives commitment rank of 2 (normal priority)
@@ -238,7 +236,7 @@ class RankingServiceTest extends TestCase
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 
-    // Tests commitment ranking across multiple crews: stale GUARANTEED → 2, UNAVAILABLE → 0
+    // Tests commitment ranking calculation across multiple crews with different availability
     public function testUpdateCrewCommitmentRanksWithMultipleCrews(): void
     {
         // Arrange
@@ -249,11 +247,11 @@ class RankingServiceTest extends TestCase
         $crew1->setAvailability($eventId, AvailabilityStatus::GUARANTEED);
         $crew2->setAvailability($eventId, AvailabilityStatus::UNAVAILABLE);
 
-        // Act — neither crew is in assignedCrewKeys
+        // Act
         $this->service->updateCrewCommitmentRanks([$crew1, $crew2], $eventId);
 
-        // Assert — stale GUARANTEED ranks same as AVAILABLE (rank=2); UNAVAILABLE → 0
-        $this->assertEquals(2, $crew1->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        // Assert
+        $this->assertEquals(3, $crew1->getRank()->getDimension(CrewRankDimension::COMMITMENT));
         $this->assertEquals(0, $crew2->getRank()->getDimension(CrewRankDimension::COMMITMENT));
     }
 

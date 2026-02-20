@@ -90,16 +90,6 @@ class ProcessSeasonUpdateUseCase
                 $selectionResult['waitlisted_crews']
             );
 
-            // Reset stale GUARANTEED statuses before commitment rank calculation.
-            // Crews dropped from selection (e.g., due to reduced berths) must have
-            // their GUARANTEED status cleared so the ranking algorithm treats them
-            // as normal AVAILABLE crew, not as currently-assigned crew.
-            $selectedCrewKeyStrings = array_map(
-                fn(Crew $crew) => $crew->getKey()->toString(),
-                $selectionResult['selected_crews']
-            );
-            $this->resetStaleGuaranteed($squad, $eventId, $selectedCrewKeyStrings);
-
             // Phase 3: Assignment optimization (next event only)
             if ($eventIdString === $nextEventId) {
                 $flotilla = $this->runAssignment($flotilla);
@@ -335,38 +325,6 @@ class ProcessSeasonUpdateUseCase
             'waitlist_boats' => $serializedWaitlistBoats,
             'waitlist_crews' => $serializedWaitlistCrews,
         ];
-    }
-
-    /**
-     * Reset stale GUARANTEED availability statuses for crews no longer selected
-     *
-     * After selection runs, any crew who carried GUARANTEED status from a previous
-     * pipeline run but is NOT in the current selection result must be reset to
-     * AVAILABLE. Without this, dropped crews keep GUARANTEED in the database,
-     * which causes the commitment rank calculation to unfairly prioritise them.
-     *
-     * @param Squad $squad All crew
-     * @param EventId $eventId Event being processed
-     * @param array<string> $selectedCrewKeys Crew keys in the current selection result
-     */
-    private function resetStaleGuaranteed(
-        Squad $squad,
-        EventId $eventId,
-        array $selectedCrewKeys
-    ): void {
-        foreach ($squad->all() as $crew) {
-            if (
-                !in_array($crew->getKey()->toString(), $selectedCrewKeys, true)
-                && $crew->getAvailability($eventId) === AvailabilityStatus::GUARANTEED
-            ) {
-                $crew->setAvailability($eventId, AvailabilityStatus::AVAILABLE);
-                $this->crewRepository->updateAvailability(
-                    $crew->getKey(),
-                    $eventId,
-                    AvailabilityStatus::AVAILABLE
-                );
-            }
-        }
     }
 
     /**
