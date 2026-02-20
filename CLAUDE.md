@@ -423,12 +423,12 @@ The system uses rank tensors for prioritization:
 - **Boats**: `[flexibility, absence]` (2D)
 - **Crews**: `[commitment, flexibility, membership, absence]` (4D)
 
-Rankings are compared lexicographically during bubble sort. **Lower rank = higher priority.**
+Rankings are compared lexicographically during bubble sort. **Higher rank = higher priority (sorted descending).**
 
 **Rank Components:**
 - `flexibility` - Whether boat owner is also registered as crew (boats) or crew owns a boat (crew)
 - `absence` - Count of past no-shows (updated dynamically)
-- `commitment` - Crew's availability for the next scheduled event (0=unavailable, 1=available)
+- `commitment` - Crew's priority level for the next event: 3=assigned, 2=available (normal), 1=admin penalty, 0=unavailable/withdrawn
 - `membership` - Valid NSC membership number status (0=valid, 1=invalid)
 
 **Deterministic Shuffling:** Ties are broken using deterministic shuffling seeded by `crc32($eventId)`, ensuring reproducible results.

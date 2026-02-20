@@ -15,6 +15,7 @@ use App\Application\UseCase\Admin\GetAllBoatsUseCase;
 use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
+use App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\DTO\Request\UpdateConfigRequest;
 use App\Application\Exception\BoatNotFoundException;
@@ -45,6 +46,7 @@ class AdminController
         private UpdateCrewProfileUseCase $updateCrewProfileUseCase,
         private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
+        private SetCrewCommitmentRankUseCase $setCrewCommitmentRankUseCase,
     ) {
     }
 
@@ -373,6 +375,43 @@ class AdminController
             return JsonResponse::success($result);
         } catch (CrewNotFoundException | BoatNotFoundException $e) {
             return JsonResponse::notFound($e->getMessage());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * PATCH /api/admin/crews/{crewKey}/commitment-rank
+     *
+     * Sets the commitment rank for a crew member (admin override).
+     *
+     * Valid values: 0 (unavailable), 1 (penalty), 2 (normal), 3 (assigned)
+     *
+     * @param array $params Route parameters (crewKey)
+     * @param array $body   Request body (commitment_rank)
+     * @param array $auth   Authentication context
+     */
+    public function setCrewCommitmentRank(array $params, array $body, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $crewKey = $params['crewKey'];
+            $rank = isset($body['commitment_rank']) ? (int)$body['commitment_rank'] : null;
+
+            if ($rank === null) {
+                return JsonResponse::error('commitment_rank is required', 400);
+            }
+
+            $result = $this->setCrewCommitmentRankUseCase->execute($crewKey, $rank);
+
+            return JsonResponse::success($result);
+        } catch (CrewNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }

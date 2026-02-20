@@ -15,7 +15,7 @@ use App\Domain\Enum\CrewRankDimension;
  * Crews have 4 dimensions: [commitment, flexibility, membership, absence]
  *
  * Rankings are compared lexicographically (left to right).
- * Lower rank values = higher priority.
+ * Higher rank values = higher priority (SelectionService sorts descending).
  */
 final readonly class Rank
 {
@@ -105,9 +105,9 @@ final readonly class Rank
      * Lexicographic comparison with another rank
      *
      * Returns:
-     * - negative if $this < $other (this has higher priority)
+     * - negative if $this < $other (other has higher priority — higher value wins)
      * - 0 if equal
-     * - positive if $this > $other (other has higher priority)
+     * - positive if $this > $other (this has higher priority — higher value wins)
      *
      * @param Rank $other
      * @return int
@@ -130,7 +130,7 @@ final readonly class Rank
     }
 
     /**
-     * Check if this rank is greater than another (lower priority)
+     * Check if this rank is greater than another (higher priority — higher value wins)
      */
     public function isGreaterThan(self $other): bool
     {
@@ -138,7 +138,7 @@ final readonly class Rank
     }
 
     /**
-     * Check if this rank is less than another (higher priority)
+     * Check if this rank is less than another (lower priority — higher value wins)
      */
     public function isLessThan(self $other): bool
     {

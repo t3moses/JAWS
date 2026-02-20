@@ -137,6 +137,14 @@ interface CrewRepositoryInterface
     public function updateRankFlexibility(Crew $crew): void;
 
     /**
+     * Update crew commitment rank only (without touching other fields)
+     *
+     * @param Crew $crew Crew with updated commitment rank
+     * @return void
+     */
+    public function updateRankCommitment(Crew $crew): void;
+
+    /**
      * Get crew count
      *
      * @return int

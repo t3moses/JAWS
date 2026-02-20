@@ -38,14 +38,15 @@ class RankingService
         ?Fleet $fleet = null
     ): Rank {
         // Calculate commitment (availability for next event)
-        $commitment = 1; // Default: AVAILABLE
+        // Higher value = higher priority (SelectionService sorts descending)
+        $commitment = 2; // Default: AVAILABLE = normal priority
         if ($nextEventId !== null) {
             $availability = $crew->getAvailability($nextEventId);
             $commitment = match ($availability) {
-                AvailabilityStatus::GUARANTEED => 0,    // Highest priority
-                AvailabilityStatus::AVAILABLE => 1,     // Medium priority
-                AvailabilityStatus::WITHDRAWN => 2,     // Lower priority
-                AvailabilityStatus::UNAVAILABLE => 3,   // Lowest priority
+                AvailabilityStatus::GUARANTEED => 3,    // High priority (assigned to next event)
+                AvailabilityStatus::AVAILABLE => 2,     // Normal priority
+                AvailabilityStatus::WITHDRAWN => 0,     // No priority
+                AvailabilityStatus::UNAVAILABLE => 0,   // No priority
             };
         }
 
@@ -154,23 +155,40 @@ class RankingService
     }
 
     /**
-     * Update commitment rank for crews based on availability for the next event
+     * Update commitment rank for crews based on availability and assignment for the next event
+     *
+     * 4-level commitment rank (higher value = higher priority):
+     *   3 = assigned to next event (set after pipeline assigns berths)
+     *   2 = normal priority (crew registered available)
+     *   1 = admin penalty (preserved; not overwritten by this method unless crew re-registers)
+     *   0 = unavailable/withdrawn
      *
      * @param array<Crew> $crews
      * @param EventId $nextEventId
+     * @param array<string> $assignedCrewKeys Crew keys assigned to the next event (empty when called from pipeline pre-assignment)
      */
-    public function updateCrewCommitmentRanks(array $crews, EventId $nextEventId): void
+    public function updateCrewCommitmentRanks(array $crews, EventId $nextEventId, array $assignedCrewKeys = []): void
     {
         foreach ($crews as $crew) {
-            $availability = $crew->getAvailability($nextEventId);
+            // Crew assigned to next event gets highest priority
+            if (in_array($crew->getKey()->toString(), $assignedCrewKeys, true)) {
+                $crew->setRankDimension(CrewRankDimension::COMMITMENT, 3);
+                continue;
+            }
+
+            // Admin penalty (rank=1) persists — do not overwrite unless crew re-registers
+            $storedRank = $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT);
+            if ($storedRank === 1) {
+                continue;
+            }
 
             // Map availability to commitment rank
-            // Lower rank = higher priority
+            // Higher value = higher priority (SelectionService sorts descending)
+            $availability = $crew->getAvailability($nextEventId);
             $commitmentRank = match ($availability) {
-                AvailabilityStatus::GUARANTEED => 0,    // Highest priority
-                AvailabilityStatus::AVAILABLE => 1,     // Medium priority
-                AvailabilityStatus::WITHDRAWN => 2,     // Lower priority
-                AvailabilityStatus::UNAVAILABLE => 3,   // Lowest priority
+                AvailabilityStatus::GUARANTEED => 3,    // Currently assigned for this event
+                AvailabilityStatus::AVAILABLE => 2,     // Normal priority
+                default => 0,                           // UNAVAILABLE or WITHDRAWN
             };
 
             $crew->setRankDimension(CrewRankDimension::COMMITMENT, $commitmentRank);
