@@ -233,6 +233,11 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
         console.log('Password change requested - backend will verify current password');
     }
 
+    const saveButton = e.target.querySelector('[type="submit"]');
+    const originalLabel = saveButton.textContent;
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
+
     // Build profile update object
     let profileUpdates = {};
 
@@ -242,18 +247,18 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
             lastName: document.getElementById('last_name').value,
             membershipNumber: document.getElementById('membership_number').value,
             experience: document.getElementById('experience').value,
-            whatsappGroup: document.getElementById('whatsapp_group').checked
+            socialPreference: document.getElementById('whatsapp_group').checked
         };
     } else {
         profileUpdates = {
-            firstName: document.getElementById('first_name').value,
-            lastName: document.getElementById('last_name').value,
-            phone: document.getElementById('phone').value,
-            boatName: document.getElementById('boat_name').value,
-            minCrew: document.getElementById('min_crew').value,
-            maxCrew: document.getElementById('max_crew').value,
-            requestFirstMate: document.getElementById('request_first_mate').checked,
-            whatsappGroup: document.getElementById('whatsapp_group').checked
+            ownerFirstName: document.getElementById('first_name').value,
+            ownerLastName: document.getElementById('last_name').value,
+            ownerMobile: document.getElementById('phone').value,
+            displayName: document.getElementById('boat_name').value,
+            minBerths: document.getElementById('min_crew').value,
+            maxBerths: document.getElementById('max_crew').value,
+            assistanceRequired: document.getElementById('request_first_mate').checked,
+            socialPreference: document.getElementById('whatsapp_group').checked
         };
     }
 
@@ -282,6 +287,8 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
             window.location.href = 'dashboard.html';
         }, 3200);
     } else {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
         showError(result.error || 'Failed to update profile');
     }
 });
