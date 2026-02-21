@@ -44,8 +44,9 @@ class PhpMailerEmailService implements EmailServiceInterface
             ?? getenv('SMTP_USERNAME') ?: '';
         $this->smtpPassword = $smtpPassword
             ?? getenv('SMTP_PASSWORD') ?: '';
+        $smtpSecureEnv = getenv('SMTP_SECURE');
         $this->smtpSecure = $smtpSecure
-            ?? getenv('SMTP_SECURE') ?: PHPMailer::ENCRYPTION_STARTTLS;
+            ?? ($smtpSecureEnv !== false ? $smtpSecureEnv : PHPMailer::ENCRYPTION_STARTTLS);
         $this->defaultFromEmail = $defaultFromEmail
             ?? getenv('EMAIL_FROM') ?: 'noreply@example.com';
         $this->defaultFromName = $defaultFromName
@@ -133,7 +134,7 @@ class PhpMailerEmailService implements EmailServiceInterface
         $mail->isSMTP();
         $mail->Host = $this->smtpHost;
         $mail->Port = $this->smtpPort;
-        $mail->SMTPAuth = true;
+        $mail->SMTPAuth = $this->smtpUsername !== '';
         $mail->Username = $this->smtpUsername;
         $mail->Password = $this->smtpPassword;
         $mail->SMTPSecure = $this->smtpSecure;
@@ -155,7 +156,8 @@ class PhpMailerEmailService implements EmailServiceInterface
         $mail->Timeout = 30;  // Connection timeout (seconds)
 
         // Disable SSL verification for local development (localhost)
-        if (getenv('APP_ENV') === 'development' && strpos($this->smtpHost, 'localhost') !== false) {
+        $appEnv = getenv('APP_ENV') ?: '';
+        if (in_array($appEnv, ['development', 'local']) && strpos($this->smtpHost, 'localhost') !== false) {
             $mail->SMTPOptions = [
                 'ssl' => [
                     'verify_peer' => false,
