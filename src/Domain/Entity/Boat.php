@@ -281,6 +281,13 @@ class Boat
         return $this->getHistory($eventId) === 'Y';
     }
 
+    // === Display ===
+
+    public function getOwnerDisplayName(): string
+    {
+        return $this->ownerFirstName . strtoupper(substr($this->ownerLastName, 0, 1));
+    }
+
     // === Array Conversion (for legacy compatibility) ===
 
     /**

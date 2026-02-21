@@ -376,6 +376,40 @@ class BoatTest extends TestCase
         $this->assertIsArray($array['history']);
     }
 
+    public function testGetOwnerDisplayNameFormatsCorrectly(): void
+    {
+        // Arrange
+        $boat = $this->createBoat();
+
+        // Act
+        $displayName = $boat->getOwnerDisplayName();
+
+        // Assert — "JohnD" format (first name + uppercase first letter of last name)
+        $this->assertEquals('JohnD', $displayName);
+    }
+
+    public function testGetOwnerDisplayNameWithMultiWordLastName(): void
+    {
+        // Arrange
+        $boat = new Boat(
+            key: BoatKey::fromString('sailaway'),
+            displayName: 'Sail Away',
+            ownerFirstName: 'Mary',
+            ownerLastName: 'van Houten',
+            ownerMobile: '555-1234',
+            minBerths: 1,
+            maxBerths: 3,
+            assistanceRequired: false,
+            socialPreference: true
+        );
+
+        // Act
+        $displayName = $boat->getOwnerDisplayName();
+
+        // Assert — only first character of last name, uppercased
+        $this->assertEquals('MaryV', $displayName);
+    }
+
     public function testOccupiedBerthsCanBeSetDirectly(): void
     {
         // Arrange

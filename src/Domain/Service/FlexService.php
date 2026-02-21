@@ -5,118 +5,28 @@ declare(strict_types=1);
 namespace App\Domain\Service;
 
 use App\Domain\Entity\Boat;
-use App\Domain\Entity\Crew;
-use App\Domain\Collection\Fleet;
-use App\Domain\Collection\Squad;
 use App\Domain\Enum\BoatRankDimension;
-use App\Domain\Enum\CrewRankDimension;
 
 /**
  * Flex Service
  *
- * Handles "flex" logic - when boat owners are also crew or crew members own boats.
- * This affects ranking and capacity calculations.
- *
- * Flex Concept:
- * - A boat owner who is also registered as crew is "flexible"
- * - A crew member who owns a boat is "flexible"
- * - Flexible status improves ranking (lower rank value = higher priority)
+ * Handles "flex" logic - when boat owners are willing to crew.
+ * Flex status is set once at registration (willingToCrew=true sets rank_flexibility=0).
+ * Flex boats appear in the crew waitlist when their boat is cut from selection.
  */
 class FlexService
 {
     /**
-     * Check if a boat owner is also registered as crew
+     * Check if a boat owner has flex status (willing to crew)
+     *
+     * Flex status is stored in rank_flexibility: 0 = flex, 1 = not flex.
+     * This is set at registration and never changed dynamically.
      *
      * @param Boat $boat
-     * @param Squad $squad
-     * @return bool True if boat owner is also crew
+     * @return bool True if boat owner is willing to crew (rank_flexibility === 0)
      */
-    public function isBoatOwnerFlex(Boat $boat, Squad $squad): bool
+    public function isBoatOwnerFlex(Boat $boat): bool
     {
         return $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY) === 0;
-    }
-
-    /**
-     * Check if a crew member owns a boat
-     *
-     * @param Crew $crew
-     * @param Fleet $fleet
-     * @return bool True if crew owns a boat
-     */
-    public function isCrewFlex(Crew $crew, Fleet $fleet): bool
-    {
-        $crewKey = $crew->getKey();
-
-        foreach ($fleet->all() as $boat) {
-            if ($boat->getOwnerKey()->equals($crewKey)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Update flexibility rank for a boat
-     *
-     * @param Boat $boat
-     * @param Squad $squad
-     */
-    public function updateBoatFlexRank(Boat $boat, Squad $squad): void
-    {
-        $isFlex = $this->isBoatOwnerFlex($boat, $squad);
-        $flexRank = $isFlex ? 0 : 1; // 0 = flexible (higher priority), 1 = inflexible
-        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, $flexRank);
-    }
-
-    /**
-     * Update flexibility rank for a crew
-     *
-     * @param Crew $crew
-     * @param Fleet $fleet
-     */
-    public function updateCrewFlexRank(Crew $crew, Fleet $fleet): void
-    {
-        $isFlex = $this->isCrewFlex($crew, $fleet);
-        $flexRank = $isFlex ? 0 : 1; // 0 = flexible (higher priority), 1 = inflexible
-        $crew->setRankDimension(CrewRankDimension::FLEXIBILITY, $flexRank);
-    }
-
-    /**
-     * Update flexibility ranks for all boats in a fleet
-     *
-     * @param Fleet $fleet
-     * @param Squad $squad
-     */
-    public function updateAllBoatFlexRanks(Fleet $fleet, Squad $squad): void
-    {
-        foreach ($fleet->all() as $boat) {
-            $this->updateBoatFlexRank($boat, $squad);
-        }
-    }
-
-    /**
-     * Update flexibility ranks for all crews in a squad
-     *
-     * @param Squad $squad
-     * @param Fleet $fleet
-     */
-    public function updateAllCrewFlexRanks(Squad $squad, Fleet $fleet): void
-    {
-        foreach ($squad->all() as $crew) {
-            $this->updateCrewFlexRank($crew, $fleet);
-        }
-    }
-
-    /**
-     * Update all flex ranks (boats and crews)
-     *
-     * @param Fleet $fleet
-     * @param Squad $squad
-     */
-    public function updateAllFlexRanks(Fleet $fleet, Squad $squad): void
-    {
-        $this->updateAllBoatFlexRanks($fleet, $squad);
-        $this->updateAllCrewFlexRanks($squad, $fleet);
     }
 }
