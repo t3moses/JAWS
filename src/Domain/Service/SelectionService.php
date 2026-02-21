@@ -354,7 +354,7 @@ private function isLess(Rank $rank1, Rank $rank2): bool
             $augmentedBoat = null;
 
             foreach ($boats as $boat) {
-                $boatSpace = $boat->getMaxBerths() - $boat->occupied_berths;
+                $boatSpace = $boat->getBerths($this->eventId) - $boat->occupied_berths;
                 if ($boatSpace > $biggestSpace) {
                     $biggestSpace = $boatSpace;
                     $augmentedBoat = $boat;
