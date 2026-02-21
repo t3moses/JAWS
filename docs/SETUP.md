@@ -166,6 +166,16 @@ SMTP_PASSWORD=your_smtp_password
 EMAIL_FROM=noreply@nsc-sdc.ca
 EMAIL_FROM_NAME="Nepean Sailing Club - Social Day Cruising"
 
+# Alternative: MailHog (local SMTP testing, no auth or encryption needed)
+# SMTP_HOST=localhost
+# SMTP_PORT=1025
+# SMTP_SECURE=
+# SMTP_USERNAME=
+# SMTP_PASSWORD=
+# EMAIL_FROM=system@example.com
+# EMAIL_FROM_NAME="JAWS System (local)"
+# APP_ENV=local
+
 # Application
 APP_DEBUG=true
 APP_ENV=development
