@@ -655,17 +655,19 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
     }
 
     /**
-     * Test: execute() recalculates and persists flexibility ranks
+     * Test: execute() persists flexibility ranks correctly
      *
-     * CRITICAL: Verifies fix for flexibility rank reset bug.
-     * When a boat owner is also crew (or crew owns boat), their flexibility
-     * rank should be set to 0 (flexible/higher priority) and persisted to database.
+     * Boat flex rank is an EXPLICIT preference set at registration (willing-to-crew).
+     * The pipeline preserves it as-is — it does NOT dynamically recalculate it.
+     *
+     * Crew flex rank IS dynamically recalculated: if the crew member owns a boat
+     * in the fleet, their rank_flexibility is set to 0 (higher priority).
      */
     public function testExecuteRecalculatesAndPersistsFlexibilityRanks(): void
     {
         // Arrange: Create flex user (John Doe owns boat AND is crew)
 
-        // Create boat owned by John Doe
+        // Create boat owned by John Doe with rank_flexibility=1 (not willing to crew)
         $stmt = $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               owner_email, min_berths, max_berths, assistance_required,
@@ -703,11 +705,11 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         // Act: Run season update
         $this->useCase->execute();
 
-        // Assert: Verify flexibility ranks updated to 0 (flexible) in database
+        // Assert: Boat flex rank is preserved (explicit preference, not recalculated by pipeline)
         $boatRankAfter = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
         $crewRankAfter = $this->pdo->query("SELECT rank_flexibility FROM crews WHERE id = $crewId")->fetchColumn();
 
-        $this->assertEquals(0, (int)$boatRankAfter, 'Boat flexibility should be 0 (owner is crew)');
-        $this->assertEquals(0, (int)$crewRankAfter, 'Crew flexibility should be 0 (crew owns boat)');
+        $this->assertEquals(1, (int)$boatRankAfter, 'Boat flexibility should be preserved as 1 (explicit preference, not recalculated)');
+        $this->assertEquals(0, (int)$crewRankAfter, 'Crew flexibility should be 0 (dynamically recalculated: crew owns a boat)');
     }
 }
