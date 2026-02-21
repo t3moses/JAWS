@@ -580,6 +580,56 @@ class SelectionServiceTest extends TestCase
         $this->assertEquals(3, $occupiedBerths);
     }
 
+    // Proves that case3() respects the berths the owner offered for the specific event,
+    // not the boat's physical maximum capacity.
+    // Regression test for bug where getMaxBerths() was used instead of getBerths($eventId).
+    public function testCase3RespectsEventOfferedBerthsNotPhysicalMax(): void
+    {
+        // Boat A: physical max 5, but owner only offers 1 berth for this event
+        $boat1 = $this->createBoat('sailaway', 1, 5, Rank::forBoat(flexibility: 0, absence: 0));
+        $boat1->setBerths($this->eventId, 1); // override the createBoat default (which sets to maxBerths)
+
+        // Boat B: physical max 2, offers 2 berths for this event (createBoat default is fine)
+        $boat2 = $this->createBoat('seabreeze', 1, 2, Rank::forBoat(flexibility: 0, absence: 0));
+
+        // 3 crews = total offered berths (1+2) — perfect fit → case3
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
+
+        $this->service->select([$boat1, $boat2], [$crew1, $crew2, $crew3], $this->eventId);
+
+        $selectedBoats = $this->service->getSelectedBoats();
+        $this->assertCount(2, $selectedBoats);
+        $this->assertCount(3, $this->service->getSelectedCrews());
+        $this->assertEmpty($this->service->getWaitlistBoats());
+        $this->assertEmpty($this->service->getWaitlistCrews());
+
+        // No boat's occupied_berths should exceed what the owner offered for this event
+        foreach ($selectedBoats as $boat) {
+            $this->assertLessThanOrEqual(
+                $boat->getBerths($this->eventId),
+                $boat->occupied_berths,
+                sprintf(
+                    'Boat %s: occupied_berths (%d) must not exceed event-offered berths (%d)',
+                    $boat->getKey()->toString(),
+                    $boat->occupied_berths,
+                    $boat->getBerths($this->eventId)
+                )
+            );
+        }
+
+        // Verify exact distribution: sailaway gets its 1 offered berth, seabreeze absorbs the rest
+        $boatsByKey = [];
+        foreach ($selectedBoats as $b) {
+            $boatsByKey[$b->getKey()->toString()] = $b;
+        }
+        $this->assertEquals(1, $boatsByKey['sailaway']->occupied_berths,
+            'sailaway offered 1 berth; must not be over-assigned');
+        $this->assertEquals(2, $boatsByKey['seabreeze']->occupied_berths,
+            'seabreeze offered 2 berths; should absorb the extra crew');
+    }
+
     // Tests that boat and crew entities maintain their identity after selection
     public function testSelectMaintainsBoatAndCrewIntegrity(): void
     {
