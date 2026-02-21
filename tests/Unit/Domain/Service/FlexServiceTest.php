@@ -60,49 +60,29 @@ class FlexServiceTest extends TestCase
         return $crew;
     }
 
-    // Tests that boat owner is identified as flex when they are also in the crew squad
-    public function testIsBoatOwnerFlexReturnsTrueWhenOwnerIsCrew(): void
+    // Tests that boat owner is identified as flex when rank_flexibility is 0
+    public function testIsBoatOwnerFlexReturnsTrueWhenFlexibilityRankIsZero(): void
     {
         // Arrange
         $boat = $this->createBoat('sailaway', 'John', 'Doe');
-        $crew = $this->createCrew('John', 'Doe');
-
-        $squad = new Squad();
-        $squad->add($crew);
+        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, 0);
 
         // Act
-        $result = $this->service->isBoatOwnerFlex($boat, $squad);
+        $result = $this->service->isBoatOwnerFlex($boat, new Squad());
 
         // Assert
         $this->assertTrue($result);
     }
 
-    // Tests that boat owner is not flex when they are not in the crew squad
-    public function testIsBoatOwnerFlexReturnsFalseWhenOwnerIsNotCrew(): void
+    // Tests that boat owner is not flex when rank_flexibility is 1 (default)
+    public function testIsBoatOwnerFlexReturnsFalseWhenFlexibilityRankIsOne(): void
     {
         // Arrange
         $boat = $this->createBoat('sailaway', 'John', 'Doe');
-        $crew = $this->createCrew('Jane', 'Smith');
-
-        $squad = new Squad();
-        $squad->add($crew);
+        // Default rank has flexibility=1
 
         // Act
-        $result = $this->service->isBoatOwnerFlex($boat, $squad);
-
-        // Assert
-        $this->assertFalse($result);
-    }
-
-    // Tests that boat owner is not flex when the crew squad is empty
-    public function testIsBoatOwnerFlexReturnsFalseWhenSquadIsEmpty(): void
-    {
-        // Arrange
-        $boat = $this->createBoat('sailaway', 'John', 'Doe');
-        $squad = new Squad();
-
-        // Act
-        $result = $this->service->isBoatOwnerFlex($boat, $squad);
+        $result = $this->service->isBoatOwnerFlex($boat, new Squad());
 
         // Assert
         $this->assertFalse($result);
@@ -156,35 +136,29 @@ class FlexServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    // Tests that boat flexibility rank is set to 0 when owner is in the crew squad
+    // Tests that boat flexibility rank stays 0 when rank_flexibility is already 0
     public function testUpdateBoatFlexRankSetsZeroWhenFlex(): void
     {
         // Arrange
         $boat = $this->createBoat('sailaway', 'John', 'Doe');
-        $crew = $this->createCrew('John', 'Doe');
-
-        $squad = new Squad();
-        $squad->add($crew);
+        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, 0);
 
         // Act
-        $this->service->updateBoatFlexRank($boat, $squad);
+        $this->service->updateBoatFlexRank($boat, new Squad());
 
         // Assert
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
     }
 
-    // Tests that boat flexibility rank is set to 1 when owner is not in the crew squad
+    // Tests that boat flexibility rank stays 1 when rank_flexibility is already 1 (default)
     public function testUpdateBoatFlexRankSetsOneWhenNotFlex(): void
     {
         // Arrange
         $boat = $this->createBoat('sailaway', 'John', 'Doe');
-        $crew = $this->createCrew('Jane', 'Smith');
-
-        $squad = new Squad();
-        $squad->add($crew);
+        // Default rank has flexibility=1
 
         // Act
-        $this->service->updateBoatFlexRank($boat, $squad);
+        $this->service->updateBoatFlexRank($boat, new Squad());
 
         // Assert
         $this->assertEquals(1, $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
@@ -231,24 +205,19 @@ class FlexServiceTest extends TestCase
         $boat1 = $this->createBoat('sailaway', 'John', 'Doe');
         $boat2 = $this->createBoat('seabreeze', 'Jane', 'Smith');
 
-        $crew1 = $this->createCrew('John', 'Doe');
-        $crew2 = $this->createCrew('Bob', 'Jones');
+        // boat1 willing to crew, boat2 not
+        $boat1->setRankDimension(BoatRankDimension::FLEXIBILITY, 0);
+        // boat2 keeps default flexibility=1
 
         $fleet = new Fleet();
         $fleet->add($boat1);
         $fleet->add($boat2);
 
-        $squad = new Squad();
-        $squad->add($crew1);
-        $squad->add($crew2);
-
         // Act
-        $this->service->updateAllBoatFlexRanks($fleet, $squad);
+        $this->service->updateAllBoatFlexRanks($fleet, new Squad());
 
         // Assert
-        // boat1 owner is crew1, so flex
         $this->assertEquals(0, $boat1->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
-        // boat2 owner is not in squad, so not flex
         $this->assertEquals(1, $boat2->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
     }
 
@@ -285,6 +254,7 @@ class FlexServiceTest extends TestCase
     {
         // Arrange
         $boat = $this->createBoat('sailaway', 'John', 'Doe');
+        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, 0); // owner willing to crew
         $crew = $this->createCrew('John', 'Doe');
 
         $fleet = new Fleet();
@@ -297,22 +267,26 @@ class FlexServiceTest extends TestCase
         $this->service->updateAllFlexRanks($fleet, $squad);
 
         // Assert
-        // Both should be flex
+        // Boat: retains flexibility=0 (willing to crew)
         $this->assertEquals(0, $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
+        // Crew: owns a boat in the fleet, so flex
         $this->assertEquals(0, $crew->getRank()->getDimension(CrewRankDimension::FLEXIBILITY));
     }
 
-    // Tests flexibility calculation with multiple boats and crews in various ownership scenarios
+    // Tests flexibility calculation with multiple boats and crews in various scenarios
     public function testFlexWithMultipleBoatsAndCrews(): void
     {
         // Arrange
-        // Create 2 boats and 3 crews
-        // Boat 1 owned by Crew 1 (flex)
-        // Boat 2 owned by someone not in crew (not flex)
-        // Crew 3 doesn't own any boat (not flex)
+        // Boat 1: owner willing to crew (flex)
+        // Boat 2: owner not willing to crew (not flex)
+        // Crew 1: owns boat 1 (flex)
+        // Crew 2 & 3: don't own any boat (not flex)
 
         $boat1 = $this->createBoat('sailaway', 'John', 'Doe');
         $boat2 = $this->createBoat('seabreeze', 'Unknown', 'Owner');
+
+        $boat1->setRankDimension(BoatRankDimension::FLEXIBILITY, 0); // willing to crew
+        // boat2 keeps default flexibility=1
 
         $crew1 = $this->createCrew('John', 'Doe');
         $crew2 = $this->createCrew('Jane', 'Smith');
@@ -331,9 +305,9 @@ class FlexServiceTest extends TestCase
         $this->service->updateAllFlexRanks($fleet, $squad);
 
         // Assert
-        // Boat 1: owner is crew 1 (flex)
+        // Boat 1: willing to crew (flex)
         $this->assertEquals(0, $boat1->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
-        // Boat 2: owner not in squad (not flex)
+        // Boat 2: not willing to crew (not flex)
         $this->assertEquals(1, $boat2->getRank()->getDimension(BoatRankDimension::FLEXIBILITY));
 
         // Crew 1: owns boat 1 (flex)

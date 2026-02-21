@@ -171,6 +171,13 @@ if (user.accountType === 'crew') {
             </label>
         </div>
 
+        <div class="form-group">
+            <label style="display: flex; align-items: flex-start; cursor: pointer;">
+                <input type="checkbox" id="willing_to_crew" name="willing_to_crew" style="width: auto; margin-right: 0.75rem; margin-top: 0.25rem;" ${user.profile.willingToCrew ? 'checked' : ''}>
+                <span>I would be willing to crew on another boat if there aren't enough crew for an event</span>
+            </label>
+        </div>
+
         <h2 style="margin-top: 4rem; margin-bottom: 2rem;">Change Password (Optional)</h2>
 
         <div class="form-group">
@@ -258,7 +265,8 @@ document.getElementById('edit-profile-form').addEventListener('submit', async fu
             minBerths: document.getElementById('min_crew').value,
             maxBerths: document.getElementById('max_crew').value,
             assistanceRequired: document.getElementById('request_first_mate').checked,
-            socialPreference: document.getElementById('whatsapp_group').checked
+            socialPreference: document.getElementById('whatsapp_group').checked,
+            willingToCrew: document.getElementById('willing_to_crew').checked
         };
     }
 

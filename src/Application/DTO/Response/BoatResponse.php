@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\DTO\Response;
 
 use App\Domain\Entity\Boat;
+use App\Domain\Enum\BoatRankDimension;
 
 /**
  * Boat Response DTO
@@ -24,6 +25,7 @@ final readonly class BoatResponse
         public int $maxBerths,
         public bool $assistanceRequired,
         public bool $socialPreference,
+        public bool $willingToCrew,
         public array $rank,
         public array $availabilities,
         public array $history,
@@ -46,6 +48,7 @@ final readonly class BoatResponse
             maxBerths: $boat->getMaxBerths(),
             assistanceRequired: $boat->requiresAssistance(),
             socialPreference: $boat->hasSocialPreference(),
+            willingToCrew: $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY) === 0,
             rank: $boat->getRank()->toArray(),
             availabilities: $boat->getAllBerths(),
             history: $boat->getAllHistory(),
@@ -70,6 +73,7 @@ final readonly class BoatResponse
             'maxBerths' => $this->maxBerths,
             'assistanceRequired' => $this->assistanceRequired,
             'socialPreference' => $this->socialPreference,
+            'willingToCrew' => $this->willingToCrew,
             'rank' => $this->rank,
             'availabilities' => $this->availabilities,
             'history' => $this->history,

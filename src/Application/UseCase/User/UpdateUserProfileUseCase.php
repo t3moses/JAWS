@@ -184,9 +184,23 @@ class UpdateUserProfileUseCase
         if (isset($profile['socialPreference'])) {
             $boat->setSocialPreference($profile['socialPreference']);
         }
+        if (isset($profile['willingToCrew'])) {
+            $boat->setRankDimension(
+                \App\Domain\Enum\BoatRankDimension::FLEXIBILITY,
+                ((bool)$profile['willingToCrew']) ? 0 : 1
+            );
+        }
 
-        // Restore original rank before saving to avoid overwriting flexibility
-        $boat->setRank($originalRank);
+        // Restore original rank to avoid overwriting pipeline-managed values,
+        // but carry forward any willingToCrew change in the flexibility dimension
+        $rankToRestore = $originalRank;
+        if (isset($profile['willingToCrew'])) {
+            $rankToRestore = $rankToRestore->withDimension(
+                \App\Domain\Enum\BoatRankDimension::FLEXIBILITY,
+                ((bool)$profile['willingToCrew']) ? 0 : 1
+            );
+        }
+        $boat->setRank($rankToRestore);
 
         $this->boatRepository->save($boat);
     }

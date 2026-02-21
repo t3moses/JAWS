@@ -33,15 +33,7 @@ class FlexService
      */
     public function isBoatOwnerFlex(Boat $boat, Squad $squad): bool
     {
-        $ownerKey = $boat->getOwnerKey();
-
-        foreach ($squad->all() as $crew) {
-            if ($crew->getKey()->equals($ownerKey)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $boat->getRank()->getDimension(BoatRankDimension::FLEXIBILITY) === 0;
     }
 
     /**
