@@ -541,43 +541,4 @@ class UpdateCrewAvailabilityUseCaseTest extends IntegrationTestCase
         $this->assertEquals(AvailabilityStatus::UNAVAILABLE->value, $this->getCrewAvailability('crew_2', 'Fri May 15'));
     }
 
-    /**
-     * Test: Updating crew availability preserves flexibility rank
-     *
-     * Verifies that UpdateCrewAvailabilityUseCase doesn't overwrite
-     * the flexibility rank when updating availability. This is critical
-     * because flex status (crew who owns a boat) should only be set
-     * during FlexService::updateAllFlexRanks() and not modified by
-     * availability updates.
-     */
-    public function testUpdateAvailabilityPreservesFlexibilityRank(): void
-    {
-        // Arrange - Create crew with flexibility rank = 0 (flex crew member)
-        $userId = $this->createTestUser();
-        $crewKey = $this->createCrewProfileForUser($userId);
-
-        // Set flexibility rank to 0 in database (simulating flex status)
-        $stmt = $this->pdo->prepare('UPDATE crews SET rank_flexibility = 0 WHERE user_id = :userId');
-        $stmt->execute(['userId' => $userId]);
-
-        // Verify initial flexibility rank is 0
-        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM crews WHERE user_id = :userId');
-        $stmt->execute(['userId' => $userId]);
-        $initialRank = $stmt->fetchColumn();
-        $this->assertEquals(0, (int)$initialRank, 'Initial flexibility rank should be 0');
-
-        $request = new UpdateAvailabilityRequest([
-            ['eventId' => 'Fri May 15', 'isAvailable' => true],
-            ['eventId' => 'Fri May 22', 'isAvailable' => false],
-        ]);
-
-        // Act - Update availability
-        $this->useCase->execute($userId, $request);
-
-        // Assert - Verify flexibility rank is still 0 after update
-        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM crews WHERE user_id = :userId');
-        $stmt->execute(['userId' => $userId]);
-        $finalRank = $stmt->fetchColumn();
-        $this->assertEquals(0, (int)$finalRank, 'Flexibility rank should remain 0 after availability update');
-    }
 }
