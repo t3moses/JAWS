@@ -61,7 +61,6 @@ class CrewTest extends TestCase
         $rank = $crew->getRank();
         // Assert
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::COMMITMENT));
-        $this->assertEquals(1, $rank->getDimension(CrewRankDimension::FLEXIBILITY));
         $this->assertEquals(1, $rank->getDimension(CrewRankDimension::MEMBERSHIP)); // Valid membership number '12345'
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::ABSENCE));
     }
@@ -195,7 +194,6 @@ class CrewTest extends TestCase
         $crew = $this->createCrew();
         $rank = Rank::forCrew(
             commitment: 1,
-            flexibility: 0,
             membership: 1,
             absence: 2
         );

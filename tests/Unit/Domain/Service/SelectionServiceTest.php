@@ -93,10 +93,10 @@ class SelectionServiceTest extends TestCase
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
 
         // Act
         $this->service->select(
@@ -121,10 +121,10 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 3, Rank::forBoat(flexibility: 0, absence: 1));
         $boat3 = $this->createBoat('windseeker', 2, 3, Rank::forBoat(flexibility: 0, absence: 2));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
 
         // Act
         $this->service->select(
@@ -151,12 +151,12 @@ class SelectionServiceTest extends TestCase
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
-        $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 4));
-        $crew6 = $this->createCrew('frank', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 5));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
+        $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, membership: 0, absence: 4));
+        $crew6 = $this->createCrew('frank', Rank::forCrew(commitment: 0, membership: 0, absence: 5));
 
         // Act
         $this->service->select(
@@ -181,11 +181,11 @@ class SelectionServiceTest extends TestCase
         $boat1 = $this->createBoat('sailaway', 2, 3, Rank::forBoat(flexibility: 0, absence: 0));
         $boat2 = $this->createBoat('seabreeze', 2, 3, Rank::forBoat(flexibility: 0, absence: 1));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
-        $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 4));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
+        $crew5 = $this->createCrew('eve', Rank::forCrew(commitment: 0, membership: 0, absence: 4));
 
         // Act
         $this->service->select(
@@ -209,8 +209,8 @@ class SelectionServiceTest extends TestCase
     //     $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
     //     $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
 
-    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
     //     $this->service->select(
     //         [$boat1, $boat2, $boat3],
@@ -229,9 +229,9 @@ class SelectionServiceTest extends TestCase
     // {
     //     $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
-    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-    //     $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+    //     $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
     //     $this->service->select(
     //         [$boat1],
@@ -255,8 +255,8 @@ class SelectionServiceTest extends TestCase
     //     $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
     //     $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 2));
 
-    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
     //     $this->service->select(
     //         [$boat1, $boat2, $boat3],
@@ -279,10 +279,10 @@ class SelectionServiceTest extends TestCase
     //     // 1 boat with 2 berths, but 4 crews
     //     $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
-    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-    //     $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-    //     $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
+    //     $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+    //     $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+    //     $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+    //     $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
 
     //     $this->service->select(
     //         [$boat1],
@@ -336,8 +336,8 @@ class SelectionServiceTest extends TestCase
     public function testSelectWithOnlyCrewsNoBoats(): void
     {
         // Arrange
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
         // Act
         $this->service->select([], [$crew1, $crew2], $this->eventId);
@@ -357,9 +357,9 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
 
         // Act
         // First selection
@@ -394,9 +394,9 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
 
         $eventId1 = EventId::fromString('Fri May 29');
         $eventId2 = EventId::fromString('Sat May 30');
@@ -428,8 +428,8 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 1, absence: 3));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 2, absence: 1));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 1, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 2, flexibility: 0, membership: 0, absence: 0));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 1, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 2, membership: 0, absence: 0));
 
         // Act
         $this->service->select(
@@ -458,10 +458,10 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 2));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
 
         // Act
         $this->service->select(
@@ -486,10 +486,10 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 1, 3, Rank::forBoat(flexibility: 0, absence: 1));
 
         // 4 crews - should distribute evenly (2 per boat)
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
-        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 3));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
+        $crew4 = $this->createCrew('dave', Rank::forCrew(commitment: 0, membership: 0, absence: 3));
 
         // Act
         $this->service->select(
@@ -515,8 +515,8 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 1));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 2));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
         // Act
         // This should complete quickly without many comparisons
@@ -540,8 +540,8 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
         $boat3 = $this->createBoat('windseeker', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
 
         // Act
         $this->service->select(
@@ -563,9 +563,9 @@ class SelectionServiceTest extends TestCase
         $boat1 = $this->createBoat('sailaway', 2, 4, Rank::forBoat(flexibility: 0, absence: 0));
 
         // 3 crews - should fit on one boat with flexible berths
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
 
         // Act
         $this->service->select([$boat1], [$crew1, $crew2, $crew3], $this->eventId);
@@ -593,9 +593,9 @@ class SelectionServiceTest extends TestCase
         $boat2 = $this->createBoat('seabreeze', 1, 2, Rank::forBoat(flexibility: 0, absence: 0));
 
         // 3 crews = total offered berths (1+2) — perfect fit → case3
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
-        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 2));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
+        $crew3 = $this->createCrew('charlie', Rank::forCrew(commitment: 0, membership: 0, absence: 2));
 
         $this->service->select([$boat1, $boat2], [$crew1, $crew2, $crew3], $this->eventId);
 
@@ -635,8 +635,8 @@ class SelectionServiceTest extends TestCase
     {
         // Arrange
         $boat1 = $this->createBoat('sailaway', 2, 2, Rank::forBoat(flexibility: 0, absence: 0));
-        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 0));
-        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, flexibility: 0, membership: 0, absence: 1));
+        $crew1 = $this->createCrew('alice', Rank::forCrew(commitment: 0, membership: 0, absence: 0));
+        $crew2 = $this->createCrew('bob', Rank::forCrew(commitment: 0, membership: 0, absence: 1));
 
         $originalBoatKey = $boat1->getKey()->toString();
         $originalCrew1Key = $crew1->getKey()->toString();

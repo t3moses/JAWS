@@ -24,12 +24,10 @@ class RankingService
     /**
      * Calculate initial rank for a crew
      *
-     * Crew members never own boats (single-role registration), so flexibility is always 1.
-     *
      * @param Crew $crew Crew entity
      * @param array<string> $pastEventIds Past event IDs for absence calculation
      * @param EventId|null $nextEventId Next event for commitment calculation (optional)
-     * @return Rank Calculated crew rank (4D: commitment, flexibility, membership, absence)
+     * @return Rank Calculated crew rank (3D: commitment, membership, absence)
      */
     public function calculateCrewRank(
         Crew $crew,
@@ -49,9 +47,6 @@ class RankingService
             };
         }
 
-        // Crew members never own boats (single-role registration)
-        $flexibility = 1;
-
         // Calculate membership (has valid membership number)
         $membership = Crew::calculateMembershipRank($crew->getMembershipNumber());
 
@@ -64,7 +59,7 @@ class RankingService
             }
         }
 
-        return Rank::forCrew($commitment, $flexibility, $membership, $absence);
+        return Rank::forCrew($commitment, $membership, $absence);
     }
 
     /**

@@ -12,7 +12,7 @@ use App\Domain\Enum\CrewRankDimension;
  *
  * Immutable multi-dimensional rank tensor for boats and crews.
  * Boats have 2 dimensions: [flexibility, absence]
- * Crews have 4 dimensions: [commitment, flexibility, membership, absence]
+ * Crews have 3 dimensions: [commitment, membership, absence]
  *
  * Rankings are compared lexicographically (left to right).
  * Higher rank values = higher priority (SelectionService sorts descending).
@@ -42,22 +42,19 @@ final readonly class Rank
     }
 
     /**
-     * Create crew rank (4D)
+     * Create crew rank (3D)
      *
      * @param int $commitment Availability for next event
-     * @param int $flexibility 0=flexible (owns boat), 1=inflexible
      * @param int $membership 0=non-member, 1=member
      * @param int $absence Count of past no-shows
      */
     public static function forCrew(
         int $commitment,
-        int $flexibility,
         int $membership,
         int $absence
     ): self {
         return new self([
             CrewRankDimension::COMMITMENT->value => $commitment,
-            CrewRankDimension::FLEXIBILITY->value => $flexibility,
             CrewRankDimension::MEMBERSHIP->value => $membership,
             CrewRankDimension::ABSENCE->value => $absence,
         ]);

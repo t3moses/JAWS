@@ -440,10 +440,8 @@ class CrewRepository implements CrewRepositoryInterface
             $crew->setUserId((int)$row['user_id']);
         }
 
-        // Set rank (flexibility is always 1 — crew members cannot own boats under single-role model)
         $rank = Rank::forCrew(
             commitment: (int)$row['rank_commitment'],
-            flexibility: 1,
             membership: (int)$row['rank_membership'],
             absence: (int)$row['rank_absence']
         );
@@ -637,10 +635,8 @@ class CrewRepository implements CrewRepositoryInterface
         $crew->setId((int)$row['id']);
         $crew->setEmail($row['email']);
 
-        // Set rank (flexibility is always 1 — crew members cannot own boats under single-role model)
         $rank = Rank::forCrew(
             commitment: (int)$row['rank_commitment'],
-            flexibility: 1,
             membership: (int)$row['rank_membership'],
             absence: (int)$row['rank_absence']
         );

@@ -385,7 +385,6 @@ class ProcessSeasonUpdateUseCase
                     'experience' => null,
                     'rank' => Rank::forCrew(
                         commitment: 2,    // Available (willing to crew)
-                        flexibility: 0,   // Owns a boat (flex priority)
                         membership: 1,    // Club member (implied by boat ownership)
                         absence: 0        // No crew absence history
                     )->toArray(),

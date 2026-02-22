@@ -49,7 +49,6 @@ class Crew
         // Initialize default rank
         $this->rank = Rank::forCrew(
             commitment: 0,   // Default: unavailable
-            flexibility: 1,  // Default: inflexible (not boat owner)
             membership: self::calculateMembershipRank($membershipNumber),
             absence: 0       // Default: no absences
         );
