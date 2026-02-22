@@ -26,14 +26,12 @@ class RankTest extends TestCase
         // Arrange
         $rank = Rank::forCrew(
             commitment: 0,
-            flexibility: 1,
             membership: 0,
             absence: 3
         );
 
         // Assert
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::COMMITMENT));
-        $this->assertEquals(1, $rank->getDimension(CrewRankDimension::FLEXIBILITY));
         $this->assertEquals(0, $rank->getDimension(CrewRankDimension::MEMBERSHIP));
         $this->assertEquals(3, $rank->getDimension(CrewRankDimension::ABSENCE));
     }
@@ -53,9 +51,9 @@ class RankTest extends TestCase
         $rank = Rank::forBoat(flexibility: 1, absence: 2);
 
         // Trying to get a dimension beyond the array bounds returns 0
-        // Boat ranks have indices 0 and 1, crew MEMBERSHIP is index 2 which doesn't exist in boat rank
+        // Boat ranks have indices 0 and 1, crew ABSENCE is index 2 which doesn't exist in boat rank
         // Assert
-        $this->assertEquals(0, $rank->getDimension(CrewRankDimension::MEMBERSHIP));
+        $this->assertEquals(0, $rank->getDimension(CrewRankDimension::ABSENCE));
     }
 
     public function testToArrayReturnsAllValues(): void
@@ -225,10 +223,9 @@ class RankTest extends TestCase
     public function testCompareToWithDifferentDimensionCounts(): void
     {
         // Arrange
-        $boatRank = Rank::forBoat(flexibility: 1, absence: 2);
+        $boatRank = Rank::forBoat(flexibility: 1, absence: 0);
         $crewRank = Rank::forCrew(
             commitment: 1,
-            flexibility: 2,
             membership: 0,
             absence: 3
         );
@@ -237,8 +234,8 @@ class RankTest extends TestCase
         // Act
         $result = $boatRank->compareTo($crewRank);
 
-        // First dimension: 1 vs 1 (equal), second dimension: 2 vs 2 (equal)
-        // But crew has more dimensions, so they're not equal overall
+        // First dimension: 1 vs 1 (equal), second dimension: 0 vs 0 (equal)
+        // But crew has more dimensions (absence=3), so boat rank is less overall
         // Assert
         $this->assertLessThan(0, $result);
     }

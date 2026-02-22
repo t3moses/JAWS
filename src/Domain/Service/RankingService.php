@@ -11,7 +11,6 @@ use App\Domain\ValueObject\Rank;
 use App\Domain\Enum\BoatRankDimension;
 use App\Domain\Enum\CrewRankDimension;
 use App\Domain\Enum\AvailabilityStatus;
-use App\Domain\Collection\Fleet;
 use App\Domain\Collection\Squad;
 
 /**
@@ -28,14 +27,12 @@ class RankingService
      * @param Crew $crew Crew entity
      * @param array<string> $pastEventIds Past event IDs for absence calculation
      * @param EventId|null $nextEventId Next event for commitment calculation (optional)
-     * @param Fleet|null $fleet Fleet for flexibility calculation (optional)
-     * @return Rank Calculated crew rank (4D: commitment, flexibility, membership, absence)
+     * @return Rank Calculated crew rank (3D: commitment, membership, absence)
      */
     public function calculateCrewRank(
         Crew $crew,
         array $pastEventIds,
-        ?EventId $nextEventId = null,
-        ?Fleet $fleet = null
+        ?EventId $nextEventId = null
     ): Rank {
         // Calculate commitment (availability for next event)
         // Higher value = higher priority (SelectionService sorts descending)
@@ -50,18 +47,6 @@ class RankingService
             };
         }
 
-        // Calculate flexibility (whether crew owns a boat)
-        $flexibility = 1; // Default: not flexible
-        if ($fleet !== null) {
-            $crewKey = $crew->getKey();
-            foreach ($fleet->all() as $boat) {
-                if ($boat->getOwnerKey()->equals($crewKey)) {
-                    $flexibility = 0; // Flexible (owns boat)
-                    break;
-                }
-            }
-        }
-
         // Calculate membership (has valid membership number)
         $membership = Crew::calculateMembershipRank($crew->getMembershipNumber());
 
@@ -74,7 +59,7 @@ class RankingService
             }
         }
 
-        return Rank::forCrew($commitment, $flexibility, $membership, $absence);
+        return Rank::forCrew($commitment, $membership, $absence);
     }
 
     /**

@@ -14,12 +14,11 @@ namespace App\Domain\Enum;
 enum CrewRankDimension: int
 {
     case COMMITMENT = 0;   // Availability for next event
-    case FLEXIBILITY = 1;  // 0=flexible (owns boat), 1=inflexible
-    case MEMBERSHIP = 2;   // 0=non-member, 1=member
-    case ABSENCE = 3;      // Count of past no-shows
+    case MEMBERSHIP = 1;   // 0=non-member, 1=member
+    case ABSENCE = 2;      // Count of past no-shows
 
     /**
-     * Get all crew rank dimensions in order
+     * Get all crew rank dimensions in order (3D)
      *
      * @return array<CrewRankDimension>
      */
@@ -27,7 +26,6 @@ enum CrewRankDimension: int
     {
         return [
             self::COMMITMENT,
-            self::FLEXIBILITY,
             self::MEMBERSHIP,
             self::ABSENCE,
         ];

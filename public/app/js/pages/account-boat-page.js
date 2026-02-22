@@ -44,7 +44,8 @@ document.querySelector('form').addEventListener('submit', async function(e) {
             minBerths: document.getElementById('min_crew').value,
             maxBerths: document.getElementById('max_crew').value,
             assistanceRequired: document.getElementById('request_first_mate').checked,
-            socialPreference: document.getElementById('whatsapp_group').checked
+            socialPreference: document.getElementById('whatsapp_group').checked,
+            willingToCrew: document.getElementById('willing_to_crew').checked
         }
     };
 

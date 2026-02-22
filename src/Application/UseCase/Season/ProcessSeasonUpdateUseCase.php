@@ -14,10 +14,12 @@ use App\Domain\Entity\Boat;
 use App\Domain\Entity\Crew;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
-use App\Domain\Service\FlexService;
 use App\Domain\Service\RankingService;
 use App\Domain\ValueObject\EventId;
+use App\Domain\ValueObject\CrewKey;
+use App\Domain\ValueObject\Rank;
 use App\Domain\Enum\AvailabilityStatus;
+use App\Domain\Enum\SkillLevel;
 
 /**
  * Process Season Update Use Case
@@ -45,7 +47,6 @@ class ProcessSeasonUpdateUseCase
         private SeasonRepositoryInterface $seasonRepository,
         private SelectionService $selectionService,
         private AssignmentService $assignmentService,
-        private FlexService $flexService,
         private RankingService $rankingService,
     ) {
     }
@@ -63,13 +64,6 @@ class ProcessSeasonUpdateUseCase
         $futureEvents = $this->eventRepository->findFutureEvents();
         $nextEventId = $this->eventRepository->findNextEvent();
 
-        // Recalculate flexibility ranks based on current fleet/squad composition
-        // This ensures flex status is accurate before selection runs
-        $this->flexService->updateAllFlexRanks($fleet, $squad);
-
-        // Persist updated flexibility ranks to database
-        $this->persistFlexRanks($fleet, $squad);
-
         $eventsProcessed = 0;
         $flotillasGenerated = 0;
         $modifiedCrews = [];
@@ -80,6 +74,13 @@ class ProcessSeasonUpdateUseCase
 
             // Phase 1: Selection (rank and capacity match)
             $selectionResult = $this->runSelection($fleet, $squad, $eventId);
+
+            // Add flex boat owners to crew waitlist when their boat is cut
+            $flexCrewEntries = $this->buildFlexCrewEntries($selectionResult['waitlisted_boats']);
+            $selectionResult['waitlisted_crews'] = array_merge(
+                $selectionResult['waitlisted_crews'],
+                $flexCrewEntries
+            );
 
             // Phase 2: Event consolidation (form flotilla structure)
             $flotilla = $this->consolidateEvent(
@@ -316,7 +317,7 @@ class ProcessSeasonUpdateUseCase
 
         $serializedWaitlistCrews = [];
         foreach ($flotilla['waitlist_crews'] as $crew) {
-            $serializedWaitlistCrews[] = $crew->toArray();
+            $serializedWaitlistCrews[] = is_array($crew) ? $crew : $crew->toArray();
         }
 
         return [
@@ -353,31 +354,48 @@ class ProcessSeasonUpdateUseCase
     }
 
     /**
-     * Persist updated flexibility ranks to database (ONLY rank_flexibility column)
+     * Build synthetic crew waitlist entries for flex boat owners whose boat was cut
      *
-     * After FlexService updates flexibility ranks in memory based on current
-     * fleet/squad composition, save the rank_flexibility values to database.
-     * Uses targeted updateRankFlexibility() methods to update only the
-     * rank_flexibility column, avoiding side effects from full entity saves
-     * which would also update availability and history.
+     * When a flex boat (rank_flexibility=0) is waitlisted, its owner should appear
+     * in the crew waitlist so they can be considered for assignment to other boats.
      *
-     * Note: Currently updates ALL boats/crews. Future optimization could track
-     * which ranks actually changed and only persist those.
-     *
-     * @param Fleet $fleet Fleet with updated boat flexibility ranks
-     * @param Squad $squad Squad with updated crew flexibility ranks
+     * @param array<Boat> $waitlistedBoats Boats that were not selected
+     * @return array<array<string, mixed>> Synthetic crew entries for flex boat owners
      */
-    private function persistFlexRanks(Fleet $fleet, Squad $squad): void
+    private function buildFlexCrewEntries(array $waitlistedBoats): array
     {
-        // Update only boat rank_flexibility column directly
-        foreach ($fleet->all() as $boat) {
-            $this->boatRepository->updateRankFlexibility($boat);
+        $entries = [];
+        foreach ($waitlistedBoats as $boat) {
+            if ($boat->isWillingToCrew()) {
+                $entries[] = [
+                    'id' => null,
+                    'key' => CrewKey::fromName(
+                        $boat->getOwnerFirstName(),
+                        $boat->getOwnerLastName()
+                    )->toString(),
+                    'display_name' => $boat->getOwnerDisplayName(),
+                    'first_name' => $boat->getOwnerFirstName(),
+                    'last_name' => $boat->getOwnerLastName(),
+                    'partner_key' => null,
+                    'email' => $boat->getOwnerEmail(),
+                    'mobile' => $boat->getOwnerMobile(),
+                    'social_preference' => $boat->hasSocialPreference(),
+                    'membership_number' => '99999',
+                    'skill' => SkillLevel::ADVANCED->value,
+                    'experience' => null,
+                    'rank' => Rank::forCrew(
+                        commitment: 2,    // Available (willing to crew)
+                        membership: 1,    // Club member (implied by boat ownership)
+                        absence: 0        // No crew absence history
+                    )->toArray(),
+                    'availability' => [],
+                    'history' => [],
+                    'whitelist' => [],
+                    'is_flex_owner' => true,
+                ];
+            }
         }
-
-        // Update only crew rank_flexibility column directly
-        foreach ($squad->all() as $crew) {
-            $this->crewRepository->updateRankFlexibility($crew);
-        }
+        return $entries;
     }
 
     /**

@@ -232,25 +232,6 @@ class CrewRepository implements CrewRepositoryInterface
         ]);
     }
 
-    public function updateRankFlexibility(Crew $crew): void
-    {
-        if ($crew->getId() === null) {
-            // Crew not yet persisted, skip update
-            return;
-        }
-
-        $rank = $crew->getRank();
-        $stmt = $this->pdo->prepare('
-            UPDATE crews
-            SET rank_flexibility = :rank_flexibility
-            WHERE id = :id
-        ');
-        $stmt->execute([
-            'id' => $crew->getId(),
-            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
-        ]);
-    }
-
     public function updateRankCommitment(Crew $crew): void
     {
         if ($crew->getId() === null) {
@@ -286,13 +267,13 @@ class CrewRepository implements CrewRepositoryInterface
                 key, display_name, first_name, last_name, partner_key,
                 email, mobile, social_preference, membership_number,
                 skill, experience,
-                rank_commitment, rank_flexibility, rank_membership, rank_absence,
+                rank_commitment, rank_membership, rank_absence,
                 user_id
             ) VALUES (
                 :key, :display_name, :first_name, :last_name, :partner_key,
                 :email, :mobile, :social_preference, :membership_number,
                 :skill, :experience,
-                :rank_commitment, :rank_flexibility, :rank_membership, :rank_absence,
+                :rank_commitment, :rank_membership, :rank_absence,
                 :user_id
             )
         ');
@@ -311,7 +292,6 @@ class CrewRepository implements CrewRepositoryInterface
             'skill' => $crew->getSkill()->value,
             'experience' => $crew->getExperience(),
             'rank_commitment' => $rank->getDimension(CrewRankDimension::COMMITMENT),
-            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
             'rank_membership' => $rank->getDimension(CrewRankDimension::MEMBERSHIP),
             'rank_absence' => $rank->getDimension(CrewRankDimension::ABSENCE),
             'user_id' => $crew->getUserId(),
@@ -341,7 +321,6 @@ class CrewRepository implements CrewRepositoryInterface
                 skill = :skill,
                 experience = :experience,
                 rank_commitment = :rank_commitment,
-                rank_flexibility = :rank_flexibility,
                 rank_membership = :rank_membership,
                 rank_absence = :rank_absence,
                 user_id = :user_id
@@ -362,7 +341,6 @@ class CrewRepository implements CrewRepositoryInterface
             'skill' => $crew->getSkill()->value,
             'experience' => $crew->getExperience(),
             'rank_commitment' => $rank->getDimension(CrewRankDimension::COMMITMENT),
-            'rank_flexibility' => $rank->getDimension(CrewRankDimension::FLEXIBILITY),
             'rank_membership' => $rank->getDimension(CrewRankDimension::MEMBERSHIP),
             'rank_absence' => $rank->getDimension(CrewRankDimension::ABSENCE),
             'user_id' => $crew->getUserId(),
@@ -462,10 +440,8 @@ class CrewRepository implements CrewRepositoryInterface
             $crew->setUserId((int)$row['user_id']);
         }
 
-        // Set rank
         $rank = Rank::forCrew(
             commitment: (int)$row['rank_commitment'],
-            flexibility: (int)$row['rank_flexibility'],
             membership: (int)$row['rank_membership'],
             absence: (int)$row['rank_absence']
         );
@@ -659,10 +635,8 @@ class CrewRepository implements CrewRepositoryInterface
         $crew->setId((int)$row['id']);
         $crew->setEmail($row['email']);
 
-        // Set rank
         $rank = Rank::forCrew(
             commitment: (int)$row['rank_commitment'],
-            flexibility: (int)$row['rank_flexibility'],
             membership: (int)$row['rank_membership'],
             absence: (int)$row['rank_absence']
         );

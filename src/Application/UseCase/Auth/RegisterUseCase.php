@@ -246,6 +246,8 @@ class RegisterUseCase
             throw new ValidationException(['profile' => 'A boat with this name already exists']);
         }
 
+        $willingToCrew = $this->parseYesNo($profile['willingToCrew'] ?? null);
+
         // Create boat entity
         $boat = new Boat(
             key: $boatKey,
@@ -264,6 +266,13 @@ class RegisterUseCase
 
         // Set rank directly
         $boat->setRank($rank);
+
+        // Override flexibility rank based on willingness to crew (calculateBoatRank uses an empty
+        // squad and always returns flexibility=1 regardless of the user's preference)
+        $boat->setRankDimension(
+            \App\Domain\Enum\BoatRankDimension::FLEXIBILITY,
+            $willingToCrew ? 0 : 1
+        );
 
         // Link to user
         $boat->setOwnerUserId($user->getId());

@@ -183,6 +183,11 @@ class Boat
         $this->socialPreference = $preference;
     }
 
+    public function isWillingToCrew(): bool
+    {
+        return $this->rank->getDimension(BoatRankDimension::FLEXIBILITY) === 0;
+    }
+
     // === Ranking ===
 
     public function getRank(): Rank
@@ -279,6 +284,13 @@ class Boat
     public function didParticipate(EventId $eventId): bool
     {
         return $this->getHistory($eventId) === 'Y';
+    }
+
+    // === Display ===
+
+    public function getOwnerDisplayName(): string
+    {
+        return $this->ownerFirstName . strtoupper(substr($this->ownerLastName, 0, 1));
     }
 
     // === Array Conversion (for legacy compatibility) ===

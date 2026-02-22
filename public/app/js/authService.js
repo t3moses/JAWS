@@ -124,7 +124,8 @@ function transformProfile(profileData, accountType) {
             minCrew: String(profileData.minBerths || 1),
             maxCrew: String(profileData.maxBerths || 4),
             requestFirstMate: profileData.assistanceRequired || false,
-            whatsappGroup: profileData.socialPreference || false
+            whatsappGroup: profileData.socialPreference || false,
+            willingToCrew: profileData.willingToCrew || false
         };
     }
 }
