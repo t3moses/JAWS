@@ -36,7 +36,6 @@ use App\Infrastructure\Service\PhpPasswordService;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
 use App\Domain\Service\RankingService;
-use App\Domain\Service\FlexService;
 
 // Simple service container
 class Container
@@ -138,15 +137,8 @@ $container->set(RankingService::class, function ($c) {
     );
 });
 
-$container->set(FlexService::class, function () {
-    return new FlexService();
-});
-
-$container->set(SelectionService::class, function ($c) {
-    return new SelectionService(
-        $c->get(RankingService::class),
-        $c->get(FlexService::class)
-    );
+$container->set(SelectionService::class, function () {
+    return new SelectionService();
 });
 
 $container->set(AssignmentService::class, function () {
@@ -220,7 +212,6 @@ $container->set(\App\Application\UseCase\Season\ProcessSeasonUpdateUseCase::clas
         $c->get(SeasonRepositoryInterface::class),
         $c->get(SelectionService::class),
         $c->get(AssignmentService::class),
-        $c->get(FlexService::class),
         $c->get(RankingService::class)
     );
 });

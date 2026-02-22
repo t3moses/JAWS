@@ -183,6 +183,11 @@ class Boat
         $this->socialPreference = $preference;
     }
 
+    public function isWillingToCrew(): bool
+    {
+        return $this->rank->getDimension(BoatRankDimension::FLEXIBILITY) === 0;
+    }
+
     // === Ranking ===
 
     public function getRank(): Rank

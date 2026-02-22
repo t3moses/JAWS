@@ -421,4 +421,46 @@ class BoatTest extends TestCase
         // Assert
         $this->assertEquals(2, $boat->occupied_berths);
     }
+
+    public function testIsWillingToCrewReturnsTrueWhenFlexibilityRankIsZero(): void
+    {
+        // Arrange
+        $boat = $this->createBoat();
+        $boat->setRankDimension(BoatRankDimension::FLEXIBILITY, 0);
+
+        // Assert
+        $this->assertTrue($boat->isWillingToCrew());
+    }
+
+    public function testIsWillingToCrewReturnsFalseByDefault(): void
+    {
+        // Arrange — default rank has flexibility=1
+        $boat = $this->createBoat();
+
+        // Assert
+        $this->assertFalse($boat->isWillingToCrew());
+    }
+
+    public function testIsWillingToCrewIsBasedOnStoredRankNotOwnerName(): void
+    {
+        // Arrange — two boats with same owner but different flex ranks
+        $flexBoat = $this->createBoat();
+        $flexBoat->setRankDimension(BoatRankDimension::FLEXIBILITY, 0);
+
+        $notFlexBoat = new Boat(
+            key: BoatKey::fromString('seabreeze'),
+            displayName: 'Sea Breeze',
+            ownerFirstName: 'John',
+            ownerLastName: 'Doe',
+            ownerMobile: '555-1234',
+            minBerths: 1,
+            maxBerths: 3,
+            assistanceRequired: false,
+            socialPreference: true
+        );
+
+        // Assert
+        $this->assertTrue($flexBoat->isWillingToCrew());
+        $this->assertFalse($notFlexBoat->isWillingToCrew());
+    }
 }

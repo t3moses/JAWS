@@ -14,7 +14,6 @@ use App\Domain\Entity\Boat;
 use App\Domain\Entity\Crew;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
-use App\Domain\Service\FlexService;
 use App\Domain\Service\RankingService;
 use App\Domain\ValueObject\EventId;
 use App\Domain\ValueObject\CrewKey;
@@ -48,7 +47,6 @@ class ProcessSeasonUpdateUseCase
         private SeasonRepositoryInterface $seasonRepository,
         private SelectionService $selectionService,
         private AssignmentService $assignmentService,
-        private FlexService $flexService,
         private RankingService $rankingService,
     ) {
     }
@@ -368,7 +366,7 @@ class ProcessSeasonUpdateUseCase
     {
         $entries = [];
         foreach ($waitlistedBoats as $boat) {
-            if ($this->flexService->isBoatOwnerFlex($boat)) {
+            if ($boat->isWillingToCrew()) {
                 $entries[] = [
                     'id' => null,
                     'key' => CrewKey::fromName(
