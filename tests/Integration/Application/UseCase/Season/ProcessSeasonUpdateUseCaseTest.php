@@ -13,7 +13,6 @@ use App\Infrastructure\Persistence\SQLite\Connection;
 use App\Domain\Service\SelectionService;
 use App\Domain\Service\AssignmentService;
 use App\Domain\Service\RankingService;
-use App\Domain\Service\FlexService;
 use App\Domain\ValueObject\EventId;
 use App\Domain\Enum\AvailabilityStatus;
 use Tests\Integration\IntegrationTestCase;
@@ -43,8 +42,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->seasonRepository = new SeasonRepository();
 
         // Initialize services
-        $flexService = new FlexService();
-        $rankingService = new RankingService($flexService);
+        $rankingService = new RankingService();
         $selectionService = new SelectionService($rankingService);
         $assignmentService = new AssignmentService();
 
@@ -56,7 +54,6 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
             $this->seasonRepository,
             $selectionService,
             $assignmentService,
-            $flexService,
             $rankingService
         );
     }
@@ -655,18 +652,16 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
     }
 
     /**
-     * Test: execute() preserves flexibility ranks as stored (never dynamically recalculates)
+     * Test: execute() preserves boat flexibility rank as stored (never dynamically recalculates)
      *
      * In the single-role registration model:
      * - Boat flex rank is set at registration (willingToCrew=true → rank_flexibility=0)
      *   and is never changed by the pipeline.
-     * - Crew flex rank is always 1 — crew members never own boats. The pipeline
-     *   does not modify it.
+     * - Crew flex rank is always 1 (hardcoded in repository, not stored in DB).
      */
     public function testExecutePreservesFlexibilityRanksAsStored(): void
     {
-        // Arrange: boat with rank_flexibility=0 (willing to crew) and
-        // crew with rank_flexibility=1 (always, single-role model)
+        // Arrange: boat with rank_flexibility=0 (willing to crew)
 
         // Create boat owned by John Doe with rank_flexibility=0 (willing to crew)
         $stmt = $this->pdo->prepare("
@@ -683,9 +678,9 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $stmt = $this->pdo->prepare("
             INSERT INTO crews (key, display_name, first_name, last_name, email,
                               skill, membership_number, social_preference,
-                              rank_commitment, rank_flexibility, rank_membership, rank_absence)
+                              rank_commitment, rank_membership, rank_absence)
             VALUES ('janesmith', 'Jane Smith', 'Jane', 'Smith', 'jane@example.com',
-                    1, '12345', 'No', 0, 1, 0, 0)
+                    1, '12345', 'No', 0, 0, 0)
         ");
         $stmt->execute();
         $crewId = (int)$this->pdo->lastInsertId();
@@ -697,20 +692,15 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->setBoatAvailability($boatId, 'Fri May 29', 2);
         $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::AVAILABLE->value);
 
-        // Verify initial state
+        // Verify initial boat rank
         $boatRank = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
-        $crewRank = $this->pdo->query("SELECT rank_flexibility FROM crews WHERE id = $crewId")->fetchColumn();
         $this->assertEquals(0, (int)$boatRank, 'Initial boat flexibility should be 0 (willing to crew)');
-        $this->assertEquals(1, (int)$crewRank, 'Initial crew flexibility should be 1');
 
         // Act: Run season update
         $this->useCase->execute();
 
-        // Assert: Both ranks are preserved unchanged — pipeline does not recalculate flex ranks
+        // Assert: Boat rank is preserved unchanged — pipeline does not recalculate flex rank
         $boatRankAfter = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
-        $crewRankAfter = $this->pdo->query("SELECT rank_flexibility FROM crews WHERE id = $crewId")->fetchColumn();
-
         $this->assertEquals(0, (int)$boatRankAfter, 'Boat flexibility should remain 0 (not modified by pipeline)');
-        $this->assertEquals(1, (int)$crewRankAfter, 'Crew flexibility should remain 1 (not modified by pipeline)');
     }
 }
