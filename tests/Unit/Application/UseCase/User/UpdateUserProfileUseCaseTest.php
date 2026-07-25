@@ -10,6 +10,8 @@ use App\Application\DTO\Response\UserResponse;
 use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
+use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
 use App\Application\UseCase\User\GetUserProfileUseCase;
 use App\Application\UseCase\User\UpdateUserProfileUseCase;
@@ -55,6 +57,9 @@ class UpdateUserProfileUseCaseTest extends TestCase
             $this->boatRepository,
             $this->passwordService,
             $this->getUserProfileUseCase,
+            $this->createMock(EmailServiceInterface::class),
+            $this->createMock(EmailTemplateServiceInterface::class),
+            'admin@example.com',
             $this->createMock(LoggerInterface::class),
         );
     }

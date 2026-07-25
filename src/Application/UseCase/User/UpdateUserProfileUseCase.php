@@ -11,7 +11,12 @@ use App\Application\Exception\WeakPasswordException;
 use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\UserRepositoryInterface;
+use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
+use App\Domain\Entity\Boat;
+use App\Domain\Entity\Crew;
+use App\Domain\Entity\User;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -27,6 +32,9 @@ class UpdateUserProfileUseCase
         private BoatRepositoryInterface $boatRepository,
         private PasswordServiceInterface $passwordService,
         private GetUserProfileUseCase $getUserProfileUseCase,
+        private EmailServiceInterface $emailService,
+        private EmailTemplateServiceInterface $emailTemplateService,
+        private string $adminNotificationEmail,
         private LoggerInterface $logger,
     ) {
     }
@@ -82,13 +90,15 @@ class UpdateUserProfileUseCase
         $this->userRepository->save($user);
 
         // Update crew profile if provided
+        $updatedCrew = null;
         if ($request->crewProfile !== null && !empty($request->crewProfile)) {
-            $this->updateCrewProfile($userId, $request->crewProfile);
+            $updatedCrew = $this->updateCrewProfile($userId, $request->crewProfile);
         }
 
         // Update boat profile if provided
+        $updatedBoat = null;
         if ($request->boatProfile !== null && !empty($request->boatProfile)) {
-            $this->updateBoatProfile($userId, $request->boatProfile);
+            $updatedBoat = $this->updateBoatProfile($userId, $request->boatProfile);
         }
 
         $updatedSections = array_values(array_filter([
@@ -102,8 +112,86 @@ class UpdateUserProfileUseCase
             'updated_sections' => $updatedSections,
         ]);
 
+        // Send admin notification email (don't fail the update if email fails)
+        if ($updatedCrew !== null) {
+            $this->sendCrewAdminNotification($user, $updatedCrew);
+        }
+        if ($updatedBoat !== null) {
+            $this->sendBoatAdminNotification($user, $updatedBoat);
+        }
+
         // Return updated profile
         return $this->getUserProfileUseCase->execute($userId);
+    }
+
+    /**
+     * Send admin notification email summarizing the revised crew profile
+     *
+     * @param User $user User entity
+     * @param Crew $crew Updated crew entity
+     * @return void
+     */
+    private function sendCrewAdminNotification(User $user, Crew $crew): void
+    {
+        try {
+            $profile = [
+                'firstName'        => $crew->getFirstName(),
+                'lastName'         => $crew->getLastName(),
+                'displayName'      => $crew->getDisplayName(),
+                'mobile'           => $crew->getMobile(),
+                'skill'            => $crew->getSkill()->value,
+                'membershipNumber' => $crew->getMembershipNumber(),
+                'socialPreference' => $crew->hasSocialPreference(),
+                'experience'       => $crew->getExperience(),
+            ];
+
+            $subject = sprintf('Crew Profile Updated - %s %s', $profile['firstName'], $profile['lastName']);
+            $body = $this->emailTemplateService->renderCrewProfileUpdateNotification($user, $profile);
+            $result = $this->emailService->send($this->adminNotificationEmail, $subject, $body);
+
+            if ($result) {
+                $this->logger->info('email.sent', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail]);
+            } else {
+                $this->logger->warning('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail]);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Send admin notification email summarizing the revised boat profile
+     *
+     * @param User $user User entity
+     * @param Boat $boat Updated boat entity
+     * @return void
+     */
+    private function sendBoatAdminNotification(User $user, Boat $boat): void
+    {
+        try {
+            $profile = [
+                'displayName'         => $boat->getDisplayName(),
+                'ownerFirstName'      => $boat->getOwnerFirstName(),
+                'ownerLastName'       => $boat->getOwnerLastName(),
+                'ownerMobile'         => $boat->getOwnerMobile(),
+                'minBerths'           => $boat->getMinBerths(),
+                'maxBerths'           => $boat->getMaxBerths(),
+                'assistanceRequired'  => $boat->requiresAssistance(),
+                'socialPreference'    => $boat->hasSocialPreference(),
+            ];
+
+            $subject = sprintf('Boat Profile Updated - %s', $profile['displayName']);
+            $body = $this->emailTemplateService->renderBoatOwnerProfileUpdateNotification($user, $profile);
+            $result = $this->emailService->send($this->adminNotificationEmail, $subject, $body);
+
+            if ($result) {
+                $this->logger->info('email.sent', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail]);
+            } else {
+                $this->logger->warning('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail]);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail, 'error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -111,9 +199,9 @@ class UpdateUserProfileUseCase
      *
      * @param int $userId User ID
      * @param array $profile Crew profile updates
-     * @return void
+     * @return Crew Updated crew entity
      */
-    private function updateCrewProfile(int $userId, array $profile): void
+    private function updateCrewProfile(int $userId, array $profile): Crew
     {
         $crew = $this->crewRepository->findByUserId($userId);
         if ($crew === null) {
@@ -152,6 +240,8 @@ class UpdateUserProfileUseCase
         $crew->setRank($originalRank);
 
         $this->crewRepository->save($crew);
+
+        return $crew;
     }
 
     /**
@@ -159,9 +249,9 @@ class UpdateUserProfileUseCase
      *
      * @param int $userId User ID
      * @param array $profile Boat profile updates
-     * @return void
+     * @return Boat Updated boat entity
      */
-    private function updateBoatProfile(int $userId, array $profile): void
+    private function updateBoatProfile(int $userId, array $profile): Boat
     {
         $boat = $this->boatRepository->findByOwnerUserId($userId);
         if ($boat === null) {
@@ -220,5 +310,7 @@ class UpdateUserProfileUseCase
         $boat->setRank($rankToRestore);
 
         $this->boatRepository->save($boat);
+
+        return $boat;
     }
 }

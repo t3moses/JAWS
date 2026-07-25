@@ -516,13 +516,16 @@ $container->set(\App\Application\UseCase\User\GetUserProfileUseCase::class, func
     );
 });
 
-$container->set(\App\Application\UseCase\User\UpdateUserProfileUseCase::class, function ($c) {
+$container->set(\App\Application\UseCase\User\UpdateUserProfileUseCase::class, function ($c) use ($config) {
     return new \App\Application\UseCase\User\UpdateUserProfileUseCase(
         $c->get(UserRepositoryInterface::class),
         $c->get(CrewRepositoryInterface::class),
         $c->get(BoatRepositoryInterface::class),
         $c->get(PasswordServiceInterface::class),
         $c->get(\App\Application\UseCase\User\GetUserProfileUseCase::class),
+        $c->get(EmailServiceInterface::class),
+        $c->get(EmailTemplateServiceInterface::class),
+        $config['email']['admin_notification_email'],
         $c->get(LoggerInterface::class)
     );
 });

@@ -7,6 +7,8 @@ namespace Tests\Integration\Application\UseCase\User;
 use App\Application\DTO\Request\UpdateProfileRequest;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\WeakPasswordException;
+use App\Application\Port\Service\EmailServiceInterface;
+use App\Application\Port\Service\EmailTemplateServiceInterface;
 use App\Application\Port\Service\PasswordServiceInterface;
 use App\Application\UseCase\User\GetUserProfileUseCase;
 use App\Application\UseCase\User\UpdateUserProfileUseCase;
@@ -62,6 +64,9 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
             $this->boatRepository,
             $this->passwordService,
             $this->getUserProfileUseCase,
+            $this->createMock(EmailServiceInterface::class),
+            $this->createMock(EmailTemplateServiceInterface::class),
+            'admin@example.com',
             new NullLogger()
         );
     }
@@ -555,6 +560,9 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
             $this->boatRepository,
             $this->passwordService,
             $this->getUserProfileUseCase,
+            $this->createMock(EmailServiceInterface::class),
+            $this->createMock(EmailTemplateServiceInterface::class),
+            'admin@example.com',
             new NullLogger()
         );
 

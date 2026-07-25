@@ -50,6 +50,24 @@ interface EmailTemplateServiceInterface
     public function renderBoatOwnerRegistrationNotification(User $user, array $profile): string;
 
     /**
+     * Render crew profile update notification email (sent to admin on profile edit)
+     *
+     * @param User $user User entity
+     * @param array $profile Revised crew profile data (see renderCrewRegistrationNotification for shape)
+     * @return string HTML email body
+     */
+    public function renderCrewProfileUpdateNotification(User $user, array $profile): string;
+
+    /**
+     * Render boat owner profile update notification email (sent to admin on profile edit)
+     *
+     * @param User $user User entity
+     * @param array $profile Revised boat profile data (see renderBoatOwnerRegistrationNotification for shape)
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerProfileUpdateNotification(User $user, array $profile): string;
+
+    /**
      * Render crew reminder notification email (sent ~24h before event)
      *
      * @param string $firstName Crew member's first name

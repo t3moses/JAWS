@@ -186,6 +186,176 @@ HTML;
     }
 
     /**
+     * Render crew profile update notification email
+     *
+     * @param User $user User entity
+     * @param array $profile Revised crew profile data
+     * @return string HTML email body
+     */
+    public function renderCrewProfileUpdateNotification(User $user, array $profile): string
+    {
+        $displayName = $profile['displayName'] ?? $this->generateDisplayName(
+            $profile['firstName'],
+            $profile['lastName']
+        );
+
+        $skillLabel = $this->getSkillLevelLabel($profile['skill'] ?? 0);
+        $mobile = $profile['mobile'] ?? 'Not provided';
+        $membershipNumber = $profile['membershipNumber'] ?? 'Not provided';
+        $socialPreference = $this->parseYesNo($profile['socialPreference'] ?? null) ? 'Yes' : 'No';
+        $experience = $profile['experience'] ?? 'Not provided';
+        $timestamp = date('Y-m-d H:i:s');
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        {$this->getSharedStyles()}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Profile Update Notification</h2>
+        </div>
+        <div class="content">
+            <div class="section">
+                <h3>Revised Crew Profile</h3>
+                <div class="field">
+                    <span class="label">Name:</span>
+                    <span class="value">{$profile['firstName']} {$profile['lastName']}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Display Name:</span>
+                    <span class="value">{$displayName}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Email:</span>
+                    <span class="value">{$user->getEmail()}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Mobile:</span>
+                    <span class="value">{$mobile}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Skill Level:</span>
+                    <span class="value">{$skillLabel}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Membership Number:</span>
+                    <span class="value">{$membershipNumber}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Social Preference:</span>
+                    <span class="value">{$socialPreference}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Experience:</span>
+                    <span class="value">{$experience}</span>
+                </div>
+                <div class="field">
+                    <span class="label">User ID:</span>
+                    <span class="value">{$user->getId()}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Update Date:</span>
+                    <span class="value">{$timestamp}</span>
+                </div>
+            </div>
+            <div class="footer">
+                <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * Render boat owner profile update notification email
+     *
+     * @param User $user User entity
+     * @param array $profile Revised boat profile data
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerProfileUpdateNotification(User $user, array $profile): string
+    {
+        $displayName = $profile['displayName'] ?? $this->generateDisplayName(
+            $profile['ownerFirstName'],
+            $profile['ownerLastName']
+        );
+
+        $ownerMobile = $profile['ownerMobile'] ?? 'Not provided';
+        $assistanceRequired = $this->parseYesNo($profile['assistanceRequired'] ?? null) ? 'Yes' : 'No';
+        $socialPreference = $this->parseYesNo($profile['socialPreference'] ?? null) ? 'Yes' : 'No';
+        $timestamp = date('Y-m-d H:i:s');
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        {$this->getSharedStyles()}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Profile Update Notification</h2>
+        </div>
+        <div class="content">
+            <div class="section">
+                <h3>Revised Boat Profile</h3>
+                <div class="field">
+                    <span class="label">Boat Name:</span>
+                    <span class="value">{$displayName}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Owner:</span>
+                    <span class="value">{$profile['ownerFirstName']} {$profile['ownerLastName']}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Owner Email:</span>
+                    <span class="value">{$user->getEmail()}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Owner Mobile:</span>
+                    <span class="value">{$ownerMobile}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Berth Capacity:</span>
+                    <span class="value">{$profile['minBerths']}-{$profile['maxBerths']}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Assistance Required:</span>
+                    <span class="value">{$assistanceRequired}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Social Preference:</span>
+                    <span class="value">{$socialPreference}</span>
+                </div>
+                <div class="field">
+                    <span class="label">User ID:</span>
+                    <span class="value">{$user->getId()}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Update Date:</span>
+                    <span class="value">{$timestamp}</span>
+                </div>
+            </div>
+            <div class="footer">
+                <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Render crew reminder notification email (sent ~24h before event)
      *
      * @param string $firstName Crew member's first name
