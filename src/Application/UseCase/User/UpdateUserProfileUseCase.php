@@ -236,8 +236,14 @@ class UpdateUserProfileUseCase
         if (array_key_exists('experience', $profile)) {
             $crew->setExperience($profile['experience'] ?: null);
         }
-        // Restore original rank before saving to avoid overwriting flexibility
+        // Restore original rank before saving to avoid overwriting pipeline-managed dimensions
+        // (availability, commitment, absence), then reapply the membership dimension so a
+        // qualifying/non-qualifying membership number change is still reflected.
         $crew->setRank($originalRank);
+        $crew->setRankDimension(
+            \App\Domain\Enum\CrewRankDimension::MEMBERSHIP,
+            Crew::calculateMembershipRank($crew->getMembershipNumber())
+        );
 
         $this->crewRepository->save($crew);
 

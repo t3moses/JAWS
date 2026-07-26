@@ -216,6 +216,16 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
         return $result !== false ? $result : null;
     }
 
+    /**
+     * Get crew rank_membership value from database
+     */
+    protected function getCrewRankMembership(int $userId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT rank_membership FROM crews WHERE user_id = ?');
+        $stmt->execute([$userId]);
+        return (int)$stmt->fetchColumn();
+    }
+
     // ==================== HAPPY PATH TESTS ====================
 
     public function testUpdateEmailOnly(): void
@@ -277,6 +287,36 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
         $this->assertEquals('555-9999', $response->crewProfile->mobile);
         $this->assertEquals(SkillLevel::ADVANCED->value, $response->crewProfile->skill);
         $this->assertEquals('99999', $response->crewProfile->membershipNumber);
+    }
+
+    public function testUpdateCrewProfileWithQualifyingMembershipNumberSetsRankMembershipToOne(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser('crew@example.com', 'crew', createCrewProfile: true);
+        $request = new UpdateProfileRequest(
+            crewProfile: ['membershipNumber' => '123456'] // 6 digits: qualifying
+        );
+
+        // Act
+        $this->useCase->execute($userId, $request);
+
+        // Assert
+        $this->assertSame(1, $this->getCrewRankMembership($userId));
+    }
+
+    public function testUpdateCrewProfileWithNonQualifyingMembershipNumberSetsRankMembershipToZero(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser('crew@example.com', 'crew', createCrewProfile: true);
+        $request = new UpdateProfileRequest(
+            crewProfile: ['membershipNumber' => 'abc'] // Non-numeric: non-qualifying
+        );
+
+        // Act
+        $this->useCase->execute($userId, $request);
+
+        // Assert
+        $this->assertSame(0, $this->getCrewRankMembership($userId));
     }
 
     public function testUpdateBoatProfileOnly(): void
