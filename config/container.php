@@ -392,6 +392,12 @@ $container->set(\App\Application\UseCase\Admin\GetAllBoatsUseCase::class, functi
     );
 });
 
+$container->set(\App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase(
+        $c->get(CrewRepositoryInterface::class)
+    );
+});
+
 $container->set(\App\Application\UseCase\Admin\UpdateCrewProfileUseCase::class, function ($c) {
     return new \App\Application\UseCase\Admin\UpdateCrewProfileUseCase(
         $c->get(CrewRepositoryInterface::class),
@@ -583,6 +589,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\GetUserDetailUseCase::class),
         $c->get(\App\Application\UseCase\Admin\GetAllCrewsUseCase::class),
         $c->get(\App\Application\UseCase\Admin\GetAllBoatsUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase::class),
         $c->get(\App\Application\UseCase\Admin\UpdateCrewProfileUseCase::class),
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),

@@ -13,6 +13,7 @@ use App\Application\UseCase\Admin\SetUserAdminUseCase;
 use App\Application\UseCase\Admin\GetUserDetailUseCase;
 use App\Application\UseCase\Admin\GetAllCrewsUseCase;
 use App\Application\UseCase\Admin\GetAllBoatsUseCase;
+use App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase;
 use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
@@ -46,6 +47,7 @@ class AdminController
         private GetUserDetailUseCase $getUserDetailUseCase,
         private GetAllCrewsUseCase $getAllCrewsUseCase,
         private GetAllBoatsUseCase $getAllBoatsUseCase,
+        private GetCrewBoatHistoryUseCase $getCrewBoatHistoryUseCase,
         private UpdateCrewProfileUseCase $updateCrewProfileUseCase,
         private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
@@ -387,6 +389,30 @@ class AdminController
 
         try {
             $result = $this->getAllBoatsUseCase->execute();
+
+            return JsonResponse::success($result);
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * GET /api/admin/crews/boat-history
+     *
+     * Returns past crew-to-boat assignment counts, for crew/boat pairs that
+     * have appeared in at least one past flotilla. Used for the crew-boat
+     * history chart.
+     *
+     * @param array $auth Authentication context
+     */
+    public function getCrewBoatHistory(array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->getCrewBoatHistoryUseCase->execute();
 
             return JsonResponse::success($result);
         } catch (\Exception $e) {

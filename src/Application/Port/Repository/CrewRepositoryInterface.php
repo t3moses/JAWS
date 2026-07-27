@@ -167,4 +167,13 @@ interface CrewRepositoryInterface
      * @return bool
      */
     public function displayNameExists(string $displayName): bool;
+
+    /**
+     * Get a summary of past crew-to-boat assignment counts, for crew/boat
+     * pairs that have appeared in at least one past flotilla (crew_history).
+     * Sorted alphabetically by crew display name, then boat display name.
+     *
+     * @return array<int, array{crew_name: string, boat_name: string, count: int}>
+     */
+    public function getCrewBoatHistorySummary(): array;
 }

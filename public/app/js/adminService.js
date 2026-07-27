@@ -226,6 +226,25 @@ export async function getAllBoats() {
 }
 
 /**
+ * Get past crew-to-boat assignment counts (for the crew-boat history chart)
+ * @returns {Promise<Array<{crew_name: string, boat_name: string, count: number}>>}
+ */
+export async function getCrewBoatHistory() {
+    try {
+        const response = await apiService.get(API_CONFIG.ENDPOINTS.ADMIN_CREW_BOAT_HISTORY);
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to load crew-boat history');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to get crew-boat history:', error);
+        throw error;
+    }
+}
+
+/**
  * Update crew profile (skill and/or partner)
  * @param {string} crewKey - Crew key
  * @param {Object} data - { skill?: number, partner_key?: string|null }

@@ -299,6 +299,24 @@ class CrewRepository implements CrewRepositoryInterface
         return (int)$stmt->fetchColumn() > 0;
     }
 
+    public function getCrewBoatHistorySummary(): array
+    {
+        $stmt = $this->pdo->query('
+            SELECT c.display_name AS crew_name, b.display_name AS boat_name, COUNT(*) AS count
+            FROM crew_history ch
+            JOIN crews c ON c.id = ch.crew_id
+            JOIN boats b ON b.key = ch.boat_key
+            GROUP BY c.id, b.key
+            ORDER BY c.display_name COLLATE NOCASE, b.display_name COLLATE NOCASE
+        ');
+
+        return array_map(fn($row) => [
+            'crew_name' => $row['crew_name'],
+            'boat_name' => $row['boat_name'],
+            'count'     => (int)$row['count'],
+        ], $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     /**
      * Insert new crew
      */

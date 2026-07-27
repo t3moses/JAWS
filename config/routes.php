@@ -294,6 +294,15 @@ return [
         'auth' => true,
     ],
 
+    // Get Crew-Boat History (past flotilla assignment counts, for chart)
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/crews/boat-history',
+        'controller' => AdminController::class,
+        'action' => 'getCrewBoatHistory',
+        'auth' => true,
+    ],
+
     // Update Crew Profile (skill and/or partner)
     [
         'method' => 'PATCH',

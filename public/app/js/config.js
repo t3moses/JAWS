@@ -44,6 +44,7 @@ export const API_CONFIG = {
         ADMIN_USER_DETAIL: '/admin/users/:userId',
         ADMIN_CREWS: '/admin/crews',
         ADMIN_BOATS: '/admin/boats',
+        ADMIN_CREW_BOAT_HISTORY: '/admin/crews/boat-history',
         ADMIN_CREW_PROFILE: '/admin/crews/:crewKey',
         ADMIN_CREW_WHITELIST_ENTRY: '/admin/crews/:crewKey/whitelist/:boatKey',
         ADMIN_CREW_COMMITMENT_RANK: '/admin/crews/:crewKey/commitment-rank'
