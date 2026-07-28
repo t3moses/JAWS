@@ -308,6 +308,54 @@ class CrewRepositoryTest extends IntegrationTestCase
         $this->repository->updateAvailability($key, $eventId, AvailabilityStatus::NOT_SELECTED);
     }
 
+    public function testDeleteAvailabilityForEventsRemovesOnlyGivenEvents(): void
+    {
+        $keptEventId = EventId::fromString('2026-04-25');
+        $removedEventId1 = EventId::fromString('2026-04-26');
+        $removedEventId2 = EventId::fromString('2026-04-27');
+        $this->createTestEvent('2026-04-25', '2026-04-25');
+        $this->createTestEvent('2026-04-26', '2026-04-26');
+        $this->createTestEvent('2026-04-27', '2026-04-27');
+
+        $crew = $this->createAndSaveCrew('Bulk', 'Delete', SkillLevel::INTERMEDIATE);
+        $this->repository->updateAvailability($crew->getKey(), $keptEventId, AvailabilityStatus::NOT_SELECTED);
+        $this->repository->updateAvailability($crew->getKey(), $removedEventId1, AvailabilityStatus::NOT_SELECTED);
+        $this->repository->updateAvailability($crew->getKey(), $removedEventId2, AvailabilityStatus::SELECTED);
+
+        $this->repository->deleteAvailabilityForEvents($crew->getKey(), ['2026-04-26', '2026-04-27']);
+
+        $foundCrew = $this->repository->findByKey($crew->getKey());
+        $this->assertTrue($foundCrew->isAvailableFor($keptEventId));
+        $this->assertEquals(AvailabilityStatus::NOT_SELECTED, $foundCrew->getAvailability($keptEventId));
+        $this->assertFalse($foundCrew->isAvailableFor($removedEventId1));
+        $this->assertFalse($foundCrew->isAvailableFor($removedEventId2));
+    }
+
+    public function testDeleteAvailabilityForEventsWithEmptyArrayDoesNothing(): void
+    {
+        $eventId = EventId::fromString('2026-04-28');
+        $this->createTestEvent('2026-04-28', '2026-04-28');
+
+        $crew = $this->createAndSaveCrew('Empty', 'Delete', SkillLevel::INTERMEDIATE);
+        $this->repository->updateAvailability($crew->getKey(), $eventId, AvailabilityStatus::NOT_SELECTED);
+
+        $this->repository->deleteAvailabilityForEvents($crew->getKey(), []);
+
+        $foundCrew = $this->repository->findByKey($crew->getKey());
+        $this->assertEquals(AvailabilityStatus::NOT_SELECTED, $foundCrew->getAvailability($eventId));
+    }
+
+    public function testDeleteAvailabilityForEventsThrowsExceptionForNonExistentCrew(): void
+    {
+        $this->createTestEvent('2026-04-29', '2026-04-29');
+        $key = CrewKey::fromName('NonExistent', 'ForBulkDelete');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Crew not found');
+
+        $this->repository->deleteAvailabilityForEvents($key, ['2026-04-29']);
+    }
+
     public function testUpdateHistoryCreatesHistoryRecord(): void
     {
         $eventId = EventId::fromString('2026-05-01');

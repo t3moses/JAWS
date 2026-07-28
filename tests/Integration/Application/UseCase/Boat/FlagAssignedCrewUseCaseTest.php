@@ -6,6 +6,8 @@ namespace Tests\Integration\Application\UseCase\Boat;
 
 use App\Application\Exception\BoatNotFoundException;
 use App\Application\UseCase\Boat\FlagAssignedCrewUseCase;
+use App\Domain\Enum\AvailabilityStatus;
+use App\Domain\ValueObject\CrewKey;
 use App\Domain\ValueObject\EventId;
 use App\Infrastructure\Persistence\SQLite\BoatRepository;
 use App\Infrastructure\Persistence\SQLite\CrewRepository;
@@ -110,6 +112,17 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $stmt = $this->pdo->prepare('SELECT commitment_rank FROM crews WHERE key = ?');
         $stmt->execute([$crewKey]);
         return (int) $stmt->fetchColumn();
+    }
+
+    protected function hasAvailabilityRecord(string $crewKey, string $eventId): bool
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT COUNT(*) FROM crew_availability ca
+            JOIN crews c ON c.id = ca.crew_id
+            WHERE c.key = ? AND ca.event_id = ?
+        ');
+        $stmt->execute([$crewKey, $eventId]);
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     /**
@@ -235,6 +248,63 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $this->assertEquals($crewKey1, $results[0]['crew_key']);
         $this->assertEquals(1, $this->getCommitmentRank($crewKey1));
         $this->assertEquals(2, $this->getCommitmentRank($crewKey2));
+    }
+
+    // ==================== REPEAT NO-SHOW / WITHDRAWAL TESTS ====================
+
+    public function testAlreadyZeroCommitmentWithdrawsCrewFromFutureEvents(): void
+    {
+        $ownerId = $this->createTestUser('owner12@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew12@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 0]);
+
+        // Crew is registered/available for the future event
+        $this->crewRepository->updateAvailability(
+            CrewKey::fromString($crewKey),
+            EventId::fromString('Fri May 15'),
+            AvailabilityStatus::NOT_SELECTED
+        );
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+
+        $results = $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertCount(1, $results);
+        $this->assertEquals(0, $results[0]['rank_commitment']);
+        $this->assertTrue($results[0]['withdrawn_from_future_events']);
+        $this->assertEquals(0, $this->getCommitmentRank($crewKey));
+        $this->assertFalse($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
+    }
+
+    public function testFirstTimeDroppingToZeroDoesNotWithdrawFromFutureEvents(): void
+    {
+        $ownerId = $this->createTestUser('owner13@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew13@example.com', 'crew');
+        // Starts at rank 1, not yet 0
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 1]);
+
+        $this->crewRepository->updateAvailability(
+            CrewKey::fromString($crewKey),
+            EventId::fromString('Fri May 15'),
+            AvailabilityStatus::NOT_SELECTED
+        );
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+
+        $results = $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        // Rank drops from 1 to 0 for the first time here — this flag itself
+        // shouldn't trigger withdrawal, only a repeat flag while already at 0 does.
+        $this->assertCount(1, $results);
+        $this->assertEquals(0, $results[0]['rank_commitment']);
+        $this->assertFalse($results[0]['withdrawn_from_future_events']);
+        $this->assertTrue($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
     }
 
     // ==================== SECURITY / VERIFICATION TESTS ====================

@@ -196,6 +196,25 @@ class CrewRepository implements CrewRepositoryInterface
         ]);
     }
 
+    public function deleteAvailabilityForEvents(CrewKey $key, array $eventIds): void
+    {
+        if (empty($eventIds)) {
+            return;
+        }
+
+        $crew = $this->findByKey($key);
+        if ($crew === null) {
+            throw new \RuntimeException("Crew not found: {$key->toString()}");
+        }
+
+        $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+        $stmt = $this->pdo->prepare("
+            DELETE FROM crew_availability
+            WHERE crew_id = ? AND event_id IN ($placeholders)
+        ");
+        $stmt->execute([$crew->getId(), ...$eventIds]);
+    }
+
     public function updateHistory(CrewKey $key, EventId $eventId, string $boatKey): void
     {
         $crew = $this->findByKey($key);

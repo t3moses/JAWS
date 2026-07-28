@@ -28,6 +28,11 @@ use Psr\Log\LoggerInterface;
  * own boat. Flags are also restricted to past events only — the next
  * event's assignment can still change before it happens, so it isn't
  * eligible for flagging yet.
+ *
+ * A crew already at commitment rank 0 who gets flagged again is a repeat
+ * no-show: rather than staying eligible for future events, they are
+ * withdrawn from all of them (their crew_availability rows are deleted, the
+ * same effect as a manual withdrawal). Commitment rank stays clamped at 0.
  */
 class FlagAssignedCrewUseCase
 {
@@ -43,7 +48,7 @@ class FlagAssignedCrewUseCase
     /**
      * @param int $userId Authenticated boat owner's user ID
      * @param array<int, array{eventId: string, crewKey: string}> $flags
-     * @return array<int, array{crew_key: string, display_name: ?string, flag_count: int, rank_commitment: int}>
+     * @return array<int, array{crew_key: string, display_name: ?string, flag_count: int, rank_commitment: int, withdrawn_from_future_events: bool}>
      * @throws BoatNotFoundException
      */
     public function execute(int $userId, array $flags): array
@@ -90,19 +95,32 @@ class FlagAssignedCrewUseCase
             $crew->setRankDimension(CrewRankDimension::COMMITMENT, $rankAfter);
             $this->crewRepository->updateRankCommitment($crew);
 
+            // Already at rock bottom and flagged again: withdraw from every future
+            // event rather than leaving them selectable at commitment rank 0.
+            $withdrawnFromFutureEvents = false;
+            if ($rankBefore === 0) {
+                $futureEventIds = $this->eventRepository->findFutureEvents();
+                if (!empty($futureEventIds)) {
+                    $this->crewRepository->deleteAvailabilityForEvents($crew->getKey(), $futureEventIds);
+                }
+                $withdrawnFromFutureEvents = true;
+            }
+
             $this->logger->info('boat_owner.crew_flagged', [
-                'boat_key'    => $boat->getKey()->toString(),
-                'crew_key'    => $crewKeyString,
-                'flag_count'  => $flagCount,
-                'rank_before' => $rankBefore,
-                'rank_after'  => $rankAfter,
+                'boat_key'                     => $boat->getKey()->toString(),
+                'crew_key'                     => $crewKeyString,
+                'flag_count'                   => $flagCount,
+                'rank_before'                  => $rankBefore,
+                'rank_after'                   => $rankAfter,
+                'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
             ]);
 
             $results[] = [
-                'crew_key'        => $crewKeyString,
-                'display_name'    => $crew->getDisplayName(),
-                'flag_count'      => $flagCount,
-                'rank_commitment' => $rankAfter,
+                'crew_key'                     => $crewKeyString,
+                'display_name'                 => $crew->getDisplayName(),
+                'flag_count'                   => $flagCount,
+                'rank_commitment'              => $rankAfter,
+                'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
             ];
         }
 

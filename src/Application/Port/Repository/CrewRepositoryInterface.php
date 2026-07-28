@@ -110,6 +110,16 @@ interface CrewRepositoryInterface
     public function deleteAvailability(CrewKey $key, EventId $eventId): void;
 
     /**
+     * Delete crew availability records for a set of events in a single operation
+     * (marks the crew as withdrawn/unavailable for each of those events)
+     *
+     * @param CrewKey $key
+     * @param array<int, string> $eventIds Event ID strings
+     * @return void
+     */
+    public function deleteAvailabilityForEvents(CrewKey $key, array $eventIds): void;
+
+    /**
      * Update crew assignment history for a specific event
      *
      * @param CrewKey $key
