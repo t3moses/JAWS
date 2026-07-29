@@ -30,7 +30,10 @@ function renderEvent(event) {
 
     // Render crewed boats
     if (CalendarService.hasCrewedBoats(event)) {
-        event.flotilla.crewedBoats.forEach(assignment => {
+        const sortedCrewedBoats = [...event.flotilla.crewedBoats].sort((a, b) =>
+            a.boat.displayName.localeCompare(b.boat.displayName)
+        );
+        sortedCrewedBoats.forEach(assignment => {
             const boatDiv = document.createElement('div');
             boatDiv.className = 'boat-assignment';
 
@@ -71,7 +74,9 @@ function renderEvent(event) {
         waitlistContent.className = 'crew-list';
 
         // Add waitlisted boats
-        const waitlistedBoats = CalendarService.getWaitlistedBoats(event);
+        const waitlistedBoats = [...CalendarService.getWaitlistedBoats(event)].sort((a, b) =>
+            a.displayName.localeCompare(b.displayName)
+        );
         waitlistedBoats.forEach(boat => {
             const boatTag = document.createElement('span');
             boatTag.className = 'crew-tag';
