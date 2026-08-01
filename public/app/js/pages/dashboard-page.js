@@ -308,7 +308,6 @@ async function populateEventAvailability() {
                     Please come back after the event ends.
                 </div>
             `;
-            document.getElementById('save-availability').style.display = 'none';
             return;
         }
 
@@ -343,6 +342,24 @@ async function populateEventAvailability() {
                     <label class="availability-date">${event.displayDate || event.eventId}</label>
                     ${deadlinePassed ? '<span class="deadline-warning">Deadline Passed</span>' : ''}
                 `;
+
+                availabilityList.appendChild(itemDiv);
+
+                const select = itemDiv.querySelector('select.berths-select');
+                select.addEventListener('change', () => {
+                    const newBerths = parseInt(select.value, 10);
+                    // '' means no row in DB yet; treat as always-dirty so saving at max still persists
+                    const originalRaw = select.dataset.original;
+                    const originalBerths = originalRaw === '' ? null : parseInt(originalRaw, 10);
+                    saveAvailabilityChange({
+                        element: select,
+                        type: 'boat',
+                        eventDate: event.eventId,
+                        newValue: newBerths,
+                        originalValue: originalBerths,
+                        payload: { eventId: event.eventId, isAvailable: newBerths > 0, berths: newBerths }
+                    });
+                });
             } else {
                 const isAvailable = user.eventAvailability[event.eventId] || false;
 
@@ -358,9 +375,23 @@ async function populateEventAvailability() {
                     </label>
                     ${deadlinePassed ? '<span class="deadline-warning">Deadline Passed</span>' : ''}
                 `;
-            }
 
-            availabilityList.appendChild(itemDiv);
+                availabilityList.appendChild(itemDiv);
+
+                const checkbox = itemDiv.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => {
+                    const isChecked = checkbox.checked;
+                    const originalValue = checkbox.dataset.original === 'true';
+                    saveAvailabilityChange({
+                        element: checkbox,
+                        type: 'crew',
+                        eventDate: event.eventId,
+                        newValue: isChecked,
+                        originalValue,
+                        payload: { eventId: event.eventId, isAvailable: isChecked }
+                    });
+                });
+            }
         });
     } catch (error) {
         console.error('Failed to load events:', error);
@@ -374,87 +405,35 @@ populateEventAvailability();
 // Load user's boat assignments
 populateAssignments();
 
-// Handle save availability button
-document.getElementById('save-availability').addEventListener('click', async function() {
-    const isBoatOwner = user.accountType !== 'crew';
-    const saveButton = this;
-    const originalLabel = saveButton.textContent;
-    saveButton.disabled = true;
-    saveButton.textContent = 'Saving...';
+/**
+ * Save a single availability change (boat berths or crew checkbox) immediately
+ * when its control is changed, reverting the control on failure.
+ */
+async function saveAvailabilityChange(change) {
+    const { element, type, eventDate, newValue, originalValue, payload } = change;
 
-    // --- Collect changes ---
-    const pendingChanges = [];
+    element.disabled = true;
 
-    if (isBoatOwner) {
-        for (const select of document.querySelectorAll('.availability-item select.berths-select')) {
-            if (select.disabled) continue;
-            const eventDate = select.getAttribute('data-event-date');
-            const newBerths = parseInt(select.value, 10);
-            // '' means no row in DB yet; treat as always-dirty so saving at max still persists
-            const originalRaw = select.dataset.original;
-            const originalBerths = originalRaw === '' ? null : parseInt(originalRaw, 10);
-            if (originalBerths !== null && newBerths === originalBerths) continue;
-            pendingChanges.push({
-                element: select,
-                type: 'boat',
-                eventDate,
-                newValue: newBerths,
-                originalValue: originalBerths,
-                payload: { eventId: eventDate, isAvailable: newBerths > 0, berths: newBerths }
-            });
-        }
-    } else {
-        for (const checkbox of document.querySelectorAll('.availability-item input[type="checkbox"]')) {
-            if (checkbox.disabled) continue;
-            const eventDate = checkbox.getAttribute('data-event-date');
-            const isAvailable = checkbox.checked;
-            const originalValue = checkbox.dataset.original === 'true';
-            if (originalValue === isAvailable) continue;
-            pendingChanges.push({
-                element: checkbox,
-                type: 'crew',
-                eventDate,
-                newValue: isAvailable,
-                originalValue,
-                payload: { eventId: eventDate, isAvailable }
-            });
-        }
-    }
+    const result = await updateBatchAvailability([payload]);
 
-    saveButton.disabled = false;
-    saveButton.textContent = originalLabel;
-
-    if (pendingChanges.length === 0) {
-        showInfo('No changes to save.', 2000);
-        return;
-    }
-
-    // --- Send one batched request ---
-    const result = await updateBatchAvailability(pendingChanges.map(c => c.payload));
+    element.disabled = false;
 
     if (!result.success) {
-        // Revert all DOM elements
-        for (const change of pendingChanges) {
-            if (change.type === 'boat') {
-                if (change.originalValue !== null) change.element.value = String(change.originalValue);
-            } else {
-                change.element.checked = change.originalValue;
-            }
+        if (type === 'boat') {
+            if (originalValue !== null) element.value = String(originalValue);
+        } else {
+            element.checked = originalValue;
         }
         showError(result.error || 'Failed to update availability');
         return;
     }
 
-    // Commit all changes to local state
-    for (const change of pendingChanges) {
-        if (change.type === 'boat') {
-            change.element.dataset.original = String(change.newValue);
-            user.eventBerths[change.eventDate] = change.newValue;
-            user.eventAvailability[change.eventDate] = change.newValue > 0;
-        } else {
-            change.element.dataset.original = String(change.newValue);
-            user.eventAvailability[change.eventDate] = change.newValue;
-        }
+    element.dataset.original = String(newValue);
+    if (type === 'boat') {
+        user.eventBerths[eventDate] = newValue;
+        user.eventAvailability[eventDate] = newValue > 0;
+    } else {
+        user.eventAvailability[eventDate] = newValue;
     }
 
     showSuccess('Availability updated successfully! Your assignments have been refreshed.');
@@ -469,4 +448,4 @@ document.getElementById('save-availability').addEventListener('click', async fun
             assignmentsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }, 300); // Small delay to let assignments load
-});
+}
