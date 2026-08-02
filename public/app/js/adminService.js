@@ -308,6 +308,26 @@ export async function setCrewCommitmentRank(crewKey, commitmentRank) {
 }
 
 /**
+ * Withdraw a crew member from every future event and set their commitment rank to 0
+ * @param {string} crewKey - Crew key
+ * @returns {Promise<Object>} { crew_key, rank_commitment }
+ */
+export async function removeCrewFromFutureEvents(crewKey) {
+    try {
+        const response = await apiService.post(API_CONFIG.ENDPOINTS.ADMIN_CREW_REMOVE_FUTURE_EVENTS, {}, { crewKey });
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to remove crew from future events');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to remove crew from future events:', error);
+        throw error;
+    }
+}
+
+/**
  * Get participant emails for an event, grouped by role
  * @param {string} eventId - Event identifier
  * @returns {Promise<{event_id: string, boat_owners: {count: number, emails: string[]}, crew_members: {count: number, emails: string[]}}>}

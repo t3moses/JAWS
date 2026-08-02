@@ -18,6 +18,7 @@ use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase;
+use App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase;
 use App\Application\UseCase\Admin\DeleteUserUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
@@ -52,6 +53,7 @@ class AdminController
         private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
         private SetCrewCommitmentRankUseCase $setCrewCommitmentRankUseCase,
+        private RemoveCrewFromFutureEventsUseCase $removeCrewFromFutureEventsUseCase,
         private DeleteUserUseCase $deleteUserUseCase,
     ) {
     }
@@ -535,6 +537,32 @@ class AdminController
             return JsonResponse::notFound($e->getMessage());
         } catch (ValidationException $e) {
             return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /api/admin/crews/{crewKey}/remove-future-events
+     *
+     * Withdraws a crew member from every future event and sets their
+     * commitment rank to 0.
+     *
+     * @param array $params Route parameters (crewKey)
+     * @param array $auth   Authentication context
+     */
+    public function removeCrewFromFutureEvents(array $params, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $result = $this->removeCrewFromFutureEventsUseCase->execute($params['crewKey']);
+
+            return JsonResponse::success($result);
+        } catch (CrewNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }

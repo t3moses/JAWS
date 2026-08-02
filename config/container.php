@@ -428,6 +428,14 @@ $container->set(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::cla
     );
 });
 
+$container->set(\App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase(
+        $c->get(CrewRepositoryInterface::class),
+        $c->get(EventRepositoryInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 // Cron Use Cases
 $container->set(\App\Application\UseCase\Cron\SendCrewReminderUseCase::class, function ($c) {
     return new \App\Application\UseCase\Cron\SendCrewReminderUseCase(
@@ -594,6 +602,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase::class),
         $c->get(\App\Application\UseCase\Admin\DeleteUserUseCase::class)
     );
 });

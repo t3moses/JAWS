@@ -210,6 +210,11 @@ function renderCommitment(crew) {
 }
 
 async function handleCommitmentSave(select) {
+    if (select.value === 'remove_future') {
+        await handleRemoveFromFutureEvents(select);
+        return;
+    }
+
     const btn = document.getElementById('commitment-save-btn');
     btn.disabled = true;
 
@@ -221,6 +226,34 @@ async function handleCommitmentSave(select) {
     } catch (error) {
         console.error('Failed to update commitment rank:', error);
         showToast(error.message || 'Failed to update commitment rank', 'error');
+        const rank = targetUserData.crew.rank_commitment ?? 2;
+        select.value = String(rank);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function handleRemoveFromFutureEvents(select) {
+    const confirmed = confirm(
+        `Remove ${targetUserData.crew.first_name} ${targetUserData.crew.last_name} from all future events? This withdraws their availability for every upcoming event and sets their commitment rank to 0. This cannot be undone.`
+    );
+    if (!confirmed) {
+        const rank = targetUserData.crew.rank_commitment ?? 2;
+        select.value = String(rank);
+        return;
+    }
+
+    const btn = document.getElementById('commitment-save-btn');
+    btn.disabled = true;
+
+    try {
+        const result = await adminService.removeCrewFromFutureEvents(targetUserData.crew.key);
+        targetUserData.crew.rank_commitment = result.rank_commitment;
+        select.value = String(result.rank_commitment);
+        showToast('Crew member removed from all future events.', 'success');
+    } catch (error) {
+        console.error('Failed to remove crew from future events:', error);
+        showToast(error.message || 'Failed to remove crew from future events', 'error');
         const rank = targetUserData.crew.rank_commitment ?? 2;
         select.value = String(rank);
     } finally {

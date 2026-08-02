@@ -338,4 +338,13 @@ return [
         'action' => 'setCrewCommitmentRank',
         'auth' => true,
     ],
+
+    // Remove Crew From Future Events (admin action)
+    [
+        'method' => 'POST',
+        'path' => '/api/admin/crews/{crewKey}/remove-future-events',
+        'controller' => AdminController::class,
+        'action' => 'removeCrewFromFutureEvents',
+        'auth' => true,
+    ],
 ];

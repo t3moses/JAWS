@@ -10,9 +10,11 @@ use App\Application\UseCase\Admin\GetAllBoatsUseCase;
 use App\Application\UseCase\Admin\GetAllCrewsUseCase;
 use App\Application\UseCase\Admin\GetAllUsersUseCase;
 use App\Application\UseCase\Admin\GetConfigUseCase;
+use App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase;
 use App\Application\UseCase\Admin\GetMatchingDataUseCase;
 use App\Application\UseCase\Admin\GetParticipantEmailsUseCase;
 use App\Application\UseCase\Admin\GetUserDetailUseCase;
+use App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\SendCustomNotificationUseCase;
 use App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase;
@@ -45,10 +47,12 @@ class AdminControllerTest extends TestCase
             $this->createStub(GetUserDetailUseCase::class),
             $this->createStub(GetAllCrewsUseCase::class),
             $this->createStub(GetAllBoatsUseCase::class),
+            $this->createStub(GetCrewBoatHistoryUseCase::class),
             $this->createStub(UpdateCrewProfileUseCase::class),
             $this->createStub(AddToCrewWhitelistUseCase::class),
             $this->createStub(RemoveFromCrewWhitelistUseCase::class),
             $this->createStub(SetCrewCommitmentRankUseCase::class),
+            $this->createStub(RemoveCrewFromFutureEventsUseCase::class),
             $this->createStub(DeleteUserUseCase::class),
         );
     }
