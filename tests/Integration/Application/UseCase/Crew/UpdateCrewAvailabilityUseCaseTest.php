@@ -123,7 +123,7 @@ class UpdateCrewAvailabilityUseCaseTest extends IntegrationTestCase
     protected function getCrewAvailability(string $crewKey, string $eventId): ?int
     {
         $stmt = $this->pdo->prepare('
-            SELECT ca.status FROM crew_availability ca
+            SELECT ca.selection_rank FROM crew_availability ca
             JOIN crews c ON ca.crew_id = c.id
             WHERE c.key = ? AND ca.event_id = ?
         ');

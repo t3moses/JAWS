@@ -217,11 +217,11 @@ class UpdateUserProfileUseCaseTest extends IntegrationTestCase
     }
 
     /**
-     * Get crew rank_membership value from database
+     * Get crew membership_rank value from database
      */
     protected function getCrewRankMembership(int $userId): int
     {
-        $stmt = $this->pdo->prepare('SELECT rank_membership FROM crews WHERE user_id = ?');
+        $stmt = $this->pdo->prepare('SELECT membership_rank FROM crews WHERE user_id = ?');
         $stmt->execute([$userId]);
         return (int)$stmt->fetchColumn();
     }

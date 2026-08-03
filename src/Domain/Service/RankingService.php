@@ -133,7 +133,7 @@ class RankingService
 
     /**
      * Update availability rank dimension for crews based on their selection status
-     * for the next event (crew_availability.status = 1 → SELECTED)
+     * for the next event (crew_availability.selection_rank = 1 → SELECTED)
      *
      * Availability is the primary (most significant) crew rank dimension, so this
      * must be refreshed every pipeline run — it is not persisted independently and
@@ -155,7 +155,7 @@ class RankingService
     /**
      * Resolve the availability rank dimension (0-1) for a crew against the next event
      *
-     * 1 = crew has a crew_availability record with status=1 (SELECTED) for the next event
+     * 1 = crew has a crew_availability record with selection_rank=1 (SELECTED) for the next event
      * 0 = not available, or no next event to compare against
      */
     private function resolveAvailabilityDimension(Crew $crew, ?EventId $nextEventId): int

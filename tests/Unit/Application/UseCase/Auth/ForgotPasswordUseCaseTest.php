@@ -107,6 +107,18 @@ class ForgotPasswordUseCaseTest extends TestCase
         $this->useCase->execute(new ForgotPasswordRequest('user@example.com'));
     }
 
+    public function testPurgesExpiredTokensTableWideOnEveryRequest(): void
+    {
+        $user = $this->makeUser(7, 'user@example.com');
+        $this->userRepository->method('findByEmail')->willReturn($user);
+        $this->emailService->method('send')->willReturn(true);
+
+        $this->tokenRepository->expects($this->once())
+            ->method('deleteExpired');
+
+        $this->useCase->execute(new ForgotPasswordRequest('user@example.com'));
+    }
+
     public function testStoresHashedTokenNotPlainToken(): void
     {
         $user = $this->makeUser(1, 'user@example.com');

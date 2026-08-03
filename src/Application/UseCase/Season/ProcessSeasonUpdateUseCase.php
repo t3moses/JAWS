@@ -420,7 +420,7 @@ class ProcessSeasonUpdateUseCase
      *
      * Crews without an existing record are never included in $availableCrews and are
      * therefore left untouched — row absence represents withdrawal and must never be
-     * turned into a status=0 row.
+     * turned into a selection_rank=0 row.
      *
      * @param array<Crew> $availableCrews Crews with an existing crew_availability record for $eventId
      * @param array{event_id: string, crewed_boats: array, waitlist_boats: array, waitlist_crews: array} $flotilla
@@ -540,7 +540,7 @@ class ProcessSeasonUpdateUseCase
     /**
      * Build Crew entities for flex boat owners whose boat was waitlisted
      *
-     * When a flex boat (rank_flexibility=0) is waitlisted, its owner should appear
+     * When a flex boat (flexibility_rank=0) is waitlisted, its owner should appear
      * in the crew waitlist so they can be promoted to another boat with spare capacity.
      *
      * Display names are resolved against both the real crew squad and previously

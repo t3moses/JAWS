@@ -917,11 +917,11 @@ class UpdateBoatAvailabilityUseCaseTest extends IntegrationTestCase
         $boatKey = $this->createBoatProfileForUser($userId);
 
         // Set flexibility rank to 0 in database (simulating flex status)
-        $stmt = $this->pdo->prepare('UPDATE boats SET rank_flexibility = 0 WHERE owner_user_id = :userId');
+        $stmt = $this->pdo->prepare('UPDATE boats SET flexibility_rank = 0 WHERE owner_user_id = :userId');
         $stmt->execute(['userId' => $userId]);
 
         // Verify initial flexibility rank is 0
-        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt = $this->pdo->prepare('SELECT flexibility_rank FROM boats WHERE owner_user_id = :userId');
         $stmt->execute(['userId' => $userId]);
         $initialRank = $stmt->fetchColumn();
         $this->assertEquals(0, (int)$initialRank, 'Initial flexibility rank should be 0');
@@ -935,7 +935,7 @@ class UpdateBoatAvailabilityUseCaseTest extends IntegrationTestCase
         $this->useCase->execute($userId, $request);
 
         // Assert - Verify flexibility rank is still 0 after update
-        $stmt = $this->pdo->prepare('SELECT rank_flexibility FROM boats WHERE owner_user_id = :userId');
+        $stmt = $this->pdo->prepare('SELECT flexibility_rank FROM boats WHERE owner_user_id = :userId');
         $stmt->execute(['userId' => $userId]);
         $finalRank = $stmt->fetchColumn();
         $this->assertEquals(0, (int)$finalRank, 'Flexibility rank should remain 0 after availability update');

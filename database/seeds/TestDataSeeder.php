@@ -382,7 +382,7 @@ class TestDataSeeder extends AbstractSeed
         // Seed crew availability (crews marked as available for all events)
         // ====================================================================
         $this->execute('
-            INSERT INTO crew_availability (crew_id, event_id, status)
+            INSERT INTO crew_availability (crew_id, event_id, selection_rank)
             SELECT c.id, e.event_id, 1
             FROM crews c
             CROSS JOIN events e

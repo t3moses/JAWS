@@ -189,12 +189,12 @@ class BoatRepository implements BoatRepositoryInterface
         $rank = $boat->getRank();
         $stmt = $this->pdo->prepare('
             UPDATE boats
-            SET rank_flexibility = :rank_flexibility
+            SET flexibility_rank = :flexibility_rank
             WHERE id = :id
         ');
         $stmt->execute([
             'id' => $boat->getId(),
-            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+            'flexibility_rank' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
         ]);
     }
 
@@ -207,12 +207,12 @@ class BoatRepository implements BoatRepositoryInterface
         $rank = $boat->getRank();
         $stmt = $this->pdo->prepare('
             UPDATE boats
-            SET rank_absence = :rank_absence
+            SET absence_rank = :absence_rank
             WHERE id = :id
         ');
         $stmt->execute([
             'id' => $boat->getId(),
-            'rank_absence' => $rank->getDimension(BoatRankDimension::ABSENCE),
+            'absence_rank' => $rank->getDimension(BoatRankDimension::ABSENCE),
         ]);
     }
 
@@ -239,13 +239,13 @@ class BoatRepository implements BoatRepositoryInterface
                 key, display_name, owner_first_name, owner_last_name,
                 owner_mobile, min_berths, max_berths,
                 assistance_required, social_preference,
-                rank_flexibility, rank_absence,
+                flexibility_rank, absence_rank,
                 owner_user_id
             ) VALUES (
                 :key, :display_name, :owner_first_name, :owner_last_name,
                 :owner_mobile, :min_berths, :max_berths,
                 :assistance_required, :social_preference,
-                :rank_flexibility, :rank_absence,
+                :flexibility_rank, :absence_rank,
                 :owner_user_id
             )
         ');
@@ -261,8 +261,8 @@ class BoatRepository implements BoatRepositoryInterface
             'max_berths' => $boat->getMaxBerths(),
             'assistance_required' => $boat->requiresAssistance() ? 'Yes' : 'No',
             'social_preference' => $boat->hasSocialPreference() ? 'Yes' : 'No',
-            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
-            'rank_absence' => $rank->getDimension(BoatRankDimension::ABSENCE),
+            'flexibility_rank' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+            'absence_rank' => $rank->getDimension(BoatRankDimension::ABSENCE),
             'owner_user_id' => $boat->getOwnerUserId(),
         ]);
 
@@ -287,8 +287,8 @@ class BoatRepository implements BoatRepositoryInterface
                 max_berths = :max_berths,
                 assistance_required = :assistance_required,
                 social_preference = :social_preference,
-                rank_flexibility = :rank_flexibility,
-                rank_absence = :rank_absence,
+                flexibility_rank = :flexibility_rank,
+                absence_rank = :absence_rank,
                 owner_user_id = :owner_user_id
             WHERE id = :id
         ');
@@ -304,8 +304,8 @@ class BoatRepository implements BoatRepositoryInterface
             'max_berths' => $boat->getMaxBerths(),
             'assistance_required' => $boat->requiresAssistance() ? 'Yes' : 'No',
             'social_preference' => $boat->hasSocialPreference() ? 'Yes' : 'No',
-            'rank_flexibility' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
-            'rank_absence' => $rank->getDimension(BoatRankDimension::ABSENCE),
+            'flexibility_rank' => $rank->getDimension(BoatRankDimension::FLEXIBILITY),
+            'absence_rank' => $rank->getDimension(BoatRankDimension::ABSENCE),
             'owner_user_id' => $boat->getOwnerUserId(),
         ]);
 
@@ -383,8 +383,8 @@ class BoatRepository implements BoatRepositoryInterface
 
         // Set rank
         $rank = Rank::forBoat(
-            flexibility: (int)$row['rank_flexibility'],
-            absence: (int)$row['rank_absence']
+            flexibility: (int)$row['flexibility_rank'],
+            absence: (int)$row['absence_rank']
         );
         $boat->setRank($rank);
 
@@ -527,8 +527,8 @@ class BoatRepository implements BoatRepositoryInterface
 
         // Set rank
         $rank = Rank::forBoat(
-            flexibility: (int)$row['rank_flexibility'],
-            absence: (int)$row['rank_absence']
+            flexibility: (int)$row['flexibility_rank'],
+            absence: (int)$row['absence_rank']
         );
         $boat->setRank($rank);
 

@@ -55,6 +55,9 @@ class ForgotPasswordUseCase
         // Invalidate any prior tokens for this user
         $this->tokenRepository->deleteByUserId($user->getId());
 
+        // Housekeeping: purge expired tokens table-wide
+        $this->tokenRepository->deleteExpired();
+
         // Generate a 256-bit CSPRNG token; store only the SHA-256 hash
         $plainToken = bin2hex(random_bytes(32));
         $tokenHash  = hash('sha256', $plainToken);

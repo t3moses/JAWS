@@ -119,7 +119,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
     protected function setCrewAvailability(int $crewId, string $eventId, int $status): void
     {
         $this->pdo->prepare("
-            INSERT INTO crew_availability (crew_id, event_id, status)
+            INSERT INTO crew_availability (crew_id, event_id, selection_rank)
             VALUES (?, ?, ?)
         ")->execute([$crewId, $eventId, $status]);
     }
@@ -130,7 +130,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
     protected function getCrewAvailabilityStatus(int $crewId, string $eventId): int
     {
         $stmt = $this->pdo->prepare("
-            SELECT status FROM crew_availability WHERE crew_id = ? AND event_id = ?
+            SELECT selection_rank FROM crew_availability WHERE crew_id = ? AND event_id = ?
         ");
         $stmt->execute([$crewId, $eventId]);
         return (int)$stmt->fetchColumn();
@@ -661,19 +661,19 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: execute() preserves boat flexibility rank as stored (never dynamically recalculates)
      *
      * In the single-role registration model:
-     * - Boat flex rank is set at registration (willingToCrew=true → rank_flexibility=0)
+     * - Boat flex rank is set at registration (willingToCrew=true → flexibility_rank=0)
      *   and is never changed by the pipeline.
      * - Crew flex rank is always 1 (hardcoded in repository, not stored in DB).
      */
     public function testExecutePreservesFlexibilityRanksAsStored(): void
     {
-        // Arrange: boat with rank_flexibility=0 (willing to crew)
+        // Arrange: boat with flexibility_rank=0 (willing to crew)
 
-        // Create boat owned by John Doe with rank_flexibility=0 (willing to crew)
+        // Create boat owned by John Doe with flexibility_rank=0 (willing to crew)
         $stmt = $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               min_berths, max_berths, assistance_required,
-                              social_preference, rank_flexibility, rank_absence)
+                              social_preference, flexibility_rank, absence_rank)
             VALUES ('sailaway', 'Sail Away', 'John', 'Doe',
                     2, 3, 'No', 'No', 0, 0)
         ");
@@ -684,7 +684,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $stmt = $this->pdo->prepare("
             INSERT INTO crews (key, display_name, first_name, last_name,
                               skill, membership_number, social_preference,
-                              commitment_rank, rank_membership, rank_absence)
+                              commitment_rank, membership_rank, absence_rank)
             VALUES ('janesmith', 'Jane Smith', 'Jane', 'Smith',
                     1, '12345', 'No', 0, 0, 0)
         ");
@@ -699,14 +699,14 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->setCrewAvailability($crewId, 'Fri May 29', AvailabilityStatus::NOT_SELECTED->value);
 
         // Verify initial boat rank
-        $boatRank = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
+        $boatRank = $this->pdo->query("SELECT flexibility_rank FROM boats WHERE id = $boatId")->fetchColumn();
         $this->assertEquals(0, (int)$boatRank, 'Initial boat flexibility should be 0 (willing to crew)');
 
         // Act: Run season update
         $this->useCase->execute();
 
         // Assert: Boat rank is preserved unchanged — pipeline does not recalculate flex rank
-        $boatRankAfter = $this->pdo->query("SELECT rank_flexibility FROM boats WHERE id = $boatId")->fetchColumn();
+        $boatRankAfter = $this->pdo->query("SELECT flexibility_rank FROM boats WHERE id = $boatId")->fetchColumn();
         $this->assertEquals(0, (int)$boatRankAfter, 'Boat flexibility should remain 0 (not modified by pipeline)');
     }
 
@@ -714,29 +714,29 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: Flex boat owner is promoted from crew waitlist into a crewed boat with spare capacity
      *
      * Scenario (case 1 — too few crews):
-     * - Boat A: flex (rank_flexibility=0, lower priority) → waitlisted by SelectionService
-     * - Boat B: not flex (rank_flexibility=1, higher priority) → selected, occupied_berths=minBerths=1
+     * - Boat A: flex (flexibility_rank=0, lower priority) → waitlisted by SelectionService
+     * - Boat B: not flex (flexibility_rank=1, higher priority) → selected, occupied_berths=minBerths=1
      * - Boat B offered 2 berths but only gets 1 crew assigned → spare capacity = 1
      * - buildFlexCrewEntries() adds Boat A's owner to waitlist_crews as a synthetic entry
      * - promoteWaitlistCrew() moves Boat A's owner onto Boat B's spare slot
      */
     public function testFlexOwnerPromotedFromWaitlistToCrewedBoat(): void
     {
-        // Arrange: Boat A — flex owner willing to crew (rank_flexibility=0 → lower priority, waitlisted first)
+        // Arrange: Boat A — flex owner willing to crew (flexibility_rank=0 → lower priority, waitlisted first)
         $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               min_berths, max_berths, assistance_required,
-                              social_preference, rank_flexibility, rank_absence)
+                              social_preference, flexibility_rank, absence_rank)
             VALUES ('flexy', 'Flexy', 'Alice', 'Flex',
                     1, 2, 'No', 'No', 0, 0)
         ")->execute();
         $boatAId = (int)$this->pdo->lastInsertId();
 
-        // Boat B — regular boat (rank_flexibility=1 → higher priority, gets selected)
+        // Boat B — regular boat (flexibility_rank=1 → higher priority, gets selected)
         $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               min_berths, max_berths, assistance_required,
-                              social_preference, rank_flexibility, rank_absence)
+                              social_preference, flexibility_rank, absence_rank)
             VALUES ('rigger', 'Rigger', 'Bob', 'Regular',
                     1, 2, 'No', 'No', 1, 0)
         ")->execute();
@@ -784,7 +784,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: boat_history rows are written for past events based on stored flotilla data
      *
      * Boats present in crewed_boats get 'Y'; absent boats get ''.
-     * rank_absence reflects the count of '' entries.
+     * absence_rank reflects the count of '' entries.
      */
     public function testBoatHistoryWrittenForPastFlotilla(): void
     {
@@ -824,8 +824,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->assertEquals('', $stmt->fetchColumn(), 'boat-b was absent so participated should be empty string');
 
         // Assert: absence ranks persisted to DB
-        $rankA = (int)$this->pdo->query("SELECT rank_absence FROM boats WHERE id = $boatAId")->fetchColumn();
-        $rankB = (int)$this->pdo->query("SELECT rank_absence FROM boats WHERE id = $boatBId")->fetchColumn();
+        $rankA = (int)$this->pdo->query("SELECT absence_rank FROM boats WHERE id = $boatAId")->fetchColumn();
+        $rankB = (int)$this->pdo->query("SELECT absence_rank FROM boats WHERE id = $boatBId")->fetchColumn();
 
         $this->assertEquals(0, $rankA, 'boat-a was present; absence should be 0');
         $this->assertEquals(1, $rankB, 'boat-b was absent once; absence should be 1');
@@ -835,7 +835,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: crew_history rows are written for past events based on stored flotilla data
      *
      * Crews present in crewed_boats get the boat key; waitlisted crews get '';
-     * crews not registered get no entry. rank_absence reflects the count of '' entries.
+     * crews not registered get no entry. absence_rank reflects the count of '' entries.
      */
     public function testCrewHistoryWrittenForPastFlotilla(): void
     {
@@ -884,8 +884,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->assertFalse($stmt->fetchColumn(), 'crew-absent should have no crew_history row');
 
         // Assert: absence ranks persisted to DB
-        $rankAssigned  = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewAssignedId")->fetchColumn();
-        $rankWaitlist  = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewWaitlistId")->fetchColumn();
+        $rankAssigned  = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewAssignedId")->fetchColumn();
+        $rankWaitlist  = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewWaitlistId")->fetchColumn();
 
         $this->assertEquals(0, $rankAssigned, 'crew-assigned was on a boat; absence should be 0');
         $this->assertEquals(1, $rankWaitlist, 'crew-waitlist was not assigned once; absence should be 1');
@@ -895,7 +895,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: Crew with higher absence rank is selected over crew with lower absence rank
      *
      * After syncing 1 past event where crew-present was assigned and crew-absent was waitlisted,
-     * crew-absent gets rank_absence=1 and crew-present gets rank_absence=0.
+     * crew-absent gets absence_rank=1 and crew-present gets absence_rank=0.
      * With only 1 boat berth available, crew-absent (higher priority) is selected.
      */
     public function testAbsentCrewSelectedOverPresentCrew(): void
@@ -976,18 +976,18 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
 
         // Act: run pipeline twice
         $this->useCase->execute();
-        $rankAfterFirst = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewId")->fetchColumn();
+        $rankAfterFirst = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewId")->fetchColumn();
         $histStmt = $this->pdo->prepare('SELECT boat_key FROM crew_history WHERE crew_id = ? AND event_id = ?');
         $histStmt->execute([$crewId, 'Fri Jan 17']);
         $boatKeyAfterFirst = $histStmt->fetchColumn();
 
         $this->useCase->execute();
-        $rankAfterSecond = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewId")->fetchColumn();
+        $rankAfterSecond = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewId")->fetchColumn();
         $histStmt->execute([$crewId, 'Fri Jan 17']);
         $boatKeyAfterSecond = $histStmt->fetchColumn();
 
         // Assert: same results both times
-        $this->assertEquals($rankAfterFirst, $rankAfterSecond, 'rank_absence should be identical after both runs');
+        $this->assertEquals($rankAfterFirst, $rankAfterSecond, 'absence_rank should be identical after both runs');
         $this->assertEquals($boatKeyAfterFirst, $boatKeyAfterSecond, 'crew_history should be identical after both runs');
         $this->assertEquals('boat-a', $boatKeyAfterFirst, 'crew-a was assigned to boat-a');
         $this->assertEquals(0, $rankAfterFirst, 'crew-a was assigned; absence should be 0');
@@ -997,7 +997,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * Test: Boat with higher absence rank is selected over boat with lower absence rank
      *
      * After syncing 1 past event where boat-a participated and boat-b was absent,
-     * boat-b gets rank_absence=1 and boat-a gets rank_absence=0.
+     * boat-b gets absence_rank=1 and boat-a gets absence_rank=0.
      * With only enough crew for 1 boat, boat-b (higher priority) is selected.
      */
     public function testAbsentBoatSelectedOverPresentBoat(): void
@@ -1008,7 +1008,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               min_berths, max_berths, assistance_required,
-                              social_preference, rank_flexibility, rank_absence)
+                              social_preference, flexibility_rank, absence_rank)
             VALUES ('boat-a', 'Boat A', 'Alice', 'Smith', 1, 1, 'No', 'No', 1, 0)
         ")->execute();
         $boatAId = (int)$this->pdo->lastInsertId();
@@ -1016,7 +1016,7 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->pdo->prepare("
             INSERT INTO boats (key, display_name, owner_first_name, owner_last_name,
                               min_berths, max_berths, assistance_required,
-                              social_preference, rank_flexibility, rank_absence)
+                              social_preference, flexibility_rank, absence_rank)
             VALUES ('boat-b', 'Boat B', 'Bob', 'Jones', 1, 1, 'No', 'No', 1, 0)
         ")->execute();
         $boatBId = (int)$this->pdo->lastInsertId();
@@ -1107,14 +1107,14 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
 
         // crew-high: commitment_rank=2 (normal AVAILABLE rank)
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-high', 'Crew High', 'Crew', 'High', 1, '12345', 'No', 2, 0, 0)
         ")->execute();
         $crewHighId = (int)$this->pdo->lastInsertId();
 
         // crew-low: commitment_rank=1 (admin penalty)
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-low', 'Crew Low', 'Crew', 'Low', 1, '12345', 'No', 1, 0, 0)
         ")->execute();
         $crewLowId = (int)$this->pdo->lastInsertId();
@@ -1156,13 +1156,13 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $boat1Id = $this->createTestBoat('boat1', 1, 1);
 
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-normal', 'Crew Normal', 'Crew', 'Normal', 1, '12345', 'No', 2, 0, 0)
         ")->execute();
         $crewNormalId = (int)$this->pdo->lastInsertId();
 
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-penalised', 'Crew Penalised', 'Crew', 'Penalised', 1, '12345', 'No', 1, 0, 0)
         ")->execute();
         $crewPenalisedId = (int)$this->pdo->lastInsertId();
@@ -1225,10 +1225,10 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
     }
 
     /**
-     * Test: Two past absences produce rank_absence=2 (cumulative)
+     * Test: Two past absences produce absence_rank=2 (cumulative)
      *
      * Verifies absence rank accumulates correctly across multiple past events.
-     * Existing tests only use 1 past event (rank_absence=1); this covers 2 absences.
+     * Existing tests only use 1 past event (absence_rank=1); this covers 2 absences.
      */
     public function testTwoPastAbsencesProduceCumulativeRankAbsence(): void
     {
@@ -1262,9 +1262,9 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         // Act
         $this->useCase->execute();
 
-        // Assert: rank_absence=2 (absent from both past events)
-        $rankAbsence = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewId")->fetchColumn();
-        $this->assertEquals(2, $rankAbsence, 'crew-a was waitlisted in 2 past events so rank_absence should be 2');
+        // Assert: absence_rank=2 (absent from both past events)
+        $rankAbsence = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewId")->fetchColumn();
+        $this->assertEquals(2, $rankAbsence, 'crew-a was waitlisted in 2 past events so absence_rank should be 2');
     }
 
     /**
@@ -1293,8 +1293,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         $this->assertTrue($result['success']);
 
         // Absence ranks stay at 0 — no flotilla means nothing to record
-        $boatAbsence = (int)$this->pdo->query("SELECT rank_absence FROM boats WHERE id = $boatId")->fetchColumn();
-        $crewAbsence = (int)$this->pdo->query("SELECT rank_absence FROM crews WHERE id = $crewId")->fetchColumn();
+        $boatAbsence = (int)$this->pdo->query("SELECT absence_rank FROM boats WHERE id = $boatId")->fetchColumn();
+        $crewAbsence = (int)$this->pdo->query("SELECT absence_rank FROM crews WHERE id = $crewId")->fetchColumn();
 
         $this->assertEquals(0, $boatAbsence, 'Boat absence rank should be 0 when past event has no flotilla');
         $this->assertEquals(0, $crewAbsence, 'Crew absence rank should be 0 when past event has no flotilla');
@@ -1326,19 +1326,19 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
 
         // Act: run pipeline twice
         $this->useCase->execute();
-        $rankAfterFirst = (int)$this->pdo->query("SELECT rank_absence FROM boats WHERE id = $boatId")->fetchColumn();
+        $rankAfterFirst = (int)$this->pdo->query("SELECT absence_rank FROM boats WHERE id = $boatId")->fetchColumn();
         $histAfterFirst = $this->pdo->prepare('SELECT participated FROM boat_history WHERE boat_id = ? AND event_id = ?');
         $histAfterFirst->execute([$boatId, 'Fri Jan 17']);
         $participatedAfterFirst = $histAfterFirst->fetchColumn();
 
         $this->useCase->execute();
-        $rankAfterSecond = (int)$this->pdo->query("SELECT rank_absence FROM boats WHERE id = $boatId")->fetchColumn();
+        $rankAfterSecond = (int)$this->pdo->query("SELECT absence_rank FROM boats WHERE id = $boatId")->fetchColumn();
         $histAfterSecond = $this->pdo->prepare('SELECT participated FROM boat_history WHERE boat_id = ? AND event_id = ?');
         $histAfterSecond->execute([$boatId, 'Fri Jan 17']);
         $participatedAfterSecond = $histAfterSecond->fetchColumn();
 
         // Assert: same results both times
-        $this->assertEquals($rankAfterFirst, $rankAfterSecond, 'rank_absence should be identical after both runs');
+        $this->assertEquals($rankAfterFirst, $rankAfterSecond, 'absence_rank should be identical after both runs');
         $this->assertEquals($participatedAfterFirst, $participatedAfterSecond, 'boat_history should be identical after both runs');
         $this->assertEquals('Y', $participatedAfterFirst, 'boat-a was in crewed_boats so participated should be Y');
         $this->assertEquals(0, $rankAfterFirst, 'boat-a was present in past flotilla so absence should be 0');
@@ -1352,8 +1352,8 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
      * must not influence selection for the new next event.
      *
      * Scenario:
-     *   - crew-member (rank_membership=1) has stale commitment_rank=0 (was UNAVAILABLE previously)
-     *   - crew-nonmember (rank_membership=0) has stale commitment_rank=3 (was ASSIGNED previously)
+     *   - crew-member (membership_rank=1) has stale commitment_rank=0 (was UNAVAILABLE previously)
+     *   - crew-nonmember (membership_rank=0) has stale commitment_rank=3 (was ASSIGNED previously)
      *   - Both crews are AVAILABLE for the next event
      *
      * Without the fix: non-member selected ([3,0,0] > [0,1,0]) — WRONG
@@ -1364,18 +1364,18 @@ class ProcessSeasonUpdateUseCaseTest extends IntegrationTestCase
         // Arrange: 1 boat (1 berth) forces Case 2 — 2 crews available, 1 is waitlisted
         $boatId = $this->createTestBoat('boat-alpha', 1, 1);
 
-        // crew-member: valid NSC membership (rank_membership=1), stale commitment_rank=0
+        // crew-member: valid NSC membership (membership_rank=1), stale commitment_rank=0
         // Simulates a crew who was UNAVAILABLE for the previous next event
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-member', 'Alice Member', 'Alice', 'Member', 1, '12345', 'No', 0, 1, 0)
         ")->execute();
         $memberCrewId = (int) $this->pdo->lastInsertId();
 
-        // crew-nonmember: no valid membership (rank_membership=0), stale commitment_rank=3
+        // crew-nonmember: no valid membership (membership_rank=0), stale commitment_rank=3
         // Simulates a crew who was ASSIGNED to the previous next event
         $this->pdo->prepare("
-            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, rank_membership, rank_absence)
+            INSERT INTO crews (key, display_name, first_name, last_name, skill, membership_number, social_preference, commitment_rank, membership_rank, absence_rank)
             VALUES ('crew-nonmember', 'Bob NoMember', 'Bob', 'NoMember', 1, '', 'No', 3, 0, 0)
         ")->execute();
         $nonMemberCrewId = (int) $this->pdo->lastInsertId();

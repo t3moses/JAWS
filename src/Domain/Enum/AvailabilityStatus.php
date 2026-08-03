@@ -7,7 +7,7 @@ namespace App\Domain\Enum;
 /**
  * Availability Status (Compressed 0-1)
  *
- * After event completion, crew_availability.status is set to indicate selection for next event:
+ * After event completion, crew_availability.selection_rank is set to indicate selection for next event:
  * 0 = registered available but not selected (or not registered)
  * 1 = registered available and selected for next event (guaranteed assignment rank)
  */
