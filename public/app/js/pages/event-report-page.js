@@ -235,7 +235,11 @@ function renderAssignmentsTable(crewedBoats, eventId) {
         return;
     }
 
-    crewedBoats.forEach(assignment => {
+    const sortedCrewedBoats = [...crewedBoats].sort((a, b) =>
+        a.boat.displayName.localeCompare(b.boat.displayName)
+    );
+
+    sortedCrewedBoats.forEach(assignment => {
         const row = tbody.insertRow();
 
         // Boat name
