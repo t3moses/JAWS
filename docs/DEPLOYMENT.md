@@ -211,6 +211,30 @@ Confirm that automatic renewal will work:
 sudo certbot renew --dry-run
 ```
 
+##### Stop/Restart Apache Around Renewal
+
+Certbot and Apache both bind port 80, so renewal needs Apache stopped beforehand and restarted afterward. Add `pre_hook`/`post_hook` entries to the domain's renewal config so this happens automatically on every renewal attempt (Certbot's systemd timer/cron job runs `certbot renew` unattended):
+
+```bash
+sudo nano /etc/letsencrypt/renewal/nsc-sdc.ca.conf
+```
+
+Add these two lines to the `[renewalparams]` section:
+
+```ini
+pre_hook = /opt/bitnami/ctlscript.sh stop apache
+post_hook = /opt/bitnami/ctlscript.sh start apache
+```
+
+> **Note:** If certbot created a numbered directory (e.g. `nsc-sdc.ca-0001.conf`), edit that file instead — check with `certbot certificates`.
+
+Re-run the dry run to confirm the hooks fire and Apache comes back up:
+
+```bash
+sudo certbot renew --dry-run
+sudo /opt/bitnami/ctlscript.sh status apache
+```
+
 Then visit the site in a browser and verify the certificate details.
 
 #### 4. Install Composer (if not already installed)

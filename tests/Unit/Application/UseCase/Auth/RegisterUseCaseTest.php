@@ -60,6 +60,7 @@ class RegisterUseCaseTest extends TestCase
         $this->config = [
             'email' => [
                 'admin_notification_email' => 'test-admin@example.com',
+                'registration_notification_email_secondary' => 'test-admin-secondary@example.com',
             ],
         ];
 
@@ -97,6 +98,10 @@ class RegisterUseCaseTest extends TestCase
 
         // Default: Email service returns true (success)
         $this->emailService->method('send')->willReturn(true);
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function ($recipients) {
+                return array_fill_keys($recipients, true);
+            });
 
         // Mock email template service to return HTML strings with actual data
         $this->emailTemplateService->method('renderCrewRegistrationNotification')
@@ -452,10 +457,12 @@ class RegisterUseCaseTest extends TestCase
         $this->crewRepository->method('findByKey')->willReturn(null);
 
         $capturedEmails = [];
-        $this->emailService->method('send')
-            ->willReturnCallback(function ($to, $subject, $body) use (&$capturedEmails) {
-                $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
-                return true;
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function ($recipients, $subject, $body) use (&$capturedEmails) {
+                foreach ($recipients as $to) {
+                    $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
+                }
+                return array_fill_keys($recipients, true);
             });
 
         $request = new RegisterRequest(
@@ -477,12 +484,14 @@ class RegisterUseCaseTest extends TestCase
         $this->assertNotNull($response);
         $this->assertEquals('mock.jwt.token', $response->token);
 
-        // Assert admin notification was sent
-        $adminEmails = array_filter($capturedEmails, fn($e) => $e['to'] === 'test-admin@example.com');
-        $this->assertNotEmpty($adminEmails);
-        $adminEmail = array_values($adminEmails)[0];
-        $this->assertStringContainsString('New Crew Registration', $adminEmail['subject']);
-        $this->assertStringContainsString('Crew member registration', $adminEmail['body']);
+        // Assert admin notification was sent to both the primary and secondary recipients
+        foreach (['test-admin@example.com', 'test-admin-secondary@example.com'] as $expectedRecipient) {
+            $adminEmails = array_filter($capturedEmails, fn($e) => $e['to'] === $expectedRecipient);
+            $this->assertNotEmpty($adminEmails, "Expected notification to $expectedRecipient");
+            $adminEmail = array_values($adminEmails)[0];
+            $this->assertStringContainsString('New Crew Registration', $adminEmail['subject']);
+            $this->assertStringContainsString('Crew member registration', $adminEmail['body']);
+        }
     }
 
     public function testSendsAdminNotificationForBoatOwnerRegistration(): void
@@ -491,10 +500,12 @@ class RegisterUseCaseTest extends TestCase
         $this->boatRepository->method('findByKey')->willReturn(null);
 
         $capturedEmails = [];
-        $this->emailService->method('send')
-            ->willReturnCallback(function ($to, $subject, $body) use (&$capturedEmails) {
-                $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
-                return true;
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function ($recipients, $subject, $body) use (&$capturedEmails) {
+                foreach ($recipients as $to) {
+                    $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
+                }
+                return array_fill_keys($recipients, true);
             });
 
         $request = new RegisterRequest(
@@ -517,12 +528,14 @@ class RegisterUseCaseTest extends TestCase
         $this->assertNotNull($response);
         $this->assertEquals('mock.jwt.token', $response->token);
 
-        // Assert admin notification was sent
-        $adminEmails = array_filter($capturedEmails, fn($e) => $e['to'] === 'test-admin@example.com');
-        $this->assertNotEmpty($adminEmails);
-        $adminEmail = array_values($adminEmails)[0];
-        $this->assertStringContainsString('New Boat Owner Registration', $adminEmail['subject']);
-        $this->assertStringContainsString('Boat Owner Registration', $adminEmail['body']);
+        // Assert admin notification was sent to both the primary and secondary recipients
+        foreach (['test-admin@example.com', 'test-admin-secondary@example.com'] as $expectedRecipient) {
+            $adminEmails = array_filter($capturedEmails, fn($e) => $e['to'] === $expectedRecipient);
+            $this->assertNotEmpty($adminEmails, "Expected notification to $expectedRecipient");
+            $adminEmail = array_values($adminEmails)[0];
+            $this->assertStringContainsString('New Boat Owner Registration', $adminEmail['subject']);
+            $this->assertStringContainsString('Boat Owner Registration', $adminEmail['body']);
+        }
     }
 
     public function testRegistrationSucceedsWhenEmailFails(): void
@@ -587,10 +600,12 @@ class RegisterUseCaseTest extends TestCase
         $this->crewRepository->method('findByKey')->willReturn(null);
 
         $capturedEmails = [];
-        $this->emailService->method('send')
-            ->willReturnCallback(function ($to, $subject, $body) use (&$capturedEmails) {
-                $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
-                return true;
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function ($recipients, $subject, $body) use (&$capturedEmails) {
+                foreach ($recipients as $to) {
+                    $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
+                }
+                return array_fill_keys($recipients, true);
             });
 
         $request = new RegisterRequest(
@@ -794,10 +809,12 @@ class RegisterUseCaseTest extends TestCase
         $this->boatRepository->method('findByKey')->willReturn(null);
 
         $capturedEmails = [];
-        $this->emailService->method('send')
-            ->willReturnCallback(function ($to, $subject, $body) use (&$capturedEmails) {
-                $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
-                return true;
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function ($recipients, $subject, $body) use (&$capturedEmails) {
+                foreach ($recipients as $to) {
+                    $capturedEmails[] = ['to' => $to, 'subject' => $subject, 'body' => $body];
+                }
+                return array_fill_keys($recipients, true);
             });
 
         $request = new RegisterRequest(
