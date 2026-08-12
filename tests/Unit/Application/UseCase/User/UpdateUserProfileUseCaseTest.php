@@ -29,6 +29,7 @@ class UpdateUserProfileUseCaseTest extends TestCase
     private BoatRepositoryInterface $boatRepository;
     private PasswordServiceInterface $passwordService;
     private GetUserProfileUseCase $getUserProfileUseCase;
+    private EmailServiceInterface $emailService;
     private UpdateUserProfileUseCase $useCase;
 
     protected function setUp(): void
@@ -51,16 +52,21 @@ class UpdateUserProfileUseCaseTest extends TestCase
         );
         $this->getUserProfileUseCase->method('execute')->willReturn($stubProfile);
 
+        $this->emailService = $this->createMock(EmailServiceInterface::class);
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(fn(array $recipients) => array_fill_keys($recipients, true));
+
         $this->useCase = new UpdateUserProfileUseCase(
             $this->userRepository,
             $this->crewRepository,
             $this->boatRepository,
             $this->passwordService,
             $this->getUserProfileUseCase,
-            $this->createMock(EmailServiceInterface::class),
+            $this->emailService,
             $this->createMock(EmailTemplateServiceInterface::class),
             'admin@example.com',
             $this->createMock(LoggerInterface::class),
+            'admin-secondary@example.com',
         );
     }
 
@@ -130,5 +136,29 @@ class UpdateUserProfileUseCaseTest extends TestCase
 
         $this->assertNotNull($capturedCrew);
         $this->assertNull($capturedCrew->getExperience());
+    }
+
+    public function testCrewProfileUpdateNotifiesPrimaryAndSecondaryRecipients(): void
+    {
+        $crew = $this->createTestCrew(null);
+        $this->crewRepository->method('findByUserId')->willReturn($crew);
+
+        $capturedRecipients = [];
+        $this->emailService->method('sendBulk')
+            ->willReturnCallback(function (array $recipients) use (&$capturedRecipients) {
+                $capturedRecipients = $recipients;
+                return array_fill_keys($recipients, true);
+            });
+
+        $request = new UpdateProfileRequest(
+            crewProfile: ['experience' => 'CANSail 1 and 2, 3 seasons at NSC'],
+        );
+
+        $this->useCase->execute(1, $request);
+
+        $this->assertEqualsCanonicalizing(
+            ['admin@example.com', 'admin-secondary@example.com'],
+            $capturedRecipients
+        );
     }
 }

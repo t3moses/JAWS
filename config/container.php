@@ -540,7 +540,8 @@ $container->set(\App\Application\UseCase\User\UpdateUserProfileUseCase::class, f
         $c->get(EmailServiceInterface::class),
         $c->get(EmailTemplateServiceInterface::class),
         $config['email']['admin_notification_email'],
-        $c->get(LoggerInterface::class)
+        $c->get(LoggerInterface::class),
+        $config['email']['registration_notification_email_secondary'] ?? null,
     );
 });
 

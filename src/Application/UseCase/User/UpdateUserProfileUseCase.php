@@ -36,6 +36,7 @@ class UpdateUserProfileUseCase
         private EmailTemplateServiceInterface $emailTemplateService,
         private string $adminNotificationEmail,
         private LoggerInterface $logger,
+        private ?string $secondaryNotificationEmail = null,
     ) {
     }
 
@@ -147,15 +148,18 @@ class UpdateUserProfileUseCase
 
             $subject = sprintf('Crew Profile Updated - %s %s', $profile['firstName'], $profile['lastName']);
             $body = $this->emailTemplateService->renderCrewProfileUpdateNotification($user, $profile);
-            $result = $this->emailService->send($this->adminNotificationEmail, $subject, $body);
+            $results = $this->emailService->sendBulk($this->getNotificationRecipients(), $subject, $body);
 
-            if ($result) {
-                $this->logger->info('email.sent', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail]);
-            } else {
-                $this->logger->warning('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail]);
+            $logContext = ['type' => 'admin_profile_update', 'account_type' => 'crew'];
+            foreach ($results as $recipient => $success) {
+                if ($success) {
+                    $this->logger->info('email.sent', $logContext + ['to' => $recipient]);
+                } else {
+                    $this->logger->warning('email.failed', $logContext + ['to' => $recipient]);
+                }
             }
         } catch (\Throwable $e) {
-            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => $this->adminNotificationEmail, 'error' => $e->getMessage()]);
+            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'crew', 'to' => implode(',', $this->getNotificationRecipients()), 'error' => $e->getMessage()]);
         }
     }
 
@@ -182,16 +186,29 @@ class UpdateUserProfileUseCase
 
             $subject = sprintf('Boat Profile Updated - %s', $profile['displayName']);
             $body = $this->emailTemplateService->renderBoatOwnerProfileUpdateNotification($user, $profile);
-            $result = $this->emailService->send($this->adminNotificationEmail, $subject, $body);
+            $results = $this->emailService->sendBulk($this->getNotificationRecipients(), $subject, $body);
 
-            if ($result) {
-                $this->logger->info('email.sent', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail]);
-            } else {
-                $this->logger->warning('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail]);
+            $logContext = ['type' => 'admin_profile_update', 'account_type' => 'boat_owner'];
+            foreach ($results as $recipient => $success) {
+                if ($success) {
+                    $this->logger->info('email.sent', $logContext + ['to' => $recipient]);
+                } else {
+                    $this->logger->warning('email.failed', $logContext + ['to' => $recipient]);
+                }
             }
         } catch (\Throwable $e) {
-            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => $this->adminNotificationEmail, 'error' => $e->getMessage()]);
+            $this->logger->error('email.failed', ['type' => 'admin_profile_update', 'account_type' => 'boat_owner', 'to' => implode(',', $this->getNotificationRecipients()), 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Build the list of admin notification recipients, including the secondary recipient if configured
+     *
+     * @return string[]
+     */
+    private function getNotificationRecipients(): array
+    {
+        return array_filter([$this->adminNotificationEmail, $this->secondaryNotificationEmail]);
     }
 
     /**
