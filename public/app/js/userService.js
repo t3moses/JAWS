@@ -76,3 +76,48 @@ export async function flagAssignedCrew(flags) {
         return { success: false, error: error.message || 'Failed to flag crew' };
     }
 }
+
+/**
+ * Correct the skill level of a crew member assigned to the caller's boat for
+ * a past event.
+ * @param {string} eventId
+ * @param {string} crewKey
+ * @param {number} skill
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+export async function updateAssignedCrewSkill(eventId, crewKey, skill) {
+    try {
+        const response = await patch(API_CONFIG.ENDPOINTS.ASSIGNMENT_CREW_SKILL, { eventId, crewKey, skill });
+
+        if (response?.success === false) {
+            console.error('Updating crew skill failed:', response.error);
+            return { success: false, error: response.error || 'Failed to update skill' };
+        }
+
+        return { success: true, data: response?.data };
+    } catch (error) {
+        console.error('Error updating crew skill:', error);
+        return { success: false, error: error.message || 'Failed to update skill' };
+    }
+}
+
+/**
+ * Re-run the season update pipeline (ranking, selection, flotilla generation)
+ * using current database contents.
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+export async function recalculateSeason() {
+    try {
+        const response = await post(API_CONFIG.ENDPOINTS.ASSIGNMENT_RECALCULATE, {});
+
+        if (response?.success === false) {
+            console.error('Recalculating season failed:', response.error);
+            return { success: false, error: response.error || 'Failed to recalculate assignments' };
+        }
+
+        return { success: true, data: response?.data };
+    } catch (error) {
+        console.error('Error recalculating season:', error);
+        return { success: false, error: error.message || 'Failed to recalculate assignments' };
+    }
+}

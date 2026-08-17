@@ -99,6 +99,87 @@
                 </div>
             </section>
 
+            <!-- Crew Detail Modal -->
+            <div id="crew-detail-modal" class="modal-overlay hidden">
+                <div class="modal modal-crew-detail">
+                    <h3 id="crew-detail-name"></h3>
+
+                    <div class="form-group">
+                        <label>Membership status</label>
+                        <p id="crew-detail-membership" class="modal-field-value"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crew-detail-skill-select">Skill</label>
+                        <p id="crew-detail-skill-display" class="modal-field-value"></p>
+                        <select id="crew-detail-skill-select" class="hidden">
+                            <option value="0">Novice</option>
+                            <option value="1">Competent crew</option>
+                            <option value="2">Competent first mate</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <p>A competent crew has demonstrated strong competence in ALL of the following areas:</p>
+                        <ul>
+                            <li>Knowledge of sea terms and parts of a boat</li>
+                            <li>Rigging and sails</li>
+                            <li>Sail handling</li>
+                            <li>Ropework</li>
+                            <li>Fire precautions and fighting</li>
+                            <li>Personal safety equipment</li>
+                            <li>Man overboard</li>
+                            <li>Emergency equipment</li>
+                            <li>Meteorology</li>
+                            <li>Seasickness</li>
+                            <li>Helmsmanship</li>
+                            <li>General boat duties</li>
+                            <li>Manners</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <p>A competent first mate has demonstrated strong competence in ALL of the following areas:</p>
+                        <ul>
+                            <li>Seamanship</li>
+                            <li>Position fixing</li>
+                            <li>Plotting a course to steer</li>
+                            <li>Weather forecasting and meteorology</li>
+                            <li>Collision regulations</li>
+                            <li>Preparation for sailing</li>
+                            <li>Deck work</li>
+                            <li>Navigation</li>
+                            <li>Pilotage</li>
+                            <li>Rules of the road</li>
+                            <li>Maintenance and repair work</li>
+                            <li>Engines</li>
+                            <li>Emergency situations</li>
+                            <li>Handling under power</li>
+                            <li>Handling under sail</li>
+                            <li>Docking</li>
+                            <li>First aid</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Experience</label>
+                        <p id="crew-detail-experience" class="modal-field-value"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Commitment rank</label>
+                        <div class="commitment-rank-row">
+                            <p id="crew-detail-commitment" class="modal-field-value"></p>
+                            <button type="button" id="crew-detail-no-show" class="btn btn-secondary hidden">No show</button>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="crew-detail-done" class="btn btn-primary">Done</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Quick Actions Section -->
             <section class="section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                 <h2>Quick Actions</h2>

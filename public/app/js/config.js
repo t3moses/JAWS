@@ -23,6 +23,8 @@ export const API_CONFIG = {
         USER_AVAILABILITY: '/users/me/availability',
         ASSIGNMENTS: '/assignments',
         ASSIGNMENT_CREW_FLAGS: '/assignments/crew-flags',
+        ASSIGNMENT_CREW_SKILL: '/assignments/crew-skill',
+        ASSIGNMENT_RECALCULATE: '/assignments/recalculate',
 
         // Status endpoint
         STATUS: '/status',

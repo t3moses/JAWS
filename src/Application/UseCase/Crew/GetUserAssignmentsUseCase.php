@@ -9,6 +9,8 @@ use App\Application\Port\Repository\BoatRepositoryInterface;
 use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\EventRepositoryInterface;
 use App\Application\Port\Repository\SeasonRepositoryInterface;
+use App\Domain\Enum\CrewRankDimension;
+use App\Domain\ValueObject\CrewKey;
 
 /**
  * Get User Assignments Use Case
@@ -125,14 +127,29 @@ class GetUserAssignmentsUseCase
 
                     // Check if this is the user's boat
                     if ($boatData['key'] === $boat->getKey()->toString()) {
-                        // Found boat assignment - extract crew data
+                        // Found boat assignment - extract crew data. Skill,
+                        // membership, commitment, and experience are read live
+                        // from the crew repository (rather than the flotilla
+                        // snapshot) since the boat owner's assignment detail
+                        // view needs current values, including ones they can
+                        // edit (skill, commitment rank via crew-flags).
                         $crews = $crewedBoat['crews'];
                         $crewmates = array_map(
-                            fn($c) => [
-                                'key' => $c['key'],
-                                'display_name' => $c['display_name'],
-                                'skill' => $c['skill'],
-                            ],
+                            function ($c) {
+                                $liveCrew = $this->crewRepository->findByKey(CrewKey::fromString($c['key']));
+                                return [
+                                    'key' => $c['key'],
+                                    'display_name' => $c['display_name'],
+                                    'skill' => $liveCrew?->getSkill()->value ?? $c['skill'],
+                                    'membership_rank' => $liveCrew?->getRank()->getDimension(
+                                        CrewRankDimension::MEMBERSHIP
+                                    ) ?? 0,
+                                    'commitment_rank' => $liveCrew?->getRank()->getDimension(
+                                        CrewRankDimension::COMMITMENT
+                                    ) ?? 2,
+                                    'experience' => $liveCrew?->getExperience(),
+                                ];
+                            },
                             $crews
                         );
 

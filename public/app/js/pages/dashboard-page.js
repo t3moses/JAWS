@@ -6,10 +6,10 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 import { getAllEvents, isDeadlinePassed } from '../eventService.js';
-import { updateBatchAvailability, flagAssignedCrew } from '../userService.js';
+import { updateBatchAvailability, flagAssignedCrew, updateAssignedCrewSkill, recalculateSeason } from '../userService.js';
 import { get } from '../apiService.js';
 import { API_CONFIG } from '../config.js';
-import { showSuccess, showError, showInfo } from '../toastService.js';
+import { showSuccess, showError } from '../toastService.js';
 
 // Make signOut available globally for onclick handlers
 window.signOut = signOut;
@@ -148,7 +148,10 @@ async function populateAssignments() {
         container.innerHTML = '';
 
         const isBoatOwner = user.accountType !== 'crew';
-        let hasFlaggableAssignment = false;
+
+        // Crew detail data for the boat owner's crew-detail modal, keyed by
+        // "eventId|crewKey" (see openCrewDetailModal / the click handler below).
+        crewDetailData.clear();
 
         // Render each assignment
         boatAssignments.forEach(assignment => {
@@ -167,26 +170,33 @@ async function populateAssignments() {
             // Format time range
             const timeRange = `${formatTime(assignment.startTime)} - ${formatTime(assignment.finishTime)}`;
 
-            // Build crewmates HTML. For boat owners, crew names for past events are
-            // togglable flag buttons (see handleSaveCrewFlags) so commitment rank can
-            // only be decremented once an assignment is final; the next/future event
-            // isn't flaggable yet, and crew members viewing their own crewmates always
-            // see a plain tag.
+            // Build crewmates HTML. For boat owners, every crewmate name is a
+            // button that opens a detail modal (editable for past events,
+            // read-only for future ones - see openCrewDetailModal). Crew
+            // members viewing their own crewmates always see a plain tag.
             const eventHasPassed = hasEventOccurred(assignment.eventDate, assignment.finishTime);
-            const canFlag = isBoatOwner && eventHasPassed;
-            if (canFlag) {
-                hasFlaggableAssignment = true;
-            }
 
             let crewmatesHTML = '';
             if (assignment.crewmates && assignment.crewmates.length > 0) {
-                const tags = assignment.crewmates.map(c => (
-                    canFlag
-                        ? `<button type="button" class="crew-tag crew-tag-btn"
-                                   data-event-id="${assignment.eventId}"
-                                   data-crew-key="${c.key}">${c.display_name}</button>`
-                        : `<span class="crew-tag">${c.display_name}</span>`
-                )).join('');
+                const tags = assignment.crewmates.map(c => {
+                    if (!isBoatOwner) {
+                        return `<span class="crew-tag">${c.display_name}</span>`;
+                    }
+
+                    const detailKey = `${assignment.eventId}|${c.key}`;
+                    crewDetailData.set(detailKey, {
+                        eventId: assignment.eventId,
+                        crewKey: c.key,
+                        displayName: c.display_name,
+                        skill: c.skill,
+                        membershipRank: c.membership_rank,
+                        experience: c.experience,
+                        commitmentRank: c.commitment_rank,
+                        isPast: eventHasPassed
+                    });
+                    return `<button type="button" class="crew-tag crew-tag-btn"
+                                   data-detail-key="${detailKey}">${c.display_name}</button>`;
+                }).join('');
                 crewmatesHTML = `<div class="assignment-crew">${tags}</div>`;
             }
 
@@ -199,79 +209,160 @@ async function populateAssignments() {
             container.appendChild(card);
         });
 
-        // Toggle a crew flag button between turquoise (unflagged) and orange (flagged)
         container.querySelectorAll('.crew-tag-btn').forEach(btn => {
-            btn.addEventListener('click', () => btn.classList.toggle('flagged'));
+            btn.addEventListener('click', () => openCrewDetailModal(crewDetailData.get(btn.dataset.detailKey)));
         });
-
-        // Boat owners get a Save Changes button to submit flagged crew, but only
-        // when at least one past-event assignment is actually flaggable
-        if (hasFlaggableAssignment) {
-            const saveWrapper = document.createElement('div');
-            saveWrapper.style.textAlign = 'center';
-            saveWrapper.style.marginTop = '2rem';
-            saveWrapper.innerHTML = '<button id="save-crew-flags" class="btn btn-primary">Save Changes</button>';
-            container.appendChild(saveWrapper);
-
-            document.getElementById('save-crew-flags').addEventListener('click', handleSaveCrewFlags);
-        }
     } catch (error) {
         console.error('Failed to load assignments:', error);
         container.innerHTML = '<div class="alert alert-error">Failed to load assignments. Please refresh the page.</div>';
     }
 }
 
+const crewDetailData = new Map();
+
+const SKILL_LABELS = ['Novice', 'Competent crew', 'Competent first mate'];
+
+// Whether the currently-open crew detail modal is for a past event - set by
+// openCrewDetailModal, read by the Done button handler to decide whether
+// closing the form should trigger a season recalculation (see below).
+let currentModalIsPast = false;
+
 /**
- * Handle the "My Boat Assignments" Save Changes click: collect every crew name
- * button currently flagged orange, list flagged crews with how many times each
- * was flagged, and submit those flags so their commitment rank is decremented.
+ * Open the crew detail modal for a boat owner's crewmate. Future events show
+ * everything read-only; past events let the owner correct skill (dropdown,
+ * saved on change) and flag a no-show (decrements commitment rank, or
+ * withdraws the crew from future events once already at rank 0).
  */
-async function handleSaveCrewFlags() {
-    const saveButton = document.getElementById('save-crew-flags');
-    const originalLabel = saveButton.textContent;
-
-    const flaggedButtons = Array.from(
-        document.querySelectorAll('#assignments-container .crew-tag-btn.flagged')
-    );
-
-    if (flaggedButtons.length === 0) {
-        showInfo('No changes to save.', 2000);
+function openCrewDetailModal(detail) {
+    if (!detail) {
         return;
     }
 
-    const flags = flaggedButtons.map(btn => ({
-        eventId: btn.dataset.eventId,
-        crewKey: btn.dataset.crewKey
-    }));
+    document.getElementById('crew-detail-name').textContent = detail.displayName || '';
+    document.getElementById('crew-detail-membership').textContent = detail.membershipRank === 1 ? 'Member' : 'Non-member';
+    document.getElementById('crew-detail-experience').textContent = detail.experience || '—';
 
-    saveButton.disabled = true;
-    saveButton.textContent = 'Saving...';
+    const skillDisplay = document.getElementById('crew-detail-skill-display');
+    const skillSelect = document.getElementById('crew-detail-skill-select');
+    const commitmentValue = document.getElementById('crew-detail-commitment');
+    const noShowBtn = document.getElementById('crew-detail-no-show');
 
-    const result = await flagAssignedCrew(flags);
+    commitmentValue.textContent = String(detail.commitmentRank);
+    currentModalIsPast = detail.isPast;
 
-    saveButton.disabled = false;
-    saveButton.textContent = originalLabel;
+    if (detail.isPast) {
+        skillDisplay.classList.add('hidden');
+        skillSelect.classList.remove('hidden');
+        skillSelect.value = String(detail.skill);
+        skillSelect.disabled = false;
+        skillSelect.dataset.eventId = detail.eventId;
+        skillSelect.dataset.crewKey = detail.crewKey;
+
+        noShowBtn.classList.remove('hidden');
+        noShowBtn.disabled = false;
+        noShowBtn.dataset.eventId = detail.eventId;
+        noShowBtn.dataset.crewKey = detail.crewKey;
+    } else {
+        skillDisplay.classList.remove('hidden');
+        skillDisplay.textContent = SKILL_LABELS[detail.skill] ?? '—';
+        skillSelect.classList.add('hidden');
+
+        noShowBtn.classList.add('hidden');
+    }
+
+    document.getElementById('crew-detail-modal').classList.remove('hidden');
+}
+
+function hideCrewDetailModal() {
+    document.getElementById('crew-detail-modal').classList.add('hidden');
+}
+
+// Closing a past-event form may have changed data the selection algorithm
+// depends on (skill correction, no-show/commitment rank), so re-run the
+// season update pipeline and reload the dashboard's assignments. Future-event
+// forms are read-only, so closing them needs no recalculation.
+document.getElementById('crew-detail-done').addEventListener('click', async () => {
+    const wasPast = currentModalIsPast;
+    hideCrewDetailModal();
+
+    if (!wasPast) {
+        return;
+    }
+
+    const container = document.getElementById('assignments-container');
+    container.innerHTML = '<div class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-gray);">Recalculating assignments...</div>';
+
+    const result = await recalculateSeason();
+    if (!result.success) {
+        showError(result.error || 'Failed to recalculate assignments');
+    }
+
+    await populateAssignments();
+});
+
+const crewDetailModal = document.getElementById('crew-detail-modal');
+crewDetailModal.addEventListener('click', (e) => {
+    if (e.target === crewDetailModal) {
+        hideCrewDetailModal();
+    }
+});
+
+document.getElementById('crew-detail-skill-select').addEventListener('change', async (e) => {
+    const select = e.target;
+    const { eventId, crewKey } = select.dataset;
+    const newSkill = parseInt(select.value, 10);
+
+    select.disabled = true;
+    const result = await updateAssignedCrewSkill(eventId, crewKey, newSkill);
+    select.disabled = false;
 
     if (!result.success) {
-        showError(result.error || 'Failed to save flagged crew');
+        showError(result.error || 'Failed to update skill');
         return;
     }
 
-    const flagged = result.data?.flagged || [];
-    if (flagged.length === 0) {
-        showInfo('No changes to save.', 2000);
+    const detail = crewDetailData.get(`${eventId}|${crewKey}`);
+    if (detail) {
+        detail.skill = newSkill;
+    }
+    showSuccess('Skill updated.');
+});
+
+document.getElementById('crew-detail-no-show').addEventListener('click', async (e) => {
+    const btn = e.target;
+    const { eventId, crewKey } = btn.dataset;
+
+    btn.disabled = true;
+    const result = await flagAssignedCrew([{ eventId, crewKey }]);
+
+    if (!result.success) {
+        btn.disabled = false;
+        showError(result.error || 'Failed to record no-show');
         return;
     }
 
-    const summary = flagged
-        .map(f => `${f.display_name || f.crew_key} (×${f.flag_count})`)
-        .join(', ');
-    showSuccess(`Flagged: ${summary}. Commitment rank updated.`);
+    const flagged = result.data?.flagged?.[0];
+    const commitmentValue = document.getElementById('crew-detail-commitment');
 
-    // Clear flags now that they've been applied, so re-clicking Save without
-    // re-flagging anything doesn't decrement the same crew again.
-    flaggedButtons.forEach(btn => btn.classList.remove('flagged'));
-}
+    if (!flagged) {
+        btn.disabled = false;
+        return;
+    }
+
+    const detail = crewDetailData.get(`${eventId}|${crewKey}`);
+    if (detail) {
+        detail.commitmentRank = flagged.rank_commitment;
+    }
+
+    if (flagged.withdrawn_from_future_events) {
+        commitmentValue.textContent = 'Remove from future events';
+        // Already at rock bottom and removed from future events - nothing left to flag.
+        btn.disabled = true;
+    } else {
+        commitmentValue.textContent = String(flagged.rank_commitment);
+        btn.disabled = false;
+    }
+});
 
 /**
  * Check whether an event has already finished (mirrors the server's

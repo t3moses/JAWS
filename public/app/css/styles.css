@@ -589,11 +589,6 @@ main {
   filter: brightness(1.08);
 }
 
-.crew-tag-btn.flagged {
-  background: #ff6b6b;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-}
-
 .waitlist {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   padding: 1.5rem 2rem;
@@ -1417,6 +1412,10 @@ nav .user-greeting {
   display: none;
 }
 
+.hidden {
+  display: none;
+}
+
 .modal {
   background: var(--white);
   border-radius: 20px;
@@ -1425,6 +1424,26 @@ nav .user-greeting {
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
+}
+
+.modal-crew-detail {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-field-value {
+  color: var(--dark);
+  font-weight: 600;
+}
+
+.commitment-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.commitment-rank-row .modal-field-value {
+  margin-bottom: 0;
 }
 
 .modal h3 {

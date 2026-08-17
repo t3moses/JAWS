@@ -182,6 +182,25 @@ return [
         'auth' => true,
     ],
 
+    // Boat owner corrects the skill level of crew assigned to their boat for a past event
+    [
+        'method' => 'PATCH',
+        'path' => '/api/assignments/crew-skill',
+        'controller' => AssignmentController::class,
+        'action' => 'updateCrewSkill',
+        'auth' => true,
+    ],
+
+    // Re-run the season update pipeline using current database contents (e.g.
+    // after a boat owner corrects a past-event crewmate's skill or no-show)
+    [
+        'method' => 'POST',
+        'path' => '/api/assignments/recalculate',
+        'controller' => AssignmentController::class,
+        'action' => 'recalculate',
+        'auth' => true,
+    ],
+
     // =======================
     // Admin Endpoints
     // =======================

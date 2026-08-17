@@ -116,4 +116,28 @@ class AssignmentApiTest extends TestCase
         $this->cleanupTestUser($boatData['userId']);
         $this->cleanupTestUser($crewData['userId']);
     }
+
+    public function testRecalculateRequiresAuth(): void
+    {
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/assignments/recalculate");
+
+        $this->assertEquals(401, $response['status']);
+    }
+
+    public function testRecalculateRunsSeasonUpdatePipeline(): void
+    {
+        $testData = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/assignments/recalculate", [], [
+            "Authorization: Bearer {$testData['token']}",
+        ]);
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertArrayHasKey('events_processed', $response['body']['data']);
+        $this->assertArrayHasKey('flotillas_generated', $response['body']['data']);
+
+        // Cleanup
+        $this->cleanupTestUser($testData['userId']);
+    }
 }
