@@ -261,6 +261,16 @@ $container->set(\App\Application\UseCase\Boat\UpdateAssignedCrewSkillUseCase::cl
     );
 });
 
+$container->set(\App\Application\UseCase\Boat\RemoveAssignedCrewFromWhitelistUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Boat\RemoveAssignedCrewFromWhitelistUseCase(
+        $c->get(BoatRepositoryInterface::class),
+        $c->get(CrewRepositoryInterface::class),
+        $c->get(EventRepositoryInterface::class),
+        $c->get(SeasonRepositoryInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 // Event Use Cases
 $container->set(\App\Application\UseCase\Event\GetAllEventsUseCase::class, function ($c) {
     return new \App\Application\UseCase\Event\GetAllEventsUseCase(
@@ -593,6 +603,7 @@ $container->set(\App\Presentation\Controller\AssignmentController::class, functi
         $c->get(\App\Application\UseCase\Crew\GetUserAssignmentsUseCase::class),
         $c->get(\App\Application\UseCase\Boat\FlagAssignedCrewUseCase::class),
         $c->get(\App\Application\UseCase\Boat\UpdateAssignedCrewSkillUseCase::class),
+        $c->get(\App\Application\UseCase\Boat\RemoveAssignedCrewFromWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Season\ProcessSeasonUpdateUseCase::class)
     );
 });

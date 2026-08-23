@@ -1446,6 +1446,13 @@ nav .user-greeting {
   margin-bottom: 0;
 }
 
+.modal-field-hint {
+  color: var(--text-gray);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
 .modal h3 {
   color: var(--dark);
   margin-bottom: 1.5rem;

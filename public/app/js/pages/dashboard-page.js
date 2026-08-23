@@ -6,7 +6,7 @@
 import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 import { getAllEvents, isDeadlinePassed } from '../eventService.js';
-import { updateBatchAvailability, flagAssignedCrew, updateAssignedCrewSkill, recalculateSeason } from '../userService.js';
+import { updateBatchAvailability, flagAssignedCrew, updateAssignedCrewSkill, removeCrewFromWhitelist, recalculateSeason } from '../userService.js';
 import { get } from '../apiService.js';
 import { API_CONFIG } from '../config.js';
 import { showSuccess, showError } from '../toastService.js';
@@ -246,6 +246,7 @@ function openCrewDetailModal(detail) {
     const skillSelect = document.getElementById('crew-detail-skill-select');
     const commitmentValue = document.getElementById('crew-detail-commitment');
     const noShowBtn = document.getElementById('crew-detail-no-show');
+    const removeWhitelistBtn = document.getElementById('crew-detail-remove-whitelist');
 
     commitmentValue.textContent = String(detail.commitmentRank);
     currentModalIsPast = detail.isPast;
@@ -262,12 +263,18 @@ function openCrewDetailModal(detail) {
         noShowBtn.disabled = false;
         noShowBtn.dataset.eventId = detail.eventId;
         noShowBtn.dataset.crewKey = detail.crewKey;
+
+        removeWhitelistBtn.classList.remove('hidden');
+        removeWhitelistBtn.disabled = false;
+        removeWhitelistBtn.dataset.eventId = detail.eventId;
+        removeWhitelistBtn.dataset.crewKey = detail.crewKey;
     } else {
         skillDisplay.classList.remove('hidden');
         skillDisplay.textContent = SKILL_LABELS[detail.skill] ?? '—';
         skillSelect.classList.add('hidden');
 
         noShowBtn.classList.add('hidden');
+        removeWhitelistBtn.classList.add('hidden');
     }
 
     document.getElementById('crew-detail-modal').classList.remove('hidden');
@@ -362,6 +369,33 @@ document.getElementById('crew-detail-no-show').addEventListener('click', async (
         commitmentValue.textContent = String(flagged.rank_commitment);
         btn.disabled = false;
     }
+});
+
+document.getElementById('crew-detail-remove-whitelist').addEventListener('click', async (e) => {
+    const btn = e.target;
+    const { eventId, crewKey } = btn.dataset;
+
+    btn.disabled = true;
+    const result = await removeCrewFromWhitelist(eventId, crewKey);
+
+    if (!result.success) {
+        btn.disabled = false;
+        showError(result.error || 'Failed to remove boat from whitelist');
+        return;
+    }
+
+    showSuccess('Boat removed from whitelist.');
+    hideCrewDetailModal();
+
+    const container = document.getElementById('assignments-container');
+    container.innerHTML = '<div class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-gray);">Recalculating assignments...</div>';
+
+    const recalcResult = await recalculateSeason();
+    if (!recalcResult.success) {
+        showError(recalcResult.error || 'Failed to recalculate assignments');
+    }
+
+    await populateAssignments();
 });
 
 /**

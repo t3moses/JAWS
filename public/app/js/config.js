@@ -24,6 +24,7 @@ export const API_CONFIG = {
         ASSIGNMENTS: '/assignments',
         ASSIGNMENT_CREW_FLAGS: '/assignments/crew-flags',
         ASSIGNMENT_CREW_SKILL: '/assignments/crew-skill',
+        ASSIGNMENT_CREW_WHITELIST_ENTRY: '/assignments/crew-whitelist/:eventId/:crewKey',
         ASSIGNMENT_RECALCULATE: '/assignments/recalculate',
 
         // Status endpoint

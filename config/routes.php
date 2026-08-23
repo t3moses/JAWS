@@ -191,6 +191,16 @@ return [
         'auth' => true,
     ],
 
+    // Boat owner removes their own boat from the whitelist of crew assigned
+    // to their boat for a past event
+    [
+        'method' => 'DELETE',
+        'path' => '/api/assignments/crew-whitelist/{eventId}/{crewKey}',
+        'controller' => AssignmentController::class,
+        'action' => 'removeCrewFromWhitelist',
+        'auth' => true,
+    ],
+
     // Re-run the season update pipeline using current database contents (e.g.
     // after a boat owner corrects a past-event crewmate's skill or no-show)
     [

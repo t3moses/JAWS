@@ -51,7 +51,9 @@ class ResetPasswordUseCase
             $this->logger->warning('auth.reset_password.invalid_token', [
                 'reason' => 'unknown_token',
             ]);
-            throw new InvalidResetTokenException();
+            throw new InvalidResetTokenException(
+                'This reset link is no longer valid. If you requested more than one reset email, please use the link from the most recent one.'
+            );
         }
 
         $expiresAt = new \DateTimeImmutable($record['expires_at']);

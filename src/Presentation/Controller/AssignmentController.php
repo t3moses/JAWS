@@ -10,6 +10,7 @@ use App\Application\Exception\BoatNotFoundException;
 use App\Application\Exception\CrewNotFoundException;
 use App\Application\Exception\ValidationException;
 use App\Application\UseCase\Boat\FlagAssignedCrewUseCase;
+use App\Application\UseCase\Boat\RemoveAssignedCrewFromWhitelistUseCase;
 use App\Application\UseCase\Boat\UpdateAssignedCrewSkillUseCase;
 use App\Application\UseCase\Crew\GetUserAssignmentsUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
@@ -26,6 +27,7 @@ class AssignmentController
         private GetUserAssignmentsUseCase $getUserAssignmentsUseCase,
         private FlagAssignedCrewUseCase $flagAssignedCrewUseCase,
         private UpdateAssignedCrewSkillUseCase $updateAssignedCrewSkillUseCase,
+        private RemoveAssignedCrewFromWhitelistUseCase $removeAssignedCrewFromWhitelistUseCase,
         private ProcessSeasonUpdateUseCase $processSeasonUpdateUseCase,
     ) {
     }
@@ -104,6 +106,34 @@ class AssignmentController
                 $request->eventId,
                 $request->crewKey,
                 $request->skill
+            );
+
+            return JsonResponse::success($result);
+        } catch (BoatNotFoundException|CrewNotFoundException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * DELETE /api/assignments/crew-whitelist/{eventId}/{crewKey}
+     *
+     * Lets a boat owner remove their own boat from the whitelist of a crew
+     * member who was assigned to their boat for a past event.
+     *
+     * @param array $params Route parameters (eventId, crewKey)
+     * @param array $auth Authentication data (user_id, email, account_type, is_admin)
+     */
+    public function removeCrewFromWhitelist(array $params, array $auth): JsonResponse
+    {
+        try {
+            $result = $this->removeAssignedCrewFromWhitelistUseCase->execute(
+                $auth['user_id'],
+                $params['eventId'],
+                $params['crewKey']
             );
 
             return JsonResponse::success($result);

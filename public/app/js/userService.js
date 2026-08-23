@@ -3,7 +3,7 @@
  * Handles user profile operations via API
  */
 
-import { patch, post } from './apiService.js';
+import { deleteRequest, patch, post } from './apiService.js';
 import { API_CONFIG } from './config.js';
 
 /**
@@ -98,6 +98,29 @@ export async function updateAssignedCrewSkill(eventId, crewKey, skill) {
     } catch (error) {
         console.error('Error updating crew skill:', error);
         return { success: false, error: error.message || 'Failed to update skill' };
+    }
+}
+
+/**
+ * Remove the caller's boat from the whitelist of a crew member who was
+ * assigned to their boat for a past event.
+ * @param {string} eventId
+ * @param {string} crewKey
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+export async function removeCrewFromWhitelist(eventId, crewKey) {
+    try {
+        const response = await deleteRequest(API_CONFIG.ENDPOINTS.ASSIGNMENT_CREW_WHITELIST_ENTRY, { eventId, crewKey });
+
+        if (response?.success === false) {
+            console.error('Removing crew from whitelist failed:', response.error);
+            return { success: false, error: response.error || 'Failed to remove boat from whitelist' };
+        }
+
+        return { success: true, data: response?.data };
+    } catch (error) {
+        console.error('Error removing crew from whitelist:', error);
+        return { success: false, error: error.message || 'Failed to remove boat from whitelist' };
     }
 }
 
