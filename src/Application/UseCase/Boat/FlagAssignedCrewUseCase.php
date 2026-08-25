@@ -18,8 +18,14 @@ use Psr\Log\LoggerInterface;
  * Flag Assigned Crew Use Case
  *
  * Lets a boat owner flag crew members who were assigned to their boat for one
- * or more events, decrementing each flagged crew's commitment rank by the
- * number of times they were flagged (clamped to 0-2).
+ * or more events. Every flag withdraws the crew from all future events
+ * (their crew_availability rows are deleted, the same effect as a manual
+ * withdrawal). Each flag also steps the crew's commitment rank down by one:
+ * while commitment rank is above 0 it is decremented; once a crew is flagged
+ * again while already at commitment rank 0, they are marked inactive
+ * (active = false) instead of decrementing further. An inactive crew is
+ * blocked from updating their own availability (see
+ * UpdateCrewAvailabilityUseCase).
  *
  * SECURITY: Client-submitted (eventId, crewKey) pairs are never trusted at
  * face value. Each pair is independently verified against the actual
@@ -28,11 +34,6 @@ use Psr\Log\LoggerInterface;
  * own boat. Flags are also restricted to past events only — the next
  * event's assignment can still change before it happens, so it isn't
  * eligible for flagging yet.
- *
- * A crew already at commitment rank 0 who gets flagged again is a repeat
- * no-show: rather than staying eligible for future events, they are
- * withdrawn from all of them (their crew_availability rows are deleted, the
- * same effect as a manual withdrawal). Commitment rank stays clamped at 0.
  */
 class FlagAssignedCrewUseCase
 {
@@ -48,7 +49,14 @@ class FlagAssignedCrewUseCase
     /**
      * @param int $userId Authenticated boat owner's user ID
      * @param array<int, array{eventId: string, crewKey: string}> $flags
-     * @return array<int, array{crew_key: string, display_name: ?string, flag_count: int, rank_commitment: int, withdrawn_from_future_events: bool}>
+     * @return array<int, array{
+     *     crew_key: string,
+     *     display_name: ?string,
+     *     flag_count: int,
+     *     rank_commitment: int,
+     *     active: bool,
+     *     withdrawn_from_future_events: bool
+     * }>
      * @throws BoatNotFoundException
      */
     public function execute(int $userId, array $flags): array
@@ -82,6 +90,10 @@ class FlagAssignedCrewUseCase
             $flagCountsByCrewKey[$crewKeyString] = ($flagCountsByCrewKey[$crewKeyString] ?? 0) + 1;
         }
 
+        // Every flag withdraws the crew from all future events, regardless of
+        // their current commitment rank.
+        $futureEventIds = $this->eventRepository->findFutureEvents();
+
         $results = [];
         foreach ($flagCountsByCrewKey as $crewKeyString => $flagCount) {
             $crew = $this->crewRepository->findByKey(CrewKey::fromString($crewKeyString));
@@ -89,21 +101,32 @@ class FlagAssignedCrewUseCase
                 continue;
             }
 
+            $withdrawnFromFutureEvents = false;
+            if (!empty($futureEventIds)) {
+                $this->crewRepository->deleteAvailabilityForEvents($crew->getKey(), $futureEventIds);
+                $withdrawnFromFutureEvents = true;
+            }
+
+            // Walk the commitment state machine one flag at a time: decrement
+            // while above zero; a flag that lands while already at zero
+            // deactivates the crew instead of decrementing further.
             $rankBefore = $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT);
-            $rankAfter = max(0, min(2, $rankBefore - $flagCount));
+            $rankAfter = $rankBefore;
+            $becameInactive = false;
+            for ($i = 0; $i < $flagCount; $i++) {
+                if ($rankAfter > 0) {
+                    $rankAfter--;
+                } else {
+                    $becameInactive = true;
+                }
+            }
 
             $crew->setRankDimension(CrewRankDimension::COMMITMENT, $rankAfter);
             $this->crewRepository->updateRankCommitment($crew);
 
-            // Already at rock bottom and flagged again: withdraw from every future
-            // event rather than leaving them selectable at commitment rank 0.
-            $withdrawnFromFutureEvents = false;
-            if ($rankBefore === 0) {
-                $futureEventIds = $this->eventRepository->findFutureEvents();
-                if (!empty($futureEventIds)) {
-                    $this->crewRepository->deleteAvailabilityForEvents($crew->getKey(), $futureEventIds);
-                }
-                $withdrawnFromFutureEvents = true;
+            if ($becameInactive) {
+                $crew->setActive(false);
+                $this->crewRepository->updateActive($crew);
             }
 
             $this->logger->info('boat_owner.crew_flagged', [
@@ -112,6 +135,7 @@ class FlagAssignedCrewUseCase
                 'flag_count'                   => $flagCount,
                 'rank_before'                  => $rankBefore,
                 'rank_after'                   => $rankAfter,
+                'became_inactive'              => $becameInactive,
                 'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
             ]);
 
@@ -120,6 +144,7 @@ class FlagAssignedCrewUseCase
                 'display_name'                 => $crew->getDisplayName(),
                 'flag_count'                   => $flagCount,
                 'rank_commitment'              => $rankAfter,
+                'active'                       => $crew->isActive(),
                 'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
             ];
         }

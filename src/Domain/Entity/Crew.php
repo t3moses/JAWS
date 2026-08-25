@@ -43,6 +43,7 @@ class Crew
         private ?string $membershipNumber,
         private SkillLevel $skill,
         private ?string $experience,
+        private bool $active = true,
     ) {
         // Initialize default rank with 4 dimensions: [availability, commitment, membership, absence]
         $this->rank = Rank::forCrew(
@@ -151,6 +152,18 @@ class Crew
     public function setSocialPreference(bool $preference): void
     {
         $this->socialPreference = $preference;
+    }
+
+    // === Active status ===
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): void
+    {
+        $this->active = $active;
     }
 
     // === Membership ===
@@ -412,6 +425,7 @@ class Crew
             'membership_number' => $this->membershipNumber,
             'skill' => $this->skill->value,
             'experience' => $this->experience,
+            'active' => $this->active,
             'rank' => $this->rank->toArray(),
             'availability' => array_map(fn($s) => $s->value, $this->availability),
             'history' => $this->history,

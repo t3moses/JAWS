@@ -55,6 +55,7 @@ class CrewRepositoryTest extends IntegrationTestCase
 
         $this->assertNotNull($crew->getId());
         $this->assertGreaterThan(0, $crew->getId());
+        $this->assertTrue($crew->isActive());
     }
 
     public function testFindByKeyReturnsCrewWhenExists(): void
@@ -489,6 +490,32 @@ class CrewRepositoryTest extends IntegrationTestCase
         $this->assertTrue($foundCrew->hasSocialPreference());
         $this->assertEquals('MEM-123', $foundCrew->getMembershipNumber());
         $this->assertEquals('Special notes', $foundCrew->getExperience());
+        $this->assertTrue($foundCrew->isActive());
+    }
+
+    public function testActiveStatusIsPersistedOnUpdate(): void
+    {
+        $crew = $this->createAndSaveCrew('Active', 'Flag', SkillLevel::NOVICE);
+        $this->assertTrue($crew->isActive());
+
+        $crew->setActive(false);
+        $this->repository->save($crew);
+
+        $foundCrew = $this->repository->findByKey($crew->getKey());
+        $this->assertFalse($foundCrew->isActive());
+    }
+
+    public function testUpdateActiveUpdatesOnlyActiveColumn(): void
+    {
+        $crew = $this->createAndSaveCrew('Update', 'Active', SkillLevel::NOVICE);
+        $crew->setDisplayName('Should Not Persist');
+        $crew->setActive(false);
+
+        $this->repository->updateActive($crew);
+
+        $foundCrew = $this->repository->findByKey($crew->getKey());
+        $this->assertFalse($foundCrew->isActive());
+        $this->assertEquals('Update Active', $foundCrew->getDisplayName());
     }
 
     public function testSkillLevelAllVariantsArePersisted(): void

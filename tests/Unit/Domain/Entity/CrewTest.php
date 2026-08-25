@@ -48,6 +48,18 @@ class CrewTest extends TestCase
         $this->assertEquals('12345', $crew->getMembershipNumber());
         $this->assertEquals(SkillLevel::INTERMEDIATE, $crew->getSkill());
         $this->assertEquals('5 years', $crew->getExperience());
+        $this->assertTrue($crew->isActive());
+    }
+
+    public function testActiveCanBeSetAndRetrieved(): void
+    {
+        $crew = $this->createCrew();
+
+        $crew->setActive(false);
+        $this->assertFalse($crew->isActive());
+
+        $crew->setActive(true);
+        $this->assertTrue($crew->isActive());
     }
 
     public function testConstructorInitializesDefaultRank(): void

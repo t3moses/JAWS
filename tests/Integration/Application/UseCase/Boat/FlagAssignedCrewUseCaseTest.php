@@ -114,6 +114,13 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         return (int) $stmt->fetchColumn();
     }
 
+    protected function getIsActive(string $crewKey): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT active FROM crews WHERE key = ?');
+        $stmt->execute([$crewKey]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     protected function hasAvailabilityRecord(string $crewKey, string $eventId): bool
     {
         $stmt = $this->pdo->prepare('
@@ -162,7 +169,9 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $this->assertEquals($crewKey, $results[0]['crew_key']);
         $this->assertEquals(1, $results[0]['flag_count']);
         $this->assertEquals(1, $results[0]['rank_commitment']);
+        $this->assertTrue($results[0]['active']);
         $this->assertEquals(1, $this->getCommitmentRank($crewKey));
+        $this->assertTrue($this->getIsActive($crewKey));
     }
 
     public function testFlagsSameCrewAcrossTwoEventsDecrementsByTwo(): void
@@ -196,14 +205,17 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
         $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
 
-        // Starting rank 1, flagged twice (would be -1 unclamped) -> clamped to 0
+        // Starting rank 1, flagged twice in the same batch: first flag drops it
+        // to 0, the second flag lands while already at 0 and deactivates it.
         $results = $this->useCase->execute($ownerId, [
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
             ['eventId' => 'Fri Apr 24', 'crewKey' => $crewKey],
         ]);
 
         $this->assertEquals(0, $results[0]['rank_commitment']);
+        $this->assertFalse($results[0]['active']);
         $this->assertEquals(0, $this->getCommitmentRank($crewKey));
+        $this->assertFalse($this->getIsActive($crewKey));
     }
 
     public function testDuplicatePairInSameRequestCountsOnce(): void
@@ -274,12 +286,14 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 
         $this->assertCount(1, $results);
         $this->assertEquals(0, $results[0]['rank_commitment']);
+        $this->assertFalse($results[0]['active']);
         $this->assertTrue($results[0]['withdrawn_from_future_events']);
         $this->assertEquals(0, $this->getCommitmentRank($crewKey));
+        $this->assertFalse($this->getIsActive($crewKey));
         $this->assertFalse($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
     }
 
-    public function testFirstTimeDroppingToZeroDoesNotWithdrawFromFutureEvents(): void
+    public function testFirstTimeDroppingToZeroWithdrawsFromFutureEventsButStaysActive(): void
     {
         $ownerId = $this->createTestUser('owner13@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
@@ -299,12 +313,15 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
         ]);
 
-        // Rank drops from 1 to 0 for the first time here — this flag itself
-        // shouldn't trigger withdrawal, only a repeat flag while already at 0 does.
+        // Every flag withdraws the crew from future events, regardless of
+        // starting rank. Rank drops from 1 to 0, but the crew isn't marked
+        // inactive until a further flag lands while already at 0.
         $this->assertCount(1, $results);
         $this->assertEquals(0, $results[0]['rank_commitment']);
-        $this->assertFalse($results[0]['withdrawn_from_future_events']);
-        $this->assertTrue($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
+        $this->assertTrue($results[0]['active']);
+        $this->assertTrue($results[0]['withdrawn_from_future_events']);
+        $this->assertFalse($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
+        $this->assertTrue($this->getIsActive($crewKey));
     }
 
     // ==================== SECURITY / VERIFICATION TESTS ====================

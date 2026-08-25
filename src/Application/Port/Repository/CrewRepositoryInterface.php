@@ -164,6 +164,14 @@ interface CrewRepositoryInterface
     public function updateRankAbsence(Crew $crew): void;
 
     /**
+     * Update crew active status only (without touching other fields)
+     *
+     * @param Crew $crew Crew with updated active status
+     * @return void
+     */
+    public function updateActive(Crew $crew): void;
+
+    /**
      * Get crew count
      *
      * @return int

@@ -10,6 +10,7 @@ use App\Application\Exception\CrewNotFoundException;
 use App\Application\Exception\EventNotFoundException;
 use App\Application\Exception\FlotillaNotFoundException;
 use App\Application\Exception\BlackoutWindowException;
+use App\Application\Exception\CrewInactiveException;
 use App\Application\Exception\InvalidCredentialsException;
 use App\Application\Exception\InvalidResetTokenException;
 use App\Application\Exception\UserAlreadyExistsException;
@@ -64,6 +65,14 @@ class ErrorHandlerMiddleware
         // Blackout window (200 OK - update rejected but not an error)
         if ($e instanceof BlackoutWindowException) {
             $this->logger->info('http.blackout_window', [
+                'message' => $e->getMessage(),
+            ]);
+            return JsonResponse::error($e->getMessage(), 200);
+        }
+
+        // Inactive crew (200 OK - update rejected but not an error)
+        if ($e instanceof CrewInactiveException) {
+            $this->logger->info('http.crew_inactive', [
                 'message' => $e->getMessage(),
             ]);
             return JsonResponse::error($e->getMessage(), 200);

@@ -21,6 +21,7 @@ use App\Infrastructure\Service\SystemTimeService;
 use App\Infrastructure\Service\PhpPasswordService;
 use App\Infrastructure\Service\JwtTokenService;
 use App\Domain\Entity\User;
+use App\Domain\Enum\CrewRankDimension;
 use App\Domain\Enum\SkillLevel;
 use Tests\Integration\IntegrationTestCase;
 use Psr\Log\NullLogger;
@@ -160,6 +161,8 @@ class RegisterUseCaseTest extends IntegrationTestCase
         $this->assertEquals('Wonder', $crew->getLastName());
         $this->assertEquals(SkillLevel::ADVANCED, $crew->getSkill());
         $this->assertEquals('555-1234', $crew->getMobile());
+        $this->assertEquals(2, $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT));
+        $this->assertTrue($crew->isActive());
     }
 
     public function testRegisterBoatOwnerCreatesBoatProfile(): void

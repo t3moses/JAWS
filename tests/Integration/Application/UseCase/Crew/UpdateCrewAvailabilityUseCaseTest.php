@@ -6,6 +6,7 @@ namespace Tests\Integration\Application\UseCase\Crew;
 
 use App\Application\DTO\Request\UpdateAvailabilityRequest;
 use App\Application\Exception\BlackoutWindowException;
+use App\Application\Exception\CrewInactiveException;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\CrewNotFoundException;
 use App\Application\Exception\EventNotFoundException;
@@ -96,9 +97,9 @@ class UpdateCrewAvailabilityUseCaseTest extends IntegrationTestCase
         $stmt = $this->pdo->prepare('
             INSERT INTO crews (
                 key, display_name, first_name, last_name, skill, mobile,
-                membership_number, social_preference, experience,
+                membership_number, social_preference, experience, active,
                 user_id, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
 
         $stmt->execute([
@@ -111,6 +112,7 @@ class UpdateCrewAvailabilityUseCaseTest extends IntegrationTestCase
             $overrides['membershipNumber'] ?? '12345',
             $overrides['socialPreference'] ?? 'No',
             $overrides['experience'] ?? 'Some sailing experience',
+            ($overrides['active'] ?? true) ? 1 : 0,
             $userId
         ]);
 
@@ -399,6 +401,61 @@ class UpdateCrewAvailabilityUseCaseTest extends IntegrationTestCase
 
         // Act
         $this->useCase->execute($userId, $request);
+    }
+
+    public function testInactiveCrewThrowsCrewInactiveException(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser();
+        $this->createCrewProfileForUser($userId, ['active' => false]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true]
+        ]);
+
+        // Assert
+        $this->expectException(CrewInactiveException::class);
+        $this->expectExceptionMessage('Updates to your availability are blocked at this time.');
+
+        // Act
+        $this->useCase->execute($userId, $request);
+    }
+
+    public function testInactiveCrewAvailabilityIsNotUpdated(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser();
+        $crewKey = $this->createCrewProfileForUser($userId, ['active' => false]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true]
+        ]);
+
+        try {
+            $this->useCase->execute($userId, $request);
+        } catch (CrewInactiveException) {
+            // expected
+        }
+
+        // Assert - no availability record was created
+        $this->assertNull($this->getCrewAvailability($crewKey, 'Fri May 15'));
+    }
+
+    public function testActiveCrewCanUpdateAvailability(): void
+    {
+        // Arrange
+        $userId = $this->createTestUser();
+        $this->createCrewProfileForUser($userId, ['active' => true]);
+
+        $request = new UpdateAvailabilityRequest([
+            ['eventId' => 'Fri May 15', 'isAvailable' => true]
+        ]);
+
+        // Act
+        $response = $this->useCase->execute($userId, $request);
+
+        // Assert
+        $this->assertEquals(AvailabilityStatus::NOT_SELECTED->value, $response->availabilities['Fri May 15']);
     }
 
     public function testUserWithoutCrewProfileThrowsException(): void

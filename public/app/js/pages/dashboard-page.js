@@ -361,9 +361,9 @@ document.getElementById('crew-detail-no-show').addEventListener('click', async (
         detail.commitmentRank = flagged.rank_commitment;
     }
 
-    if (flagged.withdrawn_from_future_events) {
-        commitmentValue.textContent = 'Remove from future events';
-        // Already at rock bottom and removed from future events - nothing left to flag.
+    if (flagged.active === false) {
+        commitmentValue.textContent = 'Crew marked inactive';
+        // Already at rock bottom and marked inactive - nothing left to flag.
         btn.disabled = true;
     } else {
         commitmentValue.textContent = String(flagged.rank_commitment);

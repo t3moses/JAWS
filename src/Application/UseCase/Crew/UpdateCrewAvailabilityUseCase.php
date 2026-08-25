@@ -8,6 +8,7 @@ use App\Application\DTO\Request\UpdateAvailabilityRequest;
 use App\Application\DTO\Response\CrewResponse;
 use App\Application\Exception\ValidationException;
 use App\Application\Exception\BlackoutWindowException;
+use App\Application\Exception\CrewInactiveException;
 use App\Application\Exception\CrewNotFoundException;
 use App\Application\Exception\EventNotFoundException;
 use App\Application\Port\Repository\CrewRepositoryInterface;
@@ -42,6 +43,7 @@ class UpdateCrewAvailabilityUseCase
      * @return CrewResponse
      * @throws ValidationException
      * @throws CrewNotFoundException
+     * @throws CrewInactiveException
      * @throws EventNotFoundException
      */
     public function execute(int $userId, UpdateAvailabilityRequest $request): CrewResponse
@@ -65,6 +67,10 @@ class UpdateCrewAvailabilityUseCase
         $crew = $this->crewRepository->findByUserId($userId);
         if ($crew === null) {
             throw new CrewNotFoundException("Crew not found for user ID: {$userId}");
+        }
+
+        if (!$crew->isActive()) {
+            throw new CrewInactiveException();
         }
 
         $crewKey = $crew->getKey();
