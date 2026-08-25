@@ -621,7 +621,7 @@ mkdir -p /opt/bitnami/jaws/database/backups
 ```bash
 ssh bitnami@16.52.222.15
 cd /opt/bitnami/jaws/database
-sudo cp jaws.db jaws.backup.$(date +%Y%m%d_%H%M%S).db
+sudo cp jaws.db backups/jaws.backup.$(date +%Y%m%d_%H%M%S).db
 ```
 
 **Download backup to local machine:**
