@@ -234,6 +234,23 @@ class CrewRepository implements CrewRepositoryInterface
         ]);
     }
 
+    public function recordNoShow(CrewKey $key, EventId $eventId): void
+    {
+        $crew = $this->findByKey($key);
+        if ($crew === null) {
+            throw new \RuntimeException("Crew not found: {$key->toString()}");
+        }
+
+        $stmt = $this->pdo->prepare('
+            INSERT OR IGNORE INTO no_shows (crew_id, event_id)
+            VALUES (:crew_id, :event_id)
+        ');
+        $stmt->execute([
+            'crew_id' => $crew->getId(),
+            'event_id' => $eventId->toString(),
+        ]);
+    }
+
     public function addToWhitelist(CrewKey $crewKey, BoatKey $boatKey): void
     {
         $crew = $this->findByKey($crewKey);

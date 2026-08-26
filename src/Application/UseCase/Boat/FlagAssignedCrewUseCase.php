@@ -25,7 +25,8 @@ use Psr\Log\LoggerInterface;
  * again while already at commitment rank 0, they are marked inactive
  * (active = false) instead of decrementing further. An inactive crew is
  * blocked from updating their own availability (see
- * UpdateCrewAvailabilityUseCase).
+ * UpdateCrewAvailabilityUseCase). Each verified (event, crew) pair is also
+ * recorded in the no_shows table (silently ignored if already recorded).
  *
  * SECURITY: Client-submitted (eventId, crewKey) pairs are never trusted at
  * face value. Each pair is independently verified against the actual
@@ -86,8 +87,11 @@ class FlagAssignedCrewUseCase
         }
 
         $flagCountsByCrewKey = [];
-        foreach ($verifiedCrewKeys as $crewKeyString) {
+        foreach ($verifiedCrewKeys as $pairKey => $crewKeyString) {
             $flagCountsByCrewKey[$crewKeyString] = ($flagCountsByCrewKey[$crewKeyString] ?? 0) + 1;
+
+            [$eventIdString] = explode('|', $pairKey, 2);
+            $this->crewRepository->recordNoShow(CrewKey::fromString($crewKeyString), EventId::fromString($eventIdString));
         }
 
         // Every flag withdraws the crew from all future events, regardless of

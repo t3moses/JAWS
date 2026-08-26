@@ -148,6 +148,17 @@ interface CrewRepositoryInterface
     public function removeFromWhitelist(CrewKey $crewKey, BoatKey $boatKey): void;
 
     /**
+     * Record a no-show for a crew member at an event (one row per crew/event
+     * pair). If a no-show has already been recorded for this crew and event,
+     * the call is a silent no-op.
+     *
+     * @param CrewKey $key
+     * @param EventId $eventId
+     * @return void
+     */
+    public function recordNoShow(CrewKey $key, EventId $eventId): void;
+
+    /**
      * Update crew commitment rank only (without touching other fields)
      *
      * @param Crew $crew Crew with updated commitment rank

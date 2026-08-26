@@ -132,6 +132,17 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         return (int) $stmt->fetchColumn() > 0;
     }
 
+    protected function countNoShows(string $crewKey, string $eventId): int
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT COUNT(*) FROM no_shows ns
+            JOIN crews c ON c.id = ns.crew_id
+            WHERE c.key = ? AND ns.event_id = ?
+        ');
+        $stmt->execute([$crewKey, $eventId]);
+        return (int) $stmt->fetchColumn();
+    }
+
     /**
      * Persist a minimal flotilla where $crewKeys are assigned to $boatKey for $eventId.
      */
@@ -414,6 +425,99 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 
         $this->assertCount(0, $results);
         $this->assertEquals(2, $this->getCommitmentRank($crewKey));
+    }
+
+    // ==================== NO-SHOW RECORD TESTS ====================
+
+    public function testFlaggingRecordsNoShowRow(): void
+    {
+        $ownerId = $this->createTestUser('owner14@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew14@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 17'));
+    }
+
+    public function testFlaggingSameCrewAcrossTwoEventsRecordsTwoNoShows(): void
+    {
+        $ownerId = $this->createTestUser('owner15@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew15@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+        $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
+
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+            ['eventId' => 'Fri Apr 24', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 17'));
+        $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 24'));
+    }
+
+    public function testReflaggingSameCrewAndEventDoesNotDuplicateNoShowRow(): void
+    {
+        $ownerId = $this->createTestUser('owner16@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew16@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+
+        // Flag once, then flag the exact same (event, crew) pair again in a
+        // separate request — the unique constraint should silently no-op the
+        // second insert rather than erroring or duplicating the row.
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 17'));
+    }
+
+    public function testDuplicatePairInSameRequestRecordsNoShowOnce(): void
+    {
+        $ownerId = $this->createTestUser('owner17@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew17@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 17'));
+    }
+
+    public function testUnverifiedFlagDoesNotRecordNoShow(): void
+    {
+        $ownerId = $this->createTestUser('owner18@example.com', 'boat_owner');
+        $boatKey = $this->createBoatProfileForUser($ownerId);
+        $crewUserId = $this->createTestUser('crew18@example.com', 'crew');
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+
+        // Flotilla exists for the event, but this crew is NOT on the boat
+        $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, []);
+
+        $this->useCase->execute($ownerId, [
+            ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+        ]);
+
+        $this->assertEquals(0, $this->countNoShows($crewKey, 'Fri Apr 17'));
     }
 
     // ==================== ERROR CONDITION TESTS ====================
