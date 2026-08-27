@@ -509,9 +509,10 @@ HTML;
     /**
      * Render welcome email for newly registered user
      *
+     * @param string $displayName The user's registered display name
      * @return string HTML email body
      */
-    public function renderWelcomeNotification(): string
+    public function renderWelcomeNotification(string $displayName): string
     {
         return <<<HTML
 <!DOCTYPE html>
@@ -527,6 +528,8 @@ HTML;
             <h2>Welcome to the Nepean Sailing Club Social Day Cruising program</h2>
         </div>
         <div class="content">
+            <p>Hi {$displayName},</p>
+
             <p>You can check the calendar of events and manage your availability through the program
             website (<a href="https://nsc-sdc.ca/">https://nsc-sdc.ca/</a>). Specific boat/crew
             assignments may change multiple times in the days leading up to an event, but will be

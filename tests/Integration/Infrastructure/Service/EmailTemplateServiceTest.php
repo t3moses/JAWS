@@ -418,9 +418,10 @@ class EmailTemplateServiceTest extends IntegrationTestCase
 
     public function testRenderWelcomeNotification(): void
     {
-        $html = $this->service->renderWelcomeNotification();
+        $html = $this->service->renderWelcomeNotification('RobertB2');
 
         $this->assertStringContainsString('Welcome to the Nepean Sailing Club', $html);
+        $this->assertStringContainsString('Hi RobertB2,', $html);
         $this->assertStringContainsString('nsc-sdc.ca', $html);
         $this->assertStringContainsString('10:00 AM', $html);
         $this->assertStringContainsString('12:45 PM', $html);

@@ -101,10 +101,11 @@ class RegisterUseCase
             $this->userRepository->save($user);
 
             // Create crew or boat profile based on account type
+            $resolvedDisplayName = null;
             if ($request->accountType === 'crew') {
-                $this->createCrewProfile($user, $request->profile);
+                $resolvedDisplayName = $this->createCrewProfile($user, $request->profile);
             } elseif ($request->accountType === 'boat_owner') {
-                $this->createBoatProfile($user, $request->profile);
+                $resolvedDisplayName = $this->createBoatProfile($user, $request->profile);
             }
 
             // Commit transaction if all successful
@@ -122,8 +123,8 @@ class RegisterUseCase
         ]);
 
         // Send admin notification email (don't fail registration if email fails)
-        $this->sendAdminNotification($user, $request);
-        $this->sendWelcomeEmail($user);
+        $this->sendAdminNotification($user, $request, $resolvedDisplayName);
+        $this->sendWelcomeEmail($user, $resolvedDisplayName);
 
         // Generate JWT token
         $token = $this->tokenService->generate(
@@ -200,9 +201,9 @@ class RegisterUseCase
      *
      * @param User $user User entity
      * @param array $profile Crew profile data
-     * @return void
+     * @return string The resolved, unique display name assigned to the new crew
      */
-    private function createCrewProfile(User $user, array $profile): void
+    private function createCrewProfile(User $user, array $profile): string
     {
         $crewKey = CrewKey::fromName($profile['firstName'], $profile['lastName']);
 
@@ -260,6 +261,8 @@ class RegisterUseCase
 
         // Save crew
         $this->crewRepository->save($crew);
+
+        return $displayName;
     }
 
     /**
@@ -267,9 +270,9 @@ class RegisterUseCase
      *
      * @param User $user User entity
      * @param array $profile Boat profile data
-     * @return void
+     * @return string The resolved, unique display name assigned to the new boat
      */
-    private function createBoatProfile(User $user, array $profile): void
+    private function createBoatProfile(User $user, array $profile): string
     {
         // Generate displayName if not provided
         $displayName = $profile['displayName'] ?? null;
@@ -334,6 +337,8 @@ class RegisterUseCase
         foreach ($allCrews as $crew) {
             $this->crewRepository->addToWhitelist($crew->getKey(), $boatKey);
         }
+
+        return $displayName;
     }
 
     /**
@@ -341,32 +346,33 @@ class RegisterUseCase
      *
      * @param User $user User entity
      * @param RegisterRequest $request Registration request data
+     * @param string $resolvedDisplayName The final, unique display name assigned during profile creation
      * @return void
      */
-    private function sendAdminNotification(User $user, RegisterRequest $request): void
+    private function sendAdminNotification(User $user, RegisterRequest $request, string $resolvedDisplayName): void
     {
         $recipients = array_filter([
             $this->config['email']['admin_notification_email'] ?? 'nsc-sdc@nsc.ca',
             $this->config['email']['registration_notification_email_secondary'] ?? null,
         ]);
 
+        // Use the display name actually persisted (deduplicated), not the raw request payload
+        $profile = array_merge($request->profile, ['displayName' => $resolvedDisplayName]);
+
         try {
             if ($request->accountType === 'crew') {
                 $subject = sprintf(
                     'New Crew Registration - %s %s',
-                    $request->profile['firstName'],
-                    $request->profile['lastName']
+                    $profile['firstName'],
+                    $profile['lastName']
                 );
-                $body = $this->emailTemplateService->renderCrewRegistrationNotification($user, $request->profile);
+                $body = $this->emailTemplateService->renderCrewRegistrationNotification($user, $profile);
             } else {
                 $subject = sprintf(
                     'New Boat Owner Registration - %s',
-                    $request->profile['displayName'] ?? $this->generateDisplayName(
-                        $request->profile['ownerFirstName'],
-                        $request->profile['ownerLastName']
-                    )
+                    $resolvedDisplayName
                 );
-                $body = $this->emailTemplateService->renderBoatOwnerRegistrationNotification($user, $request->profile);
+                $body = $this->emailTemplateService->renderBoatOwnerRegistrationNotification($user, $profile);
             }
 
             $results = $this->emailService->sendBulk($recipients, $subject, $body);
@@ -391,13 +397,14 @@ class RegisterUseCase
      * Send welcome email to newly registered user
      *
      * @param User $user User entity
+     * @param string $displayName The user's registered display name
      * @return void
      */
-    private function sendWelcomeEmail(User $user): void
+    private function sendWelcomeEmail(User $user, string $displayName): void
     {
         try {
             $subject = 'Welcome to the Nepean Sailing Club Social Day Cruising program';
-            $body = $this->emailTemplateService->renderWelcomeNotification();
+            $body = $this->emailTemplateService->renderWelcomeNotification($displayName);
 
             $futureEventIds = $this->eventRepository->findFutureEvents();
             $events = [];

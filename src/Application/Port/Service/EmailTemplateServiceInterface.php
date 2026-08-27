@@ -100,9 +100,10 @@ interface EmailTemplateServiceInterface
     /**
      * Render welcome email for newly registered user
      *
+     * @param string $displayName The user's registered display name
      * @return string HTML email body
      */
-    public function renderWelcomeNotification(): string;
+    public function renderWelcomeNotification(string $displayName): string;
 
     /**
      * Render password reset email
