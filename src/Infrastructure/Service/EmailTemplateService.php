@@ -541,7 +541,7 @@ HTML;
             you will be counted a no-show. This will affect your standing for future events.</p>
 
             <p>The event start time is <strong>12:45 PM</strong>. If you are not present at that time,
-            your place may be reassigned to a standby member.</p>
+            the boat will sail without you.</p>
 
             <p>If you have questions or concerns, please consult the FAQ on the program website
             (<a href="https://nsc-sdc.ca/faq.html">https://nsc-sdc.ca/faq.html</a>).
