@@ -147,6 +147,7 @@ class GetUserAssignmentsUseCase
                                     'commitment_rank' => $liveCrew?->getRank()->getDimension(
                                         CrewRankDimension::COMMITMENT
                                     ) ?? 2,
+                                    'initial_commitment_rank' => $liveCrew?->getInitialCommitmentRank() ?? 2,
                                     'experience' => $liveCrew?->getExperience(),
                                 ];
                             },

@@ -56,9 +56,10 @@ class AssignmentController
     /**
      * POST /api/assignments/crew-flags
      *
-     * Lets a boat owner flag crew members assigned to their boat, withdrawing
-     * them from future events and stepping down their commitment rank (or
-     * marking them inactive once already at rank 0) for each time flagged.
+     * Lets a boat owner flag crew members assigned to their boat as no-shows,
+     * recomputing their commitment rank from their total no-show count,
+     * withdrawing them from future events, and deactivating the account if
+     * commitment rank hits 0.
      *
      * @param array $body Request body (flags: array of {eventId, crewKey})
      * @param array $auth Authentication data (user_id, email, account_type, is_admin)

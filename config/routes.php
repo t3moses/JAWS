@@ -359,21 +359,12 @@ return [
         'auth' => true,
     ],
 
-    // Set Crew Commitment Rank (admin override)
-    [
-        'method' => 'PATCH',
-        'path' => '/api/admin/crews/{crewKey}/commitment-rank',
-        'controller' => AdminController::class,
-        'action' => 'setCrewCommitmentRank',
-        'auth' => true,
-    ],
-
-    // Remove Crew From Future Events (admin action)
+    // Record No Show (admin action)
     [
         'method' => 'POST',
-        'path' => '/api/admin/crews/{crewKey}/remove-future-events',
+        'path' => '/api/admin/crews/{crewKey}/no-shows',
         'controller' => AdminController::class,
-        'action' => 'removeCrewFromFutureEvents',
+        'action' => 'recordNoShow',
         'auth' => true,
     ],
 ];

@@ -7,6 +7,7 @@ import { requireAuth, getCurrentUser, signOut } from '../authService.js';
 import { updateAuthenticatedNavigation, addAdminLink } from '../navigationService.js';
 import { initHamburgerMenu } from '../hamburger.js';
 import * as adminService from '../adminService.js';
+import { getAllEvents } from '../eventService.js';
 import { showToast } from '../toast.js';
 
 let currentUser = null;
@@ -96,7 +97,7 @@ function renderPage() {
 
     if (crew) {
         renderSkill(crew);
-        renderCommitment(crew);
+        renderNoShows(crew);
         renderPartner(crew);
         renderWhitelist(crew);
     }
@@ -194,68 +195,65 @@ async function handleSkillSave(select) {
     }
 }
 
-// ==================== Commitment Rank ====================
+// ==================== No Shows ====================
 
-function renderCommitment(crew) {
-    const section = document.getElementById('section-commitment');
-    const select = document.getElementById('commitment-select');
-    const saveBtn = document.getElementById('commitment-save-btn');
+function isEventPast(dateStr, finishTimeStr) {
+    return new Date() > new Date(`${dateStr}T${finishTimeStr}`);
+}
 
-    const rank = crew.rank_commitment ?? 2;
-    select.value = String(rank);
+function formatEventLabel(event) {
+    const [year, month, day] = event.date.split('-').map(Number);
+    const displayDate = new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    return `${displayDate} (${event.eventId})`;
+}
 
-    saveBtn.addEventListener('click', () => handleCommitmentSave(select));
+async function renderNoShows(crew) {
+    const section = document.getElementById('section-no-shows');
+    const select = document.getElementById('no-show-event-select');
+    const saveBtn = document.getElementById('no-show-save-btn');
+
+    const events = await getAllEvents();
+    const pastEvents = events
+        .filter(event => isEventPast(event.date, event.finishTime))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    pastEvents.forEach(event => {
+        const opt = document.createElement('option');
+        opt.value = event.eventId;
+        opt.textContent = formatEventLabel(event);
+        select.appendChild(opt);
+    });
+    select.value = '';
+
+    saveBtn.addEventListener('click', () => handleNoShowSave(crew, select));
 
     section.style.display = '';
 }
 
-async function handleCommitmentSave(select) {
-    if (select.value === 'remove_future') {
-        await handleRemoveFromFutureEvents(select);
+async function handleNoShowSave(crew, select) {
+    if (!select.value) {
+        showToast('Please select an event.', 'error');
         return;
     }
 
-    const btn = document.getElementById('commitment-save-btn');
+    const btn = document.getElementById('no-show-save-btn');
     btn.disabled = true;
 
     try {
-        const result = await adminService.setCrewCommitmentRank(targetUserData.crew.key, parseInt(select.value, 10));
-        targetUserData.crew.rank_commitment = result.rank_commitment;
-        select.value = String(result.rank_commitment);
-        showToast('Commitment rank updated successfully.', 'success');
+        await adminService.recordNoShow(crew.key, select.value);
+        select.value = '';
+        showToast('No-show recorded.', 'success');
     } catch (error) {
-        console.error('Failed to update commitment rank:', error);
-        showToast(error.message || 'Failed to update commitment rank', 'error');
-        const rank = targetUserData.crew.rank_commitment ?? 2;
-        select.value = String(rank);
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-async function handleRemoveFromFutureEvents(select) {
-    const confirmed = confirm(
-        `Remove ${targetUserData.crew.first_name} ${targetUserData.crew.last_name} from all future events? This withdraws their availability for every upcoming event and sets their commitment rank to 0. This cannot be undone.`
-    );
-    if (!confirmed) {
-        const rank = targetUserData.crew.rank_commitment ?? 2;
-        select.value = String(rank);
-        return;
-    }
-
-    const btn = document.getElementById('commitment-save-btn');
-    btn.disabled = true;
-
-    try {
-        const result = await adminService.removeCrewFromFutureEvents(targetUserData.crew.key);
-        targetUserData.crew.rank_commitment = result.rank_commitment;
-        select.value = String(result.rank_commitment);
-        showToast('Crew member removed from all future events.', 'success');
-    } catch (error) {
-        console.error('Failed to remove crew from future events:', error);
-        showToast(error.message || 'Failed to remove crew from future events', 'error');
-        const rank = targetUserData.crew.rank_commitment ?? 2;
-        select.value = String(rank);
+        console.error('Failed to record no-show:', error);
+        showToast(error.message || 'Failed to record no-show', 'error');
     } finally {
         btn.disabled = false;
     }

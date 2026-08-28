@@ -115,9 +115,9 @@ Key use cases:
 
 **Location:** `database/jaws.db` | **Migrations:** `database/migrations/`
 
-12 tables:
+13 tables:
 1. `boats` — display_name, owner_*, capacity, assistance_required, ranking
-2. `crews` — name, partner_key, email, skill, membership_number, ranking
+2. `crews` — name, partner_key, email, skill, membership_number, ranking, commitment_rank, initial_commitment_rank, active
 3. `events` — event_id, event_date, start/finish_time, status
 4. `boat_availability` — berths per boat per event
 5. `crew_availability` — status (0-1) per crew per event; row absence = withdrawn
@@ -128,6 +128,7 @@ Key use cases:
 10. `flotillas` — JSON assignments
 11. `users` — authentication credentials (email, password_hash, is_admin, boat_key, crew_key)
 12. `cron_notifications` — idempotent email tracking, UNIQUE(event_id, type)
+13. `no_shows` — one row per (crew, event) no-show, UNIQUE(crew_id, event_id); source of truth for commitment_rank (see Ranking System)
 
 Features: FK constraints, CASCADE deletes, composite indexes, WAL mode, auto-update triggers.
 
@@ -141,7 +142,7 @@ Compared lexicographically, higher = higher priority (sorted descending). Ties b
 - `flexibility` — boats only: 0 if flex (owner also crew), else 1
 - `availability` — crews only, primary dimension: 1 if `crew_availability.status`=1 (SELECTED) for the next event, else 0
 - `absence` — count of past no-shows (deprioritizes unreliable participants)
-- `commitment` — 2/1/0, persistent priority. New crews default to 2 on registration. Two writers: an admin can set it directly (`SetCrewCommitmentRankUseCase`, `PATCH /api/admin/crews/{crewKey}/commitment-rank`); a boat owner can decrement it for crew genuinely assigned to their boat (`FlagAssignedCrewUseCase`, `POST /api/assignments/crew-flags`, server-verified against the persisted flotilla, clamped to 0-2). Nothing else (pipeline runs, a crew's own availability changes) mutates it.
+- `commitment` — derived, not stored-and-mutated: `max(0, initial_commitment_rank - no_shows count)`. `initial_commitment_rank` is an immutable baseline set at registration (always 2 today). The no_shows count comes from the `no_shows` table, one row per (crew, event) pair. Both writers funnel through the same `RecordNoShowUseCase`, which inserts the no_shows row, recomputes commitment_rank, withdraws the crew from every future event, and deactivates the account (`active = false`) if commitment_rank hits 0: a boat owner flagging crew genuinely assigned to their boat for a past event (`FlagAssignedCrewUseCase`, `POST /api/assignments/crew-flags`, server-verified against the persisted flotilla) or an admin recording one directly (`AdminController::recordNoShow`, `POST /api/admin/crews/{crewKey}/no-shows`). Nothing else (pipeline runs, a crew's own availability changes) mutates it.
 - `membership` — 0=valid NSC membership, 1=invalid
 
 ## Assignment Optimization
@@ -192,7 +193,7 @@ For each rule: find highest-loss crew → find best-grad swap → swap if improv
 | PATCH | /api/admin/crews/{crewKey} | AdminController::updateCrewProfile |
 | POST | /api/admin/crews/{crewKey}/whitelist/{boatKey} | AdminController::addToWhitelist |
 | DELETE | /api/admin/crews/{crewKey}/whitelist/{boatKey} | AdminController::removeFromWhitelist |
-| PATCH | /api/admin/crews/{crewKey}/commitment-rank | AdminController::setCrewCommitmentRank |
+| POST | /api/admin/crews/{crewKey}/no-shows | AdminController::recordNoShow |
 | GET | /api/admin/boats | AdminController::getAllBoats |
 
 **PATCH /api/users/me/availability:** Auto-detects boat/crew/flex role. Updates boat berths, crew status, or both. Triggers `ProcessSeasonUpdateUseCase`. Response includes `updated` array (e.g., `["boat", "crew"]`).

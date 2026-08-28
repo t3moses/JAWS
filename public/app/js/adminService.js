@@ -287,42 +287,24 @@ export async function addToCrewWhitelist(crewKey, boatKey) {
 }
 
 /**
- * Set the commitment rank for a crew member (admin override)
+ * Record a no-show for a crew member at a past event. Recomputes their
+ * commitment rank from their total no-show count, withdraws them from every
+ * future event, and deactivates the account if commitment rank hits 0.
  * @param {string} crewKey - Crew key
- * @param {number} commitmentRank - 0=unavailable, 1=penalty, 2=normal, 3=assigned
- * @returns {Promise<Object>} Updated crew summary
+ * @param {string} eventId - Past event ID
+ * @returns {Promise<Object>} { crew_key, no_show_count, rank_commitment, active, withdrawn_from_future_events }
  */
-export async function setCrewCommitmentRank(crewKey, commitmentRank) {
+export async function recordNoShow(crewKey, eventId) {
     try {
-        const response = await apiService.patch(API_CONFIG.ENDPOINTS.ADMIN_CREW_COMMITMENT_RANK, { commitment_rank: commitmentRank }, { crewKey });
+        const response = await apiService.post(API_CONFIG.ENDPOINTS.ADMIN_CREW_NO_SHOWS, { event_id: eventId }, { crewKey });
 
         if (!response.success) {
-            throw new Error(response.message || 'Failed to update commitment rank');
+            throw new Error(response.message || 'Failed to record no-show');
         }
 
         return response.data;
     } catch (error) {
-        console.error('AdminService: Failed to set commitment rank:', error);
-        throw error;
-    }
-}
-
-/**
- * Withdraw a crew member from every future event and set their commitment rank to 0
- * @param {string} crewKey - Crew key
- * @returns {Promise<Object>} { crew_key, rank_commitment }
- */
-export async function removeCrewFromFutureEvents(crewKey) {
-    try {
-        const response = await apiService.post(API_CONFIG.ENDPOINTS.ADMIN_CREW_REMOVE_FUTURE_EVENTS, {}, { crewKey });
-
-        if (!response.success) {
-            throw new Error(response.message || 'Failed to remove crew from future events');
-        }
-
-        return response.data;
-    } catch (error) {
-        console.error('AdminService: Failed to remove crew from future events:', error);
+        console.error('AdminService: Failed to record no-show:', error);
         throw error;
     }
 }

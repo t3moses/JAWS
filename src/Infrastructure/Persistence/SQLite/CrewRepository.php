@@ -251,6 +251,21 @@ class CrewRepository implements CrewRepositoryInterface
         ]);
     }
 
+    public function countNoShows(CrewKey $key): int
+    {
+        $crew = $this->findByKey($key);
+        if ($crew === null) {
+            throw new \RuntimeException("Crew not found: {$key->toString()}");
+        }
+
+        $stmt = $this->pdo->prepare('
+            SELECT COUNT(*) FROM no_shows WHERE crew_id = :crew_id
+        ');
+        $stmt->execute(['crew_id' => $crew->getId()]);
+
+        return (int)$stmt->fetchColumn();
+    }
+
     public function addToWhitelist(CrewKey $crewKey, BoatKey $boatKey): void
     {
         $crew = $this->findByKey($crewKey);
@@ -380,13 +395,13 @@ class CrewRepository implements CrewRepositoryInterface
                 key, display_name, first_name, last_name, partner_key,
                 mobile, social_preference, membership_number,
                 skill, experience, active,
-                commitment_rank, membership_rank, absence_rank,
+                commitment_rank, membership_rank, absence_rank, initial_commitment_rank,
                 user_id
             ) VALUES (
                 :key, :display_name, :first_name, :last_name, :partner_key,
                 :mobile, :social_preference, :membership_number,
                 :skill, :experience, :active,
-                :commitment_rank, :membership_rank, :absence_rank,
+                :commitment_rank, :membership_rank, :absence_rank, :initial_commitment_rank,
                 :user_id
             )
         ');
@@ -407,6 +422,7 @@ class CrewRepository implements CrewRepositoryInterface
             'commitment_rank' => $rank->getDimension(CrewRankDimension::COMMITMENT),
             'membership_rank' => $rank->getDimension(CrewRankDimension::MEMBERSHIP),
             'absence_rank' => $rank->getDimension(CrewRankDimension::ABSENCE),
+            'initial_commitment_rank' => $crew->getInitialCommitmentRank(),
             'user_id' => $crew->getUserId(),
         ]);
 
@@ -544,6 +560,7 @@ class CrewRepository implements CrewRepositoryInterface
             skill: SkillLevel::fromInt((int)$row['skill']),
             experience: !empty($row['experience']) ? $row['experience'] : null,
             active: (bool)$row['active'],
+            initialCommitmentRank: (int)($row['initial_commitment_rank'] ?? 2),
         );
 
         $crew->setId((int)$row['id']);
@@ -745,6 +762,7 @@ class CrewRepository implements CrewRepositoryInterface
             skill: SkillLevel::fromInt((int)$row['skill']),
             experience: !empty($row['experience']) ? $row['experience'] : null,
             active: (bool)$row['active'],
+            initialCommitmentRank: (int)($row['initial_commitment_rank'] ?? 2),
         );
 
         $crew->setId((int)$row['id']);

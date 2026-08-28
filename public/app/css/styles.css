@@ -1436,16 +1436,6 @@ nav .user-greeting {
   font-weight: 600;
 }
 
-.commitment-rank-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.commitment-rank-row .modal-field-value {
-  margin-bottom: 0;
-}
-
 .modal-field-hint {
   color: var(--text-gray);
   font-size: 0.85rem;

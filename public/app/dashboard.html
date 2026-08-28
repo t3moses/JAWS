@@ -166,17 +166,19 @@
                         <p id="crew-detail-experience" class="modal-field-value"></p>
                     </div>
 
-                    <div class="form-group">
-                        <label>Commitment rank</label>
-                        <div class="commitment-rank-row">
-                            <p id="crew-detail-commitment" class="modal-field-value"></p>
-                            <button type="button" id="crew-detail-no-show" class="btn btn-secondary hidden">No show</button>
-                        </div>
+                    <div class="form-group" id="crew-detail-no-shows-group">
+                        <label>No shows</label>
+                        <p id="crew-detail-no-shows-value" class="modal-field-value"></p>
+                    </div>
+
+                    <div class="form-group" id="crew-detail-no-show-action-group">
+                        <p class="modal-field-hint">Click if the crew did not show up for this event</p>
+                        <button type="button" id="crew-detail-no-show" class="btn btn-secondary hidden">No show</button>
                     </div>
 
                     <div class="form-group">
+                        <p id="crew-detail-remove-whitelist-hint" class="modal-field-hint hidden">Click to remove your boat from this crew's whitelist</p>
                         <button type="button" id="crew-detail-remove-whitelist" class="btn btn-secondary hidden">Remove</button>
-                        <p class="modal-field-hint">Click here to remove your boat from this crew's whitelist</p>
                     </div>
 
                     <div class="modal-actions">

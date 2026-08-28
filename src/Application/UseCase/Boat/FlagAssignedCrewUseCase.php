@@ -6,11 +6,9 @@ namespace App\Application\UseCase\Boat;
 
 use App\Application\Exception\BoatNotFoundException;
 use App\Application\Port\Repository\BoatRepositoryInterface;
-use App\Application\Port\Repository\CrewRepositoryInterface;
 use App\Application\Port\Repository\EventRepositoryInterface;
 use App\Application\Port\Repository\SeasonRepositoryInterface;
-use App\Domain\Enum\CrewRankDimension;
-use App\Domain\ValueObject\CrewKey;
+use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Domain\ValueObject\EventId;
 use Psr\Log\LoggerInterface;
 
@@ -18,31 +16,27 @@ use Psr\Log\LoggerInterface;
  * Flag Assigned Crew Use Case
  *
  * Lets a boat owner flag crew members who were assigned to their boat for one
- * or more events. Every flag withdraws the crew from all future events
- * (their crew_availability rows are deleted, the same effect as a manual
- * withdrawal). Each flag also steps the crew's commitment rank down by one:
- * while commitment rank is above 0 it is decremented; once a crew is flagged
- * again while already at commitment rank 0, they are marked inactive
- * (active = false) instead of decrementing further. An inactive crew is
+ * or more events. Each verified (event, crew) pair is recorded as a no-show
+ * via RecordNoShowUseCase, which derives commitment rank from the crew's
+ * total no-show count, withdraws them from all future events, and
+ * deactivates the account once commitment rank hits 0. An inactive crew is
  * blocked from updating their own availability (see
- * UpdateCrewAvailabilityUseCase). Each verified (event, crew) pair is also
- * recorded in the no_shows table (silently ignored if already recorded).
+ * UpdateCrewAvailabilityUseCase).
  *
  * SECURITY: Client-submitted (eventId, crewKey) pairs are never trusted at
  * face value. Each pair is independently verified against the actual
- * persisted flotilla for that event before it counts toward the decrement,
- * so a boat owner can only flag crew who were genuinely assigned to their
- * own boat. Flags are also restricted to past events only — the next
- * event's assignment can still change before it happens, so it isn't
- * eligible for flagging yet.
+ * persisted flotilla for that event before it is recorded, so a boat owner
+ * can only flag crew who were genuinely assigned to their own boat. Flags
+ * are also restricted to past events only — the next event's assignment can
+ * still change before it happens, so it isn't eligible for flagging yet.
  */
 class FlagAssignedCrewUseCase
 {
     public function __construct(
         private BoatRepositoryInterface $boatRepository,
-        private CrewRepositoryInterface $crewRepository,
         private EventRepositoryInterface $eventRepository,
         private SeasonRepositoryInterface $seasonRepository,
+        private RecordNoShowUseCase $recordNoShowUseCase,
         private LoggerInterface $logger,
     ) {
     }
@@ -53,7 +47,7 @@ class FlagAssignedCrewUseCase
      * @return array<int, array{
      *     crew_key: string,
      *     display_name: ?string,
-     *     flag_count: int,
+     *     no_show_count: int,
      *     rank_commitment: int,
      *     active: bool,
      *     withdrawn_from_future_events: bool
@@ -71,89 +65,37 @@ class FlagAssignedCrewUseCase
         $pastEventIds = array_flip($this->eventRepository->findPastEvents());
 
         // Verify each (eventId, crewKey) pair against the real persisted flotilla,
-        // de-duplicating so a repeated pair can't be counted more than once.
-        $verifiedCrewKeys = [];
+        // de-duplicating so a repeated pair can't be recorded more than once.
+        $verifiedPairs = [];
         foreach ($flags as $flag) {
             $pairKey = $flag['eventId'] . '|' . $flag['crewKey'];
-            if (isset($verifiedCrewKeys[$pairKey])) {
+            if (isset($verifiedPairs[$pairKey])) {
                 continue;
             }
             if (!isset($pastEventIds[$flag['eventId']])) {
                 continue;
             }
             if ($this->wasAssignedToBoat($flag['eventId'], $flag['crewKey'], $boat->getKey()->toString())) {
-                $verifiedCrewKeys[$pairKey] = $flag['crewKey'];
+                $verifiedPairs[$pairKey] = $flag;
             }
         }
 
-        $flagCountsByCrewKey = [];
-        foreach ($verifiedCrewKeys as $pairKey => $crewKeyString) {
-            $flagCountsByCrewKey[$crewKeyString] = ($flagCountsByCrewKey[$crewKeyString] ?? 0) + 1;
-
-            [$eventIdString] = explode('|', $pairKey, 2);
-            $this->crewRepository->recordNoShow(CrewKey::fromString($crewKeyString), EventId::fromString($eventIdString));
-        }
-
-        // Every flag withdraws the crew from all future events, regardless of
-        // their current commitment rank.
-        $futureEventIds = $this->eventRepository->findFutureEvents();
-
-        $results = [];
-        foreach ($flagCountsByCrewKey as $crewKeyString => $flagCount) {
-            $crew = $this->crewRepository->findByKey(CrewKey::fromString($crewKeyString));
-            if ($crew === null) {
-                continue;
-            }
-
-            $withdrawnFromFutureEvents = false;
-            if (!empty($futureEventIds)) {
-                $this->crewRepository->deleteAvailabilityForEvents($crew->getKey(), $futureEventIds);
-                $withdrawnFromFutureEvents = true;
-            }
-
-            // Walk the commitment state machine one flag at a time: decrement
-            // while above zero; a flag that lands while already at zero
-            // deactivates the crew instead of decrementing further.
-            $rankBefore = $crew->getRank()->getDimension(CrewRankDimension::COMMITMENT);
-            $rankAfter = $rankBefore;
-            $becameInactive = false;
-            for ($i = 0; $i < $flagCount; $i++) {
-                if ($rankAfter > 0) {
-                    $rankAfter--;
-                } else {
-                    $becameInactive = true;
-                }
-            }
-
-            $crew->setRankDimension(CrewRankDimension::COMMITMENT, $rankAfter);
-            $this->crewRepository->updateRankCommitment($crew);
-
-            if ($becameInactive) {
-                $crew->setActive(false);
-                $this->crewRepository->updateActive($crew);
-            }
+        // Record each verified pair, keeping the latest result per crew - the
+        // recomputed commitment rank reflects the crew's total no-show count
+        // regardless of how many pairs (or in what order) were processed.
+        $resultsByCrewKey = [];
+        foreach ($verifiedPairs as $flag) {
+            $result = $this->recordNoShowUseCase->execute($flag['crewKey'], $flag['eventId']);
+            $resultsByCrewKey[$flag['crewKey']] = $result;
 
             $this->logger->info('boat_owner.crew_flagged', [
-                'boat_key'                     => $boat->getKey()->toString(),
-                'crew_key'                     => $crewKeyString,
-                'flag_count'                   => $flagCount,
-                'rank_before'                  => $rankBefore,
-                'rank_after'                   => $rankAfter,
-                'became_inactive'              => $becameInactive,
-                'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
+                'boat_key' => $boat->getKey()->toString(),
+                'crew_key' => $flag['crewKey'],
+                'event_id' => $flag['eventId'],
             ]);
-
-            $results[] = [
-                'crew_key'                     => $crewKeyString,
-                'display_name'                 => $crew->getDisplayName(),
-                'flag_count'                   => $flagCount,
-                'rank_commitment'              => $rankAfter,
-                'active'                       => $crew->isActive(),
-                'withdrawn_from_future_events' => $withdrawnFromFutureEvents,
-            ];
         }
 
-        return $results;
+        return array_values($resultsByCrewKey);
     }
 
     /**

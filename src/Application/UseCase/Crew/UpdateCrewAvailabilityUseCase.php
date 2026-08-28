@@ -95,8 +95,8 @@ class UpdateCrewAvailabilityUseCase
         // Reload crew to get updated availability for response
         $crew = $this->crewRepository->findByUserId($userId);
 
-        // Commitment rank is admin-set only (see SetCrewCommitmentRankUseCase) and is
-        // never mutated as a side effect of a crew's own availability changes.
+        // Commitment rank is only mutated by RecordNoShowUseCase and is never
+        // mutated as a side effect of a crew's own availability changes.
         $this->logger->info('crew.availability_updated', [
             'crew_key'    => $crewKey->toString(),
             'event_count' => count($request->availabilities),

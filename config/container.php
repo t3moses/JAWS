@@ -241,12 +241,21 @@ $container->set(\App\Application\UseCase\Crew\GetUserAssignmentsUseCase::class, 
     );
 });
 
+$container->set(\App\Application\UseCase\Crew\RecordNoShowUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Crew\RecordNoShowUseCase(
+        $c->get(CrewRepositoryInterface::class),
+        $c->get(EventRepositoryInterface::class),
+        $c->get(TransactionServiceInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 $container->set(\App\Application\UseCase\Boat\FlagAssignedCrewUseCase::class, function ($c) {
     return new \App\Application\UseCase\Boat\FlagAssignedCrewUseCase(
         $c->get(BoatRepositoryInterface::class),
-        $c->get(CrewRepositoryInterface::class),
         $c->get(EventRepositoryInterface::class),
         $c->get(SeasonRepositoryInterface::class),
+        $c->get(\App\Application\UseCase\Crew\RecordNoShowUseCase::class),
         $c->get(LoggerInterface::class)
     );
 });
@@ -441,20 +450,6 @@ $container->set(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::c
     );
 });
 
-$container->set(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::class, function ($c) {
-    return new \App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase(
-        $c->get(CrewRepositoryInterface::class),
-        $c->get(LoggerInterface::class)
-    );
-});
-
-$container->set(\App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase::class, function ($c) {
-    return new \App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase(
-        $c->get(CrewRepositoryInterface::class),
-        $c->get(EventRepositoryInterface::class),
-        $c->get(LoggerInterface::class)
-    );
-});
 
 // Cron Use Cases
 $container->set(\App\Application\UseCase\Cron\SendCrewReminderUseCase::class, function ($c) {
@@ -625,8 +620,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\UpdateCrewProfileUseCase::class),
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),
-        $c->get(\App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase::class),
-        $c->get(\App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase::class),
+        $c->get(\App\Application\UseCase\Crew\RecordNoShowUseCase::class),
         $c->get(\App\Application\UseCase\Admin\DeleteUserUseCase::class)
     );
 });

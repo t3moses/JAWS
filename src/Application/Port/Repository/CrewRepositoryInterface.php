@@ -159,6 +159,14 @@ interface CrewRepositoryInterface
     public function recordNoShow(CrewKey $key, EventId $eventId): void;
 
     /**
+     * Count the number of no-shows recorded for a crew member across all events.
+     *
+     * @param CrewKey $key
+     * @return int
+     */
+    public function countNoShows(CrewKey $key): int;
+
+    /**
      * Update crew commitment rank only (without touching other fields)
      *
      * @param Crew $crew Crew with updated commitment rank

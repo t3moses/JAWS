@@ -14,13 +14,12 @@ use App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase;
 use App\Application\UseCase\Admin\GetMatchingDataUseCase;
 use App\Application\UseCase\Admin\GetParticipantEmailsUseCase;
 use App\Application\UseCase\Admin\GetUserDetailUseCase;
-use App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\SendCustomNotificationUseCase;
-use App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase;
 use App\Application\UseCase\Admin\SetUserAdminUseCase;
 use App\Application\UseCase\Admin\DeleteUserUseCase;
 use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
+use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Presentation\Controller\AdminController;
@@ -34,6 +33,7 @@ class AdminControllerTest extends TestCase
     private function makeController(
         UpdateConfigUseCase $updateConfigUseCase,
         ProcessSeasonUpdateUseCase $processSeasonUpdateUseCase,
+        ?RecordNoShowUseCase $recordNoShowUseCase = null,
     ): AdminController {
         return new AdminController(
             $this->createStub(GetMatchingDataUseCase::class),
@@ -51,8 +51,7 @@ class AdminControllerTest extends TestCase
             $this->createStub(UpdateCrewProfileUseCase::class),
             $this->createStub(AddToCrewWhitelistUseCase::class),
             $this->createStub(RemoveFromCrewWhitelistUseCase::class),
-            $this->createStub(SetCrewCommitmentRankUseCase::class),
-            $this->createStub(RemoveCrewFromFutureEventsUseCase::class),
+            $recordNoShowUseCase ?? $this->createStub(RecordNoShowUseCase::class),
             $this->createStub(DeleteUserUseCase::class),
         );
     }
@@ -123,5 +122,62 @@ class AdminControllerTest extends TestCase
         $response   = $controller->updateConfig(['source' => 'invalid'], $this->adminAuth);
 
         $this->assertEquals(400, $this->getResponseStatusCode($response));
+    }
+
+    public function testRecordNoShowReturns200WithResultOnSuccess(): void
+    {
+        $recordNoShowUseCase = $this->createMock(RecordNoShowUseCase::class);
+        $recordNoShowUseCase->expects($this->once())
+            ->method('execute')
+            ->with('crew_1', 'Fri Apr 17')
+            ->willReturn([
+                'crew_key' => 'crew_1',
+                'display_name' => 'Test Crew',
+                'no_show_count' => 1,
+                'rank_commitment' => 1,
+                'active' => true,
+                'withdrawn_from_future_events' => true,
+            ]);
+
+        $controller = $this->makeController(
+            $this->createStub(UpdateConfigUseCase::class),
+            $this->createStub(ProcessSeasonUpdateUseCase::class),
+            $recordNoShowUseCase,
+        );
+        $response = $controller->recordNoShow(['crewKey' => 'crew_1'], ['event_id' => 'Fri Apr 17'], $this->adminAuth);
+
+        $this->assertEquals(200, $this->getResponseStatusCode($response));
+        $data = $this->getResponseData($response);
+        $this->assertEquals(1, $data['data']['rank_commitment']);
+    }
+
+    public function testRecordNoShowReturns400WhenEventIdMissing(): void
+    {
+        $recordNoShowUseCase = $this->createMock(RecordNoShowUseCase::class);
+        $recordNoShowUseCase->expects($this->never())->method('execute');
+
+        $controller = $this->makeController(
+            $this->createStub(UpdateConfigUseCase::class),
+            $this->createStub(ProcessSeasonUpdateUseCase::class),
+            $recordNoShowUseCase,
+        );
+        $response = $controller->recordNoShow(['crewKey' => 'crew_1'], [], $this->adminAuth);
+
+        $this->assertEquals(400, $this->getResponseStatusCode($response));
+    }
+
+    public function testRecordNoShowReturns403WhenNotAdmin(): void
+    {
+        $recordNoShowUseCase = $this->createMock(RecordNoShowUseCase::class);
+        $recordNoShowUseCase->expects($this->never())->method('execute');
+
+        $controller = $this->makeController(
+            $this->createStub(UpdateConfigUseCase::class),
+            $this->createStub(ProcessSeasonUpdateUseCase::class),
+            $recordNoShowUseCase,
+        );
+        $response = $controller->recordNoShow(['crewKey' => 'crew_1'], ['event_id' => 'Fri Apr 17'], ['is_admin' => false, 'user_id' => 1]);
+
+        $this->assertEquals(403, $this->getResponseStatusCode($response));
     }
 }

@@ -8,9 +8,12 @@ use Phinx\Migration\AbstractMigration;
  * Create No Shows Table Migration
  *
  * Records a no-show for a crew at an event, one row per (crew, event) pair.
- * Written when a boat owner flags a crew member for a no-show (see
- * FlagAssignedCrewUseCase); re-flagging the same crew for the same event is a
- * no-op thanks to the composite unique index.
+ * Written by RecordNoShowUseCase, invoked either when a boat owner flags a
+ * crew member for a no-show (see FlagAssignedCrewUseCase) or when an admin
+ * records one directly; re-flagging the same crew for the same event is a
+ * no-op thanks to the composite unique index. The crew's total row count
+ * here is read back to derive commitment_rank (see
+ * AddInitialCommitmentRankToCrews).
  */
 final class CreateNoShowsTable extends AbstractMigration
 {

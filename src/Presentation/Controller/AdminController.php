@@ -17,9 +17,8 @@ use App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase;
 use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
-use App\Application\UseCase\Admin\SetCrewCommitmentRankUseCase;
-use App\Application\UseCase\Admin\RemoveCrewFromFutureEventsUseCase;
 use App\Application\UseCase\Admin\DeleteUserUseCase;
+use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
 use App\Application\DTO\Request\UpdateConfigRequest;
@@ -52,8 +51,7 @@ class AdminController
         private UpdateCrewProfileUseCase $updateCrewProfileUseCase,
         private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
-        private SetCrewCommitmentRankUseCase $setCrewCommitmentRankUseCase,
-        private RemoveCrewFromFutureEventsUseCase $removeCrewFromFutureEventsUseCase,
+        private RecordNoShowUseCase $recordNoShowUseCase,
         private DeleteUserUseCase $deleteUserUseCase,
     ) {
     }
@@ -506,63 +504,37 @@ class AdminController
     }
 
     /**
-     * PATCH /api/admin/crews/{crewKey}/commitment-rank
+     * POST /api/admin/crews/{crewKey}/no-shows
      *
-     * Sets the commitment rank for a crew member (admin override).
-     *
-     * Valid values: 0 (unavailable), 1 (penalty), 2 (normal), 3 (assigned)
+     * Records a no-show for a crew member at a past event. Recomputes their
+     * commitment rank from their total no-show count, withdraws them from
+     * every future event, and deactivates the account if commitment rank
+     * hits 0.
      *
      * @param array $params Route parameters (crewKey)
-     * @param array $body   Request body (commitment_rank)
+     * @param array $body   Request body (event_id)
      * @param array $auth   Authentication context
      */
-    public function setCrewCommitmentRank(array $params, array $body, array $auth): JsonResponse
+    public function recordNoShow(array $params, array $body, array $auth): JsonResponse
     {
         if (!$this->isAdmin($auth)) {
             return JsonResponse::error('Admin privileges required', 403);
         }
 
         try {
-            $crewKey = $params['crewKey'];
-            $rank = isset($body['commitment_rank']) ? (int)$body['commitment_rank'] : null;
+            $eventId = $body['event_id'] ?? null;
 
-            if ($rank === null) {
-                return JsonResponse::error('commitment_rank is required', 400);
+            if (empty($eventId) || !is_string($eventId)) {
+                return JsonResponse::error('event_id is required', 400);
             }
 
-            $result = $this->setCrewCommitmentRankUseCase->execute($crewKey, $rank);
+            $result = $this->recordNoShowUseCase->execute($params['crewKey'], $eventId);
 
             return JsonResponse::success($result);
         } catch (CrewNotFoundException $e) {
             return JsonResponse::notFound($e->getMessage());
         } catch (ValidationException $e) {
             return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
-        } catch (\Exception $e) {
-            return JsonResponse::serverError($e->getMessage());
-        }
-    }
-
-    /**
-     * POST /api/admin/crews/{crewKey}/remove-future-events
-     *
-     * Withdraws a crew member from every future event and sets their
-     * commitment rank to 0.
-     *
-     * @param array $params Route parameters (crewKey)
-     * @param array $auth   Authentication context
-     */
-    public function removeCrewFromFutureEvents(array $params, array $auth): JsonResponse
-    {
-        if (!$this->isAdmin($auth)) {
-            return JsonResponse::error('Admin privileges required', 403);
-        }
-
-        try {
-            $result = $this->removeCrewFromFutureEventsUseCase->execute($params['crewKey']);
-
-            return JsonResponse::success($result);
-        } catch (CrewNotFoundException $e) {
-            return JsonResponse::notFound($e->getMessage());
         } catch (\Exception $e) {
             return JsonResponse::serverError($e->getMessage());
         }

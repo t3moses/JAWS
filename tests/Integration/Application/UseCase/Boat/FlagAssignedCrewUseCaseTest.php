@@ -6,6 +6,7 @@ namespace Tests\Integration\Application\UseCase\Boat;
 
 use App\Application\Exception\BoatNotFoundException;
 use App\Application\UseCase\Boat\FlagAssignedCrewUseCase;
+use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Domain\Enum\AvailabilityStatus;
 use App\Domain\ValueObject\CrewKey;
 use App\Domain\ValueObject\EventId;
@@ -13,6 +14,7 @@ use App\Infrastructure\Persistence\SQLite\BoatRepository;
 use App\Infrastructure\Persistence\SQLite\CrewRepository;
 use App\Infrastructure\Persistence\SQLite\EventRepository;
 use App\Infrastructure\Persistence\SQLite\SeasonRepository;
+use App\Infrastructure\Service\DatabaseTransactionService;
 use App\Infrastructure\Service\SystemTimeService;
 use Psr\Log\NullLogger;
 use Tests\Integration\IntegrationTestCase;
@@ -20,10 +22,11 @@ use Tests\Integration\IntegrationTestCase;
 /**
  * Integration tests for FlagAssignedCrewUseCase
  *
- * Verifies that a boat owner can decrement the commitment rank of crew
- * genuinely assigned to their boat, that client-submitted (eventId, crewKey)
- * pairs are independently verified against the persisted flotilla (never
- * trusted at face value), and that the decrement is clamped to 0-2.
+ * Verifies that a boat owner can record a no-show for crew genuinely
+ * assigned to their boat, that client-submitted (eventId, crewKey) pairs are
+ * independently verified against the persisted flotilla (never trusted at
+ * face value), and that commitment rank is derived from the crew's total
+ * no_shows count (initial_commitment_rank - count, floored at 0).
  */
 class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 {
@@ -31,6 +34,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
     private BoatRepository $boatRepository;
     private CrewRepository $crewRepository;
     private SeasonRepository $seasonRepository;
+    private EventRepository $eventRepository;
 
     protected function setUp(): void
     {
@@ -38,6 +42,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 
         // Simulated "now" (set in IntegrationTestCase::initializeSeasonConfig) is
         // 2026-05-01, so these are past events — required for flagging to be allowed.
+        $this->createTestEvent('Fri Apr 03', '2026-04-03');
         $this->createTestEvent('Fri Apr 17', '2026-04-17');
         $this->createTestEvent('Fri Apr 24', '2026-04-24');
         $this->createTestEvent('Fri May 15', '2026-05-15');
@@ -45,13 +50,20 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $this->boatRepository = new BoatRepository();
         $this->crewRepository = new CrewRepository();
         $this->seasonRepository = new SeasonRepository();
-        $eventRepository = new EventRepository(new SystemTimeService($this->seasonRepository));
+        $this->eventRepository = new EventRepository(new SystemTimeService($this->seasonRepository));
+
+        $recordNoShowUseCase = new RecordNoShowUseCase(
+            $this->crewRepository,
+            $this->eventRepository,
+            new DatabaseTransactionService(),
+            new NullLogger()
+        );
 
         $this->useCase = new FlagAssignedCrewUseCase(
             $this->boatRepository,
-            $this->crewRepository,
-            $eventRepository,
+            $this->eventRepository,
             $this->seasonRepository,
+            $recordNoShowUseCase,
             new NullLogger()
         );
     }
@@ -84,15 +96,21 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         return $key;
     }
 
+    /**
+     * Creates a crew whose current commitment_rank starts equal to
+     * initial_commitment_rank (no prior no-shows). Use seedPriorNoShow() to
+     * simulate a crew that already has recorded no-shows.
+     */
     protected function createCrewProfileForUser(int $userId, array $overrides = []): string
     {
         $key = $overrides['key'] ?? 'crew_' . $userId;
+        $initialCommitmentRank = $overrides['initialCommitmentRank'] ?? 2;
 
         $stmt = $this->pdo->prepare('
             INSERT INTO crews (
                 key, display_name, first_name, last_name, skill,
-                commitment_rank, user_id, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                commitment_rank, initial_commitment_rank, user_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $key,
@@ -100,11 +118,22 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
             'Test',
             'Crew',
             1,
-            $overrides['commitmentRank'] ?? 2,
+            $initialCommitmentRank,
+            $initialCommitmentRank,
             $userId,
         ]);
 
         return $key;
+    }
+
+    /**
+     * Directly inserts a no_shows row for a past event not under test, to
+     * simulate a crew that already has recorded no-shows before the action
+     * being tested.
+     */
+    protected function seedPriorNoShow(string $crewKey, string $eventId): void
+    {
+        $this->crewRepository->recordNoShow(CrewKey::fromString($crewKey), EventId::fromString($eventId));
     }
 
     protected function getCommitmentRank(string $crewKey): int
@@ -168,7 +197,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner1@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew1@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
 
@@ -178,19 +207,19 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 
         $this->assertCount(1, $results);
         $this->assertEquals($crewKey, $results[0]['crew_key']);
-        $this->assertEquals(1, $results[0]['flag_count']);
+        $this->assertEquals(1, $results[0]['no_show_count']);
         $this->assertEquals(1, $results[0]['rank_commitment']);
         $this->assertTrue($results[0]['active']);
         $this->assertEquals(1, $this->getCommitmentRank($crewKey));
         $this->assertTrue($this->getIsActive($crewKey));
     }
 
-    public function testFlagsSameCrewAcrossTwoEventsDecrementsByTwo(): void
+    public function testFlagsSameCrewAcrossTwoEventsCountsBoth(): void
     {
         $ownerId = $this->createTestUser('owner2@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew2@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
         $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
@@ -201,23 +230,23 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         ]);
 
         $this->assertCount(1, $results);
-        $this->assertEquals(2, $results[0]['flag_count']);
+        $this->assertEquals(2, $results[0]['no_show_count']);
         $this->assertEquals(0, $results[0]['rank_commitment']);
         $this->assertEquals(0, $this->getCommitmentRank($crewKey));
     }
 
-    public function testDecrementClampedAtZero(): void
+    public function testRankFlooredAtZeroAndDeactivatedOnceNoShowsExceedInitialRank(): void
     {
         $ownerId = $this->createTestUser('owner3@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew3@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 1]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['initialCommitmentRank' => 1]);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
         $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
 
-        // Starting rank 1, flagged twice in the same batch: first flag drops it
-        // to 0, the second flag lands while already at 0 and deactivates it.
+        // initial_commitment_rank is 1: the first no-show already drops rank
+        // to 0 and deactivates the crew; the second is still floored at 0.
         $results = $this->useCase->execute($ownerId, [
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
             ['eventId' => 'Fri Apr 24', 'crewKey' => $crewKey],
@@ -234,7 +263,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner4@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew4@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
 
@@ -245,7 +274,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
         ]);
 
-        $this->assertEquals(1, $results[0]['flag_count']);
+        $this->assertEquals(1, $results[0]['no_show_count']);
         $this->assertEquals(1, $this->getCommitmentRank($crewKey));
     }
 
@@ -255,10 +284,10 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $boatKey = $this->createBoatProfileForUser($ownerId);
 
         $crewUserId1 = $this->createTestUser('crew5a@example.com', 'crew');
-        $crewKey1 = $this->createCrewProfileForUser($crewUserId1, ['key' => 'crew5a', 'commitmentRank' => 2]);
+        $crewKey1 = $this->createCrewProfileForUser($crewUserId1, ['key' => 'crew5a']);
 
         $crewUserId2 = $this->createTestUser('crew5b@example.com', 'crew');
-        $crewKey2 = $this->createCrewProfileForUser($crewUserId2, ['key' => 'crew5b', 'commitmentRank' => 2]);
+        $crewKey2 = $this->createCrewProfileForUser($crewUserId2, ['key' => 'crew5b']);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey1, $crewKey2]);
 
@@ -266,7 +295,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey1],
         ]);
 
-        // Only crew1 was flagged; crew2 must not appear or be decremented
+        // Only crew1 was flagged; crew2 must not appear or be affected
         $this->assertCount(1, $results);
         $this->assertEquals($crewKey1, $results[0]['crew_key']);
         $this->assertEquals(1, $this->getCommitmentRank($crewKey1));
@@ -275,12 +304,16 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
 
     // ==================== REPEAT NO-SHOW / WITHDRAWAL TESTS ====================
 
-    public function testAlreadyZeroCommitmentWithdrawsCrewFromFutureEvents(): void
+    public function testAlreadyAtZeroCommitmentWithdrawsCrewFromFutureEvents(): void
     {
         $ownerId = $this->createTestUser('owner12@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew12@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 0]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['initialCommitmentRank' => 2]);
+
+        // Two prior no-shows already bring rank to 0 (and the crew inactive).
+        $this->seedPriorNoShow($crewKey, 'Fri Apr 03');
+        $this->crewRepository->updateRankCommitment($this->crewRepository->findByKey(CrewKey::fromString($crewKey)));
 
         // Crew is registered/available for the future event
         $this->crewRepository->updateAvailability(
@@ -290,9 +323,12 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         );
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
+        $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
 
+        // Two more no-shows (total 3, initial 2) - still floored at 0.
         $results = $this->useCase->execute($ownerId, [
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
+            ['eventId' => 'Fri Apr 24', 'crewKey' => $crewKey],
         ]);
 
         $this->assertCount(1, $results);
@@ -304,13 +340,13 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $this->assertFalse($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
     }
 
-    public function testFirstTimeDroppingToZeroWithdrawsFromFutureEventsButStaysActive(): void
+    public function testFirstTimeDroppingToZeroWithdrawsFromFutureEventsAndDeactivates(): void
     {
         $ownerId = $this->createTestUser('owner13@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew13@example.com', 'crew');
-        // Starts at rank 1, not yet 0
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 1]);
+        // Starts at initial rank 1, no prior no-shows
+        $crewKey = $this->createCrewProfileForUser($crewUserId, ['initialCommitmentRank' => 1]);
 
         $this->crewRepository->updateAvailability(
             CrewKey::fromString($crewKey),
@@ -324,15 +360,14 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
             ['eventId' => 'Fri Apr 17', 'crewKey' => $crewKey],
         ]);
 
-        // Every flag withdraws the crew from future events, regardless of
-        // starting rank. Rank drops from 1 to 0, but the crew isn't marked
-        // inactive until a further flag lands while already at 0.
+        // Rank drops from 1 to 0 on the very first no-show, and the crew is
+        // deactivated immediately - there's no grace period.
         $this->assertCount(1, $results);
         $this->assertEquals(0, $results[0]['rank_commitment']);
-        $this->assertTrue($results[0]['active']);
+        $this->assertFalse($results[0]['active']);
         $this->assertTrue($results[0]['withdrawn_from_future_events']);
         $this->assertFalse($this->hasAvailabilityRecord($crewKey, 'Fri May 15'));
-        $this->assertTrue($this->getIsActive($crewKey));
+        $this->assertFalse($this->getIsActive($crewKey));
     }
 
     // ==================== SECURITY / VERIFICATION TESTS ====================
@@ -342,7 +377,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner6@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew6@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         // Flotilla exists for the event, but this crew is NOT on the boat
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, []);
@@ -364,7 +399,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $otherBoatKey = $this->createBoatProfileForUser($otherOwnerId, ['key' => 'boat_other']);
 
         $crewUserId = $this->createTestUser('crew7@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         // Crew is assigned to the OTHER owner's boat, not this owner's boat
         $this->saveFlotillaWithCrew('Fri Apr 17', $otherBoatKey, [$crewKey]);
@@ -382,7 +417,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner8@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew8@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $results = $this->useCase->execute($ownerId, [
             ['eventId' => 'Nonexistent Event', 'crewKey' => $crewKey],
@@ -397,7 +432,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner9@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew9@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         // Event exists, but no flotilla has been generated for it yet
         $results = $this->useCase->execute($ownerId, [
@@ -413,7 +448,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner11@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew11@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         // 'Fri May 15' (2026-05-15) is after the simulated "now" of 2026-05-01,
         // so even though the crew is genuinely assigned, it's not flaggable yet.
@@ -434,7 +469,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner14@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew14@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
 
@@ -450,7 +485,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner15@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew15@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
         $this->saveFlotillaWithCrew('Fri Apr 24', $boatKey, [$crewKey]);
@@ -469,7 +504,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner16@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew16@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
 
@@ -484,6 +519,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         ]);
 
         $this->assertEquals(1, $this->countNoShows($crewKey, 'Fri Apr 17'));
+        $this->assertEquals(1, $this->getCommitmentRank($crewKey));
     }
 
     public function testDuplicatePairInSameRequestRecordsNoShowOnce(): void
@@ -491,7 +527,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner17@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew17@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, [$crewKey]);
 
@@ -508,7 +544,7 @@ class FlagAssignedCrewUseCaseTest extends IntegrationTestCase
         $ownerId = $this->createTestUser('owner18@example.com', 'boat_owner');
         $boatKey = $this->createBoatProfileForUser($ownerId);
         $crewUserId = $this->createTestUser('crew18@example.com', 'crew');
-        $crewKey = $this->createCrewProfileForUser($crewUserId, ['commitmentRank' => 2]);
+        $crewKey = $this->createCrewProfileForUser($crewUserId);
 
         // Flotilla exists for the event, but this crew is NOT on the boat
         $this->saveFlotillaWithCrew('Fri Apr 17', $boatKey, []);

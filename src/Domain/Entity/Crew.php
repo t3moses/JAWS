@@ -44,14 +44,20 @@ class Crew
         private SkillLevel $skill,
         private ?string $experience,
         private bool $active = true,
+        private int $initialCommitmentRank = 2,
     ) {
         // Initialize default rank with 4 dimensions: [availability, commitment, membership, absence]
         $this->rank = Rank::forCrew(
             availability: 0, // Default: not selected for event
-            commitment: 2,   // Default: normal priority (persistent, admin-set)
+            commitment: $initialCommitmentRank, // Default: normal priority: current commitment_rank starts equal to the immutable baseline
             membership: self::calculateMembershipRank($membershipNumber),
             absence: 0       // Default: no absences
         );
+    }
+
+    public function getInitialCommitmentRank(): int
+    {
+        return $this->initialCommitmentRank;
     }
 
     // === Identity ===
@@ -426,6 +432,7 @@ class Crew
             'skill' => $this->skill->value,
             'experience' => $this->experience,
             'active' => $this->active,
+            'initial_commitment_rank' => $this->initialCommitmentRank,
             'rank' => $this->rank->toArray(),
             'availability' => array_map(fn($s) => $s->value, $this->availability),
             'history' => $this->history,

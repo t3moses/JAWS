@@ -192,6 +192,7 @@ async function populateAssignments() {
                         membershipRank: c.membership_rank,
                         experience: c.experience,
                         commitmentRank: c.commitment_rank,
+                        initialCommitmentRank: c.initial_commitment_rank,
                         isPast: eventHasPassed
                     });
                     return `<button type="button" class="crew-tag crew-tag-btn"
@@ -229,9 +230,9 @@ let currentModalIsPast = false;
 
 /**
  * Open the crew detail modal for a boat owner's crewmate. Future events show
- * everything read-only; past events let the owner correct skill (dropdown,
- * saved on change) and flag a no-show (decrements commitment rank, or
- * withdraws the crew from future events once already at rank 0).
+ * everything read-only, including a "No shows" count. Past events let the
+ * owner correct skill (dropdown, saved on change) and flag a no-show, which
+ * withdraws the crew from future events and may deactivate their account.
  */
 function openCrewDetailModal(detail) {
     if (!detail) {
@@ -244,11 +245,13 @@ function openCrewDetailModal(detail) {
 
     const skillDisplay = document.getElementById('crew-detail-skill-display');
     const skillSelect = document.getElementById('crew-detail-skill-select');
-    const commitmentValue = document.getElementById('crew-detail-commitment');
+    const noShowsGroup = document.getElementById('crew-detail-no-shows-group');
+    const noShowsValue = document.getElementById('crew-detail-no-shows-value');
+    const noShowActionGroup = document.getElementById('crew-detail-no-show-action-group');
     const noShowBtn = document.getElementById('crew-detail-no-show');
     const removeWhitelistBtn = document.getElementById('crew-detail-remove-whitelist');
+    const removeWhitelistHint = document.getElementById('crew-detail-remove-whitelist-hint');
 
-    commitmentValue.textContent = String(detail.commitmentRank);
     currentModalIsPast = detail.isPast;
 
     if (detail.isPast) {
@@ -259,11 +262,15 @@ function openCrewDetailModal(detail) {
         skillSelect.dataset.eventId = detail.eventId;
         skillSelect.dataset.crewKey = detail.crewKey;
 
+        noShowsGroup.classList.add('hidden');
+
+        noShowActionGroup.classList.remove('hidden');
         noShowBtn.classList.remove('hidden');
         noShowBtn.disabled = false;
         noShowBtn.dataset.eventId = detail.eventId;
         noShowBtn.dataset.crewKey = detail.crewKey;
 
+        removeWhitelistHint.classList.remove('hidden');
         removeWhitelistBtn.classList.remove('hidden');
         removeWhitelistBtn.disabled = false;
         removeWhitelistBtn.dataset.eventId = detail.eventId;
@@ -273,7 +280,13 @@ function openCrewDetailModal(detail) {
         skillDisplay.textContent = SKILL_LABELS[detail.skill] ?? '—';
         skillSelect.classList.add('hidden');
 
+        noShowsGroup.classList.remove('hidden');
+        noShowsValue.textContent = String(detail.initialCommitmentRank - detail.commitmentRank);
+
+        noShowActionGroup.classList.add('hidden');
         noShowBtn.classList.add('hidden');
+
+        removeWhitelistHint.classList.add('hidden');
         removeWhitelistBtn.classList.add('hidden');
     }
 
@@ -349,7 +362,6 @@ document.getElementById('crew-detail-no-show').addEventListener('click', async (
     }
 
     const flagged = result.data?.flagged?.[0];
-    const commitmentValue = document.getElementById('crew-detail-commitment');
 
     if (!flagged) {
         btn.disabled = false;
@@ -362,11 +374,11 @@ document.getElementById('crew-detail-no-show').addEventListener('click', async (
     }
 
     if (flagged.active === false) {
-        commitmentValue.textContent = 'Crew marked inactive';
+        showSuccess('No-show recorded. Crew marked inactive.');
         // Already at rock bottom and marked inactive - nothing left to flag.
         btn.disabled = true;
     } else {
-        commitmentValue.textContent = String(flagged.rank_commitment);
+        showSuccess('No-show recorded.');
         btn.disabled = false;
     }
 });
