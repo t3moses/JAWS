@@ -20,6 +20,7 @@ class AssignmentResponse
         public readonly ?string $boatName,
         public readonly ?string $boatKey,
         public readonly array $crewmates,
+        public readonly ?string $displayName = null,
     ) {
     }
 
@@ -37,6 +38,7 @@ class AssignmentResponse
             'boatName' => $this->boatName,
             'boatKey' => $this->boatKey,
             'crewmates' => $this->crewmates,
+            'displayName' => $this->displayName,
         ];
     }
 }

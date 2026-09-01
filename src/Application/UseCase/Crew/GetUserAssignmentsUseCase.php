@@ -112,6 +112,7 @@ class GetUserAssignmentsUseCase
                                 boatName: $boatData['display_name'],
                                 boatKey: $boatData['key'],
                                 crewmates: array_values($crewmates),
+                                displayName: $assignedCrew['display_name'],
                             );
                             $found = true;
                             break 2;

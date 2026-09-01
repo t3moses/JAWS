@@ -176,9 +176,15 @@ async function populateAssignments() {
             // members viewing their own crewmates always see a plain tag.
             const eventHasPassed = hasEventOccurred(assignment.eventDate, assignment.finishTime);
 
+            // Crew members see their own display name first in the crew list,
+            // styled the same as their crewmates' tags.
+            const selfTag = (!isBoatOwner && assignment.displayName)
+                ? `<span class="crew-tag">${assignment.displayName}</span>`
+                : '';
+
             let crewmatesHTML = '';
-            if (assignment.crewmates && assignment.crewmates.length > 0) {
-                const tags = assignment.crewmates.map(c => {
+            if ((assignment.crewmates && assignment.crewmates.length > 0) || selfTag) {
+                const tags = (assignment.crewmates || []).map(c => {
                     if (!isBoatOwner) {
                         return `<span class="crew-tag">${c.display_name}</span>`;
                     }
@@ -198,7 +204,7 @@ async function populateAssignments() {
                     return `<button type="button" class="crew-tag crew-tag-btn"
                                    data-detail-key="${detailKey}">${c.display_name}</button>`;
                 }).join('');
-                crewmatesHTML = `<div class="assignment-crew">${tags}</div>`;
+                crewmatesHTML = `<div class="assignment-crew">${selfTag}${tags}</div>`;
             }
 
             card.innerHTML = `
