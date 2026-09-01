@@ -689,12 +689,12 @@ sqlite3 jaws.db "SELECT event_id, event_date FROM events ORDER BY event_date;"
 
 ## Cron Jobs
 
-JAWS sends two types of automated email notifications via cron jobs:
+JAWS supports two types of automated email notifications via `bin/notify.php`. Only the crew reminder is scheduled in cron; the crew list is run manually when needed.
 
-| Notification | Timing | Recipients |
-|---|---|---|
-| **Crew Reminder** | ~24 hours before event start (23–25 h window) | All registered crew members individually |
-| **Crew List** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Admin (TO) + all boat owners with linked accounts (CC) |
+| Notification | Timing | Recipients | Scheduled |
+|---|---|---|---|
+| **Crew Reminder** | ~24 hours before event start (23–25 h window) | All registered crew members individually | Yes (hourly cron) |
+| **Crew List** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Admin (TO) + all boat owners with linked accounts (CC) | No (manual run only) |
 
 Idempotency is enforced via the `cron_notifications` database table (UNIQUE constraint on `event_id + type`), so even if the cron fires multiple times in the same window, the email is only ever sent once.
 
@@ -729,15 +729,14 @@ vendor/bin/phinx migrate --environment=production
 crontab -e
 ```
 
-Add the following two lines (run hourly; the script handles its own timing logic):
+Add the following line (run hourly; the script handles its own timing logic):
 
 ```bash
 # JAWS: crew reminder email (~24h before event)
 0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=reminder >> /opt/bitnami/jaws/logs/cron.log 2>&1
-
-# JAWS: crew list email (on event day when blackout window opens)
-0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=crew-list >> /opt/bitnami/jaws/logs/cron.log 2>&1
 ```
+
+**Note:** The crew list email (`--type=crew-list`) is not scheduled in cron. The script still supports it for manual runs (see [Manual Test Run](#manual-test-run)).
 
 **Note:** `/usr/bin/php` is the Bitnami system PHP. Verify the path with `which php` if needed.
 
