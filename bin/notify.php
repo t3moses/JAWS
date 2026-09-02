@@ -14,10 +14,12 @@ declare(strict_types=1);
  *   php bin/notify.php --type=reminder             # sends to crew and boat owners ~24h before event start
  *   php bin/notify.php --type=crew-list            # sends when blackout window opens on event day
  *   php bin/notify.php --type=assignment-reminder  # sends to each assigned crew when blackout window opens on event day
+ *   php bin/notify.php --type=owner-crew-list      # sends each boat owner their assigned crew list when blackout window opens on event day
  *
  * Cron schedule (hourly):
  *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=reminder             >> /opt/bitnami/jaws/logs/cron.log 2>&1
  *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=assignment-reminder  >> /opt/bitnami/jaws/logs/cron.log 2>&1
+ *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=owner-crew-list      >> /opt/bitnami/jaws/logs/cron.log 2>&1
  */
 
 // Resolve project root regardless of where the script is called from
@@ -53,8 +55,8 @@ use App\Infrastructure\Persistence\SQLite\Connection;
 $options = getopt('', ['type:']);
 $type = $options['type'] ?? null;
 
-if (!in_array($type, ['reminder', 'crew-list', 'assignment-reminder'], true)) {
-    fwrite(STDERR, "Usage: php bin/notify.php --type=reminder|crew-list|assignment-reminder\n");
+if (!in_array($type, ['reminder', 'crew-list', 'assignment-reminder', 'owner-crew-list'], true)) {
+    fwrite(STDERR, "Usage: php bin/notify.php --type=reminder|crew-list|assignment-reminder|owner-crew-list\n");
     exit(1);
 }
 
@@ -106,7 +108,7 @@ if ($type === 'reminder') {
         echo "Not in reminder window (diff={$diffFormatted}h). Exiting.\n";
         exit(0);
     }
-} elseif ($type === 'crew-list' || $type === 'assignment-reminder') {
+} elseif ($type === 'crew-list' || $type === 'assignment-reminder' || $type === 'owner-crew-list') {
     // Send only on event day, within [blackout_from, blackout_from + 1h]
     $todayDate = $now->format('Y-m-d');
 
@@ -177,6 +179,17 @@ if ($type === 'reminder') {
 } elseif ($type === 'assignment-reminder') {
     /** @var \App\Application\UseCase\Cron\SendAssignmentReminderUseCase $useCase */
     $useCase = $container->get(\App\Application\UseCase\Cron\SendAssignmentReminderUseCase::class);
+    $result  = $useCase->execute($eventId);
+
+    $recipientsCount = $result['sent'];
+    $skippedCount    = $result['skipped'];
+
+    foreach ($result['details'] as $line) {
+        echo "  {$line}\n";
+    }
+} elseif ($type === 'owner-crew-list') {
+    /** @var \App\Application\UseCase\Cron\SendBoatOwnerCrewListUseCase $useCase */
+    $useCase = $container->get(\App\Application\UseCase\Cron\SendBoatOwnerCrewListUseCase::class);
     $result  = $useCase->execute($eventId);
 
     $recipientsCount = $result['sent'];

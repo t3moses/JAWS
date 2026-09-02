@@ -689,13 +689,14 @@ sqlite3 jaws.db "SELECT event_id, event_date FROM events ORDER BY event_date;"
 
 ## Cron Jobs
 
-JAWS supports several automated email notifications via `bin/notify.php`. The crew/boat owner reminders and the assignment reminder are scheduled in cron; the crew list is run manually when needed.
+JAWS supports several automated email notifications via `bin/notify.php`. The crew/boat owner reminders, the assignment reminder, and the boat owner crew list are scheduled in cron; the combined crew list is run manually when needed.
 
 | Notification | Timing | Recipients | Scheduled |
 |---|---|---|---|
 | **Crew Reminder** | ~24 hours before event start (23–25 h window) | All registered crew members individually | Yes (hourly cron, `--type=reminder`) |
 | **Boat Owner Reminder** | ~24 hours before event start (23–25 h window) | Owner of every boat registered (offered berths) for the event, individually | Yes (hourly cron, `--type=reminder`) |
-| **Assignment Reminder** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Each crew assigned to a boat in the persisted flotilla, individually | Yes (hourly cron) |
+| **Assignment Reminder** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Each crew assigned to a boat in the persisted flotilla, individually | Yes (hourly cron, `--type=assignment-reminder`) |
+| **Boat Owner Crew List** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Owner of every boat in the persisted flotilla, individually | Yes (hourly cron, `--type=owner-crew-list`) |
 | **Crew List** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Admin (TO) + all boat owners with linked accounts (CC) | No (manual run only) |
 
 The crew reminder and boat owner reminder are both sent by the single `--type=reminder` run; they share the `reminder` idempotency key, so one hourly cron entry covers both.
@@ -703,6 +704,8 @@ The crew reminder and boat owner reminder are both sent by the single `--type=re
 The boat owner reminder names the boat, reminds the owner it is registered for the event, and asks them to withdraw it before the deadline if it is no longer available.
 
 The assignment reminder names the crew's assigned boat and its owner, tells them to arrive by the event start time, and warns that absence at the start time is flagged as a no-show.
+
+The boat owner crew list emails each owner in the flotilla the display names of the crew assigned to their boat, and closes by looking forward to seeing them at the start time.
 
 Idempotency is enforced via the `cron_notifications` database table (UNIQUE constraint on `event_id + type`), so even if the cron fires multiple times in the same window, the email is only ever sent once.
 
@@ -745,9 +748,12 @@ Add the following lines (run hourly; the script handles its own timing logic):
 
 # JAWS: assignment reminder email (on event day when the blackout window opens)
 0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=assignment-reminder >> /opt/bitnami/jaws/logs/cron.log 2>&1
+
+# JAWS: boat owner crew list email (on event day when the blackout window opens)
+0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=owner-crew-list >> /opt/bitnami/jaws/logs/cron.log 2>&1
 ```
 
-**Note:** The crew list email (`--type=crew-list`) is not scheduled in cron. The script still supports it for manual runs (see [Manual Test Run](#manual-test-run)).
+**Note:** The combined crew list email (`--type=crew-list`) is not scheduled in cron. The script still supports it for manual runs (see [Manual Test Run](#manual-test-run)).
 
 **Note:** `/usr/bin/php` is the Bitnami system PHP. Verify the path with `which php` if needed.
 
@@ -770,7 +776,7 @@ The script runs hourly but exits early unless conditions are met:
 - This 2-hour window provides tolerance for hourly cron scheduling drift
 - Sends both the crew reminder and the boat owner reminder in the same run
 
-**Crew List (`--type=crew-list`) and Assignment Reminder (`--type=assignment-reminder`):**
+**Crew List (`--type=crew-list`), Assignment Reminder (`--type=assignment-reminder`) and Boat Owner Crew List (`--type=owner-crew-list`):**
 - Checks if today is the event day
 - Checks if the current time falls within `blackout_from` to `blackout_from + 1 hour` (as configured in `season_config`)
 - Default window: 10:00–11:00 local time
@@ -785,6 +791,7 @@ cd /opt/bitnami/jaws
 # Dry-run output only — script will exit if outside the timing window
 php bin/notify.php --type=reminder
 php bin/notify.php --type=assignment-reminder
+php bin/notify.php --type=owner-crew-list
 php bin/notify.php --type=crew-list
 ```
 

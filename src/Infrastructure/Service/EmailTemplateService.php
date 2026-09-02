@@ -579,6 +579,85 @@ HTML;
     }
 
     /**
+     * Render per-owner crew list email (sent individually to each boat owner in
+     * the persisted flotilla when the blackout window opens on event day)
+     *
+     * @param string $ownerFirstName Boat owner's first name
+     * @param string $boatDisplayName Display name of the owner's boat
+     * @param string[] $crewDisplayNames Display names of the crew assigned to this boat
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerCrewListNotification(
+        string $ownerFirstName,
+        string $boatDisplayName,
+        array $crewDisplayNames,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string {
+        $friendlyDate = date('l, F j, Y', strtotime($eventDate));
+        $friendlyTime = date('g:i a', strtotime($startTime));
+        $owner = htmlspecialchars($ownerFirstName);
+        $boat  = htmlspecialchars($boatDisplayName);
+
+        if (empty($crewDisplayNames)) {
+            $crewRows = <<<ROW
+                    <tr><td style="padding: 6px 10px; color: #888;">No crew assigned</td></tr>
+ROW;
+        } else {
+            $crewRows = '';
+            foreach ($crewDisplayNames as $crewName) {
+                $safeName = htmlspecialchars($crewName);
+                $crewRows .= <<<ROW
+                    <tr><td style="padding: 6px 10px; border-bottom: 1px solid #eee;">{$safeName}</td></tr>
+ROW;
+            }
+        }
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        {$this->getSharedStyles()}
+        table { font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Social Day Cruising - Your Crew List</h2>
+        </div>
+        <div class="content">
+            <p>Hi {$owner},</p>
+
+            <p>Crew assignments for today's event are now frozen. The following crew are assigned to <strong>{$boat}</strong> for {$eventId} &mdash; {$friendlyDate}:</p>
+
+            <div class="section">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        {$crewRows}
+                    </tbody>
+                </table>
+            </div>
+
+            <p>We look forward to seeing you at {$friendlyTime}.</p>
+
+            <div class="footer">
+                <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
+                <p>If you have any questions, try the Social Day Cruising network on WhatsApp.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Render assignment reminder email (sent individually to each assigned crew
      * when the blackout window opens on event day)
      *

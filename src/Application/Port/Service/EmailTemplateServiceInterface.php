@@ -116,6 +116,27 @@ interface EmailTemplateServiceInterface
     ): string;
 
     /**
+     * Render per-owner crew list email (sent individually to each boat owner in
+     * the persisted flotilla when the blackout window opens on event day)
+     *
+     * @param string $ownerFirstName Boat owner's first name
+     * @param string $boatDisplayName Display name of the owner's boat
+     * @param string[] $crewDisplayNames Display names of the crew assigned to this boat
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerCrewListNotification(
+        string $ownerFirstName,
+        string $boatDisplayName,
+        array $crewDisplayNames,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string;
+
+    /**
      * Render assignment reminder email (sent individually to each assigned crew
      * when the blackout window opens on event day)
      *
