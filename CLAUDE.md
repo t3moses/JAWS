@@ -82,7 +82,7 @@ Key use cases:
 - `Boat/UpdateBoatAvailabilityUseCase.php`, `Crew/UpdateCrewAvailabilityUseCase.php`
 - `Event/`, `Flotilla/` — CRUD/query use cases
 - `Admin/` — user/crew/boat management, whitelist operations, commitment rank, notifications
-- `Cron/SendCrewReminderUseCase.php`, `Cron/SendCrewListUseCase.php`
+- `Cron/SendCrewReminderUseCase.php`, `Cron/SendCrewListUseCase.php`, `Cron/SendAssignmentReminderUseCase.php`
 
 **Ports (interfaces):** `Port/Repository/` and `Port/Service/` (incl. `TransactionServiceInterface`) — contracts implemented by Infrastructure.
 

@@ -507,6 +507,90 @@ HTML;
     }
 
     /**
+     * Render assignment reminder email (sent individually to each assigned crew
+     * when the blackout window opens on event day)
+     *
+     * @param string $firstName Crew member's first name
+     * @param string $boatDisplayName Display name of the boat the crew is assigned to
+     * @param string $ownerFirstName First name of the boat owner
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderAssignmentReminderNotification(
+        string $firstName,
+        string $boatDisplayName,
+        string $ownerFirstName,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string {
+        $friendlyDate = date('l, F j, Y', strtotime($eventDate));
+        $friendlyTime = date('g:i a', strtotime($startTime));
+        $boat  = htmlspecialchars($boatDisplayName);
+        $owner = htmlspecialchars($ownerFirstName);
+        $name  = htmlspecialchars($firstName);
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        {$this->getSharedStyles()}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Social Day Cruising - Your Boat Assignment</h2>
+        </div>
+        <div class="content">
+            <p>Hi {$name},</p>
+
+            <p>Crew assignments for today's event are now frozen. You are assigned to:</p>
+
+            <div class="section">
+                <div class="field">
+                    <span class="label">Event:</span>
+                    <span class="value">{$eventId}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Date:</span>
+                    <span class="value">{$friendlyDate}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Boat:</span>
+                    <span class="value">{$boat}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Skipper:</span>
+                    <span class="value">{$owner}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Start Time:</span>
+                    <span class="value">{$friendlyTime}</span>
+                </div>
+            </div>
+
+            <p>Please arrive in time to board <strong>{$boat}</strong> and be ready to sail by
+            <strong>{$friendlyTime}</strong>.</p>
+
+            <p><strong>If you are not present at the start time, you will be flagged as a no-show.</strong>
+            This will affect your standing for future events.</p>
+
+            <div class="footer">
+                <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
+                <p>If you have any questions, try the Social Day Cruising network on WhatsApp.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Render welcome email for newly registered user
      *
      * @param string $displayName The user's registered display name

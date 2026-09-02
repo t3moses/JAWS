@@ -428,6 +428,49 @@ class EmailTemplateServiceTest extends IntegrationTestCase
         $this->assertStringContainsString('<!DOCTYPE html>', $html);
     }
 
+    // ========================================
+    // Assignment Reminder Notification Tests
+    // ========================================
+
+    public function testRenderAssignmentReminderNotification(): void
+    {
+        $html = $this->service->renderAssignmentReminderNotification(
+            'John',
+            'Sailaway',
+            'Robert',
+            'Fri May 29',
+            '2026-05-29',
+            '12:45:00'
+        );
+
+        $this->assertStringContainsString('<!DOCTYPE html>', $html);
+        $this->assertStringContainsString('Hi John,', $html);
+        $this->assertStringContainsString('Sailaway', $html);
+        $this->assertStringContainsString('Robert', $html);
+        $this->assertStringContainsString('Fri May 29', $html);
+        // Friendly start time
+        $this->assertStringContainsString('12:45 pm', $html);
+        // No-show warning
+        $this->assertStringContainsString('flagged as a no-show', $html);
+        // Shared styles
+        $this->assertStringContainsString('font-family: Arial', $html);
+    }
+
+    public function testRenderAssignmentReminderNotificationEscapesHtml(): void
+    {
+        $html = $this->service->renderAssignmentReminderNotification(
+            'John',
+            'Sail & <Away>',
+            "O'Brien",
+            'Fri May 29',
+            '2026-05-29',
+            '12:45:00'
+        );
+
+        $this->assertStringNotContainsString('<Away>', $html);
+        $this->assertStringContainsString('Sail &amp; &lt;Away&gt;', $html);
+    }
+
     public function testTimestampIsIncludedInRegistrationNotifications(): void
     {
         $user = new User(

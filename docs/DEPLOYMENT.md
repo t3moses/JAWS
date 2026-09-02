@@ -689,12 +689,15 @@ sqlite3 jaws.db "SELECT event_id, event_date FROM events ORDER BY event_date;"
 
 ## Cron Jobs
 
-JAWS supports two types of automated email notifications via `bin/notify.php`. Only the crew reminder is scheduled in cron; the crew list is run manually when needed.
+JAWS supports three types of automated email notifications via `bin/notify.php`. The crew reminder and assignment reminder are scheduled in cron; the crew list is run manually when needed.
 
 | Notification | Timing | Recipients | Scheduled |
 |---|---|---|---|
 | **Crew Reminder** | ~24 hours before event start (23–25 h window) | All registered crew members individually | Yes (hourly cron) |
+| **Assignment Reminder** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Each crew assigned to a boat in the persisted flotilla, individually | Yes (hourly cron) |
 | **Crew List** | On event day, within the first hour of the blackout window (default 10:00–11:00) | Admin (TO) + all boat owners with linked accounts (CC) | No (manual run only) |
+
+The assignment reminder names the crew's assigned boat and its owner, tells them to arrive by the event start time, and warns that absence at the start time is flagged as a no-show.
 
 Idempotency is enforced via the `cron_notifications` database table (UNIQUE constraint on `event_id + type`), so even if the cron fires multiple times in the same window, the email is only ever sent once.
 
@@ -729,11 +732,14 @@ vendor/bin/phinx migrate --environment=production
 crontab -e
 ```
 
-Add the following line (run hourly; the script handles its own timing logic):
+Add the following lines (run hourly; the script handles its own timing logic):
 
 ```bash
 # JAWS: crew reminder email (~24h before event)
 0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=reminder >> /opt/bitnami/jaws/logs/cron.log 2>&1
+
+# JAWS: assignment reminder email (on event day when the blackout window opens)
+0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=assignment-reminder >> /opt/bitnami/jaws/logs/cron.log 2>&1
 ```
 
 **Note:** The crew list email (`--type=crew-list`) is not scheduled in cron. The script still supports it for manual runs (see [Manual Test Run](#manual-test-run)).
@@ -758,7 +764,7 @@ The script runs hourly but exits early unless conditions are met:
 - Checks if the next event starts between 23 and 25 hours from now
 - This 2-hour window provides tolerance for hourly cron scheduling drift
 
-**Crew List (`--type=crew-list`):**
+**Crew List (`--type=crew-list`) and Assignment Reminder (`--type=assignment-reminder`):**
 - Checks if today is the event day
 - Checks if the current time falls within `blackout_from` to `blackout_from + 1 hour` (as configured in `season_config`)
 - Default window: 10:00–11:00 local time
@@ -772,6 +778,7 @@ cd /opt/bitnami/jaws
 
 # Dry-run output only — script will exit if outside the timing window
 php bin/notify.php --type=reminder
+php bin/notify.php --type=assignment-reminder
 php bin/notify.php --type=crew-list
 ```
 

@@ -11,12 +11,13 @@ declare(strict_types=1);
  * without producing duplicate sends.
  *
  * Usage:
- *   php bin/notify.php --type=reminder    # sends ~24h before event start
- *   php bin/notify.php --type=crew-list   # sends when blackout window opens on event day
+ *   php bin/notify.php --type=reminder             # sends ~24h before event start
+ *   php bin/notify.php --type=crew-list            # sends when blackout window opens on event day
+ *   php bin/notify.php --type=assignment-reminder  # sends to each assigned crew when blackout window opens on event day
  *
  * Cron schedule (hourly):
- *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=reminder   >> /opt/bitnami/jaws/logs/cron.log 2>&1
- *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=crew-list  >> /opt/bitnami/jaws/logs/cron.log 2>&1
+ *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=reminder             >> /opt/bitnami/jaws/logs/cron.log 2>&1
+ *   0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/notify.php --type=assignment-reminder  >> /opt/bitnami/jaws/logs/cron.log 2>&1
  */
 
 // Resolve project root regardless of where the script is called from
@@ -52,8 +53,8 @@ use App\Infrastructure\Persistence\SQLite\Connection;
 $options = getopt('', ['type:']);
 $type = $options['type'] ?? null;
 
-if (!in_array($type, ['reminder', 'crew-list'], true)) {
-    fwrite(STDERR, "Usage: php bin/notify.php --type=reminder|crew-list\n");
+if (!in_array($type, ['reminder', 'crew-list', 'assignment-reminder'], true)) {
+    fwrite(STDERR, "Usage: php bin/notify.php --type=reminder|crew-list|assignment-reminder\n");
     exit(1);
 }
 
@@ -105,7 +106,7 @@ if ($type === 'reminder') {
         echo "Not in reminder window (diff={$diffFormatted}h). Exiting.\n";
         exit(0);
     }
-} elseif ($type === 'crew-list') {
+} elseif ($type === 'crew-list' || $type === 'assignment-reminder') {
     // Send only on event day, within [blackout_from, blackout_from + 1h]
     $todayDate = $now->format('Y-m-d');
 
@@ -123,7 +124,7 @@ if ($type === 'reminder') {
     $blackoutEnd  = date('H:i:s', strtotime($blackoutFrom) + 3600);
 
     if ($currentTime < $blackoutFrom || $currentTime > $blackoutEnd) {
-        echo "Not in crew-list window (now={$currentTime}, window={$blackoutFrom}–{$blackoutEnd}). Exiting.\n";
+        echo "Not in blackout-open window (now={$currentTime}, window={$blackoutFrom}–{$blackoutEnd}). Exiting.\n";
         exit(0);
     }
 }
@@ -164,6 +165,17 @@ if ($type === 'reminder') {
     $result  = $useCase->execute($eventId);
 
     $recipientsCount = $result['sent'] ? 1 : 0;
+    $skippedCount    = $result['skipped'];
+
+    foreach ($result['details'] as $line) {
+        echo "  {$line}\n";
+    }
+} elseif ($type === 'assignment-reminder') {
+    /** @var \App\Application\UseCase\Cron\SendAssignmentReminderUseCase $useCase */
+    $useCase = $container->get(\App\Application\UseCase\Cron\SendAssignmentReminderUseCase::class);
+    $result  = $useCase->execute($eventId);
+
+    $recipientsCount = $result['sent'];
     $skippedCount    = $result['skipped'];
 
     foreach ($result['details'] as $line) {

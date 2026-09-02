@@ -98,6 +98,27 @@ interface EmailTemplateServiceInterface
     ): string;
 
     /**
+     * Render assignment reminder email (sent individually to each assigned crew
+     * when the blackout window opens on event day)
+     *
+     * @param string $firstName Crew member's first name
+     * @param string $boatDisplayName Display name of the boat the crew is assigned to
+     * @param string $ownerFirstName First name of the boat owner
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderAssignmentReminderNotification(
+        string $firstName,
+        string $boatDisplayName,
+        string $ownerFirstName,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string;
+
+    /**
      * Render welcome email for newly registered user
      *
      * @param string $displayName The user's registered display name

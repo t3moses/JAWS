@@ -475,6 +475,17 @@ $container->set(\App\Application\UseCase\Cron\SendCrewListUseCase::class, functi
     );
 });
 
+$container->set(\App\Application\UseCase\Cron\SendAssignmentReminderUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Cron\SendAssignmentReminderUseCase(
+        $c->get(EventRepositoryInterface::class),
+        $c->get(SeasonRepositoryInterface::class),
+        $c->get(UserRepositoryInterface::class),
+        $c->get(EmailServiceInterface::class),
+        $c->get(EmailTemplateServiceInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 // Auth Use Cases
 $container->set(\App\Application\UseCase\Auth\RegisterUseCase::class, function ($c) use ($config) {
     return new \App\Application\UseCase\Auth\RegisterUseCase(
