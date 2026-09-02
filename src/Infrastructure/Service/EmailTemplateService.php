@@ -420,6 +420,78 @@ HTML;
     }
 
     /**
+     * Render boat owner reminder notification email (sent ~24h before event)
+     *
+     * @param string $ownerFirstName Boat owner's first name
+     * @param string $displayName Boat's display name
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerReminderNotification(
+        string $ownerFirstName,
+        string $displayName,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string {
+        $friendlyDate = date('l, F j, Y', strtotime($eventDate));
+        $friendlyTime = date('g:i a', strtotime($startTime));
+        $ownerFirstName = htmlspecialchars($ownerFirstName);
+        $displayName = htmlspecialchars($displayName);
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        {$this->getSharedStyles()}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Social Day Cruising - Reminder</h2>
+        </div>
+        <div class="content">
+            <p>Hi {$ownerFirstName},</p>
+
+            <p>This is a reminder that {$displayName} is registered for the event on {$friendlyDate}.</p>
+
+            <div class="section">
+                <div class="field">
+                    <span class="label">Boat:</span>
+                    <span class="value">{$displayName}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Event:</span>
+                    <span class="value">{$eventId}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Date:</span>
+                    <span class="value">{$friendlyDate}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Start Time:</span>
+                    <span class="value">{$friendlyTime}</span>
+                </div>
+            </div>
+
+            <p>In the event she is no longer available, please be sure to withdraw her before the deadline. Otherwise, we look forward to seeing you at {$friendlyTime}.</p>
+
+            <div class="footer">
+                <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
+                <p>If you have any questions, try the Social Day Cruising network on WhatsApp.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Render crew list notification email (sent to admin + boat owners at blackout start)
      *
      * @param string $eventId Event identifier (e.g. "Fri May 29")

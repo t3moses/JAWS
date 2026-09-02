@@ -463,6 +463,17 @@ $container->set(\App\Application\UseCase\Cron\SendCrewReminderUseCase::class, fu
     );
 });
 
+$container->set(\App\Application\UseCase\Cron\SendBoatOwnerReminderUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Cron\SendBoatOwnerReminderUseCase(
+        $c->get(EventRepositoryInterface::class),
+        $c->get(BoatRepositoryInterface::class),
+        $c->get(UserRepositoryInterface::class),
+        $c->get(EmailServiceInterface::class),
+        $c->get(EmailTemplateServiceInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 $container->set(\App\Application\UseCase\Cron\SendCrewListUseCase::class, function ($c) use ($config) {
     return new \App\Application\UseCase\Cron\SendCrewListUseCase(
         $c->get(EventRepositoryInterface::class),

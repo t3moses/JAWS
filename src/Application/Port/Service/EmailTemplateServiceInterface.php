@@ -84,6 +84,24 @@ interface EmailTemplateServiceInterface
     ): string;
 
     /**
+     * Render boat owner reminder notification email (sent ~24h before event)
+     *
+     * @param string $ownerFirstName Boat owner's first name
+     * @param string $displayName Boat's display name
+     * @param string $eventId Event identifier (e.g. "Fri May 29")
+     * @param string $eventDate Event date (YYYY-MM-DD)
+     * @param string $startTime Event start time (HH:MM:SS)
+     * @return string HTML email body
+     */
+    public function renderBoatOwnerReminderNotification(
+        string $ownerFirstName,
+        string $displayName,
+        string $eventId,
+        string $eventDate,
+        string $startTime
+    ): string;
+
+    /**
      * Render crew list notification email (sent to admin + boat owners at blackout start)
      *
      * @param string $eventId Event identifier (e.g. "Fri May 29")

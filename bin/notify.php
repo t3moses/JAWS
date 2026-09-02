@@ -11,7 +11,7 @@ declare(strict_types=1);
  * without producing duplicate sends.
  *
  * Usage:
- *   php bin/notify.php --type=reminder             # sends ~24h before event start
+ *   php bin/notify.php --type=reminder             # sends to crew and boat owners ~24h before event start
  *   php bin/notify.php --type=crew-list            # sends when blackout window opens on event day
  *   php bin/notify.php --type=assignment-reminder  # sends to each assigned crew when blackout window opens on event day
  *
@@ -149,14 +149,18 @@ $recipientsCount = 0;
 $skippedCount    = 0;
 
 if ($type === 'reminder') {
-    /** @var \App\Application\UseCase\Cron\SendCrewReminderUseCase $useCase */
-    $useCase = $container->get(\App\Application\UseCase\Cron\SendCrewReminderUseCase::class);
-    $result  = $useCase->execute($eventId);
+    /** @var \App\Application\UseCase\Cron\SendCrewReminderUseCase $crewUseCase */
+    $crewUseCase = $container->get(\App\Application\UseCase\Cron\SendCrewReminderUseCase::class);
+    $crewResult  = $crewUseCase->execute($eventId);
 
-    $recipientsCount = $result['sent'];
-    $skippedCount    = $result['skipped'];
+    /** @var \App\Application\UseCase\Cron\SendBoatOwnerReminderUseCase $ownerUseCase */
+    $ownerUseCase = $container->get(\App\Application\UseCase\Cron\SendBoatOwnerReminderUseCase::class);
+    $ownerResult  = $ownerUseCase->execute($eventId);
 
-    foreach ($result['details'] as $line) {
+    $recipientsCount = $crewResult['sent'] + $ownerResult['sent'];
+    $skippedCount    = $crewResult['skipped'] + $ownerResult['skipped'];
+
+    foreach (array_merge($crewResult['details'], $ownerResult['details']) as $line) {
         echo "  {$line}\n";
     }
 } elseif ($type === 'crew-list') {
