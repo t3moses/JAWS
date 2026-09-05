@@ -313,24 +313,24 @@ class AdminApiTest extends TestCase
     }
 
     // =======================
-    // DELETE /api/admin/users/{userId}
+    // POST /api/admin/users/{userId}/deactivate
     // =======================
 
-    public function testDeleteUserRequiresAuthentication(): void
+    public function testDeactivateUserRequiresAuthentication(): void
     {
-        $response = $this->makeRequest('DELETE', "{$this->baseUrl}/admin/users/999999");
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/admin/users/999999/deactivate");
 
         $this->assertEquals(401, $response['status']);
     }
 
-    public function testDeleteUserRequiresAdminPrivileges(): void
+    public function testDeactivateUserRequiresAdminPrivileges(): void
     {
         $adminData = $this->createTestAdmin($this->baseUrl);
         $crewData  = $this->createTestCrew($this->baseUrl);
 
         $response = $this->makeRequest(
-            'DELETE',
-            "{$this->baseUrl}/admin/users/{$adminData['userId']}",
+            'POST',
+            "{$this->baseUrl}/admin/users/{$adminData['userId']}/deactivate",
             null,
             ["Authorization: Bearer {$crewData['token']}"]
         );
@@ -341,69 +341,62 @@ class AdminApiTest extends TestCase
         $this->cleanupTestUser($crewData['userId']);
     }
 
-    public function testDeleteUserRemovesCrewAccountAndProfile(): void
+    public function testDeactivateUserDeactivatesCrewButKeepsAccount(): void
     {
         $adminData = $this->createTestAdmin($this->baseUrl);
         $crewData  = $this->createTestCrew($this->baseUrl);
 
         $response = $this->makeRequest(
-            'DELETE',
-            "{$this->baseUrl}/admin/users/{$crewData['userId']}",
+            'POST',
+            "{$this->baseUrl}/admin/users/{$crewData['userId']}/deactivate",
             null,
             ["Authorization: Bearer {$adminData['token']}"]
         );
 
         $this->assertEquals(200, $response['status']);
         $this->assertTrue($response['body']['success']);
-        $this->assertTrue($response['body']['data']['deleted']);
+        $this->assertTrue($response['body']['data']['deactivated']);
 
-        // The deleted user can no longer be fetched
+        // The account keeps existing and can still be fetched
         $getResponse = $this->makeRequest(
             'GET',
             "{$this->baseUrl}/admin/users/{$crewData['userId']}",
             null,
             ["Authorization: Bearer {$adminData['token']}"]
         );
-        $this->assertEquals(404, $getResponse['status']);
+        $this->assertEquals(200, $getResponse['status']);
+        $this->assertEquals(0, $getResponse['body']['data']['crew']['rank_commitment']);
 
         $this->cleanupTestUser($adminData['userId']);
         $this->cleanupTestUser($crewData['userId']);
     }
 
-    public function testDeleteUserRemovesBoatOwnerAccountAndProfile(): void
+    public function testDeactivateUserRejectsAccountWithoutLinkedCrew(): void
     {
         $adminData = $this->createTestAdmin($this->baseUrl);
         $boatData  = $this->createTestBoatOwner($this->baseUrl);
 
         $response = $this->makeRequest(
-            'DELETE',
-            "{$this->baseUrl}/admin/users/{$boatData['userId']}",
+            'POST',
+            "{$this->baseUrl}/admin/users/{$boatData['userId']}/deactivate",
             null,
             ["Authorization: Bearer {$adminData['token']}"]
         );
 
-        $this->assertEquals(200, $response['status']);
-        $this->assertTrue($response['body']['success']);
-
-        $getResponse = $this->makeRequest(
-            'GET',
-            "{$this->baseUrl}/admin/users/{$boatData['userId']}",
-            null,
-            ["Authorization: Bearer {$adminData['token']}"]
-        );
-        $this->assertEquals(404, $getResponse['status']);
+        $this->assertEquals(400, $response['status']);
+        $this->assertFalse($response['body']['success']);
 
         $this->cleanupTestUser($adminData['userId']);
         $this->cleanupTestUser($boatData['userId']);
     }
 
-    public function testDeleteUserReturnsBadRequestWhenTargetingSelf(): void
+    public function testDeactivateUserReturnsBadRequestWhenTargetingSelf(): void
     {
         $adminData = $this->createTestAdmin($this->baseUrl);
 
         $response = $this->makeRequest(
-            'DELETE',
-            "{$this->baseUrl}/admin/users/{$adminData['userId']}",
+            'POST',
+            "{$this->baseUrl}/admin/users/{$adminData['userId']}/deactivate",
             null,
             ["Authorization: Bearer {$adminData['token']}"]
         );
@@ -414,13 +407,13 @@ class AdminApiTest extends TestCase
         $this->cleanupTestUser($adminData['userId']);
     }
 
-    public function testDeleteUserReturnsNotFoundForUnknownUser(): void
+    public function testDeactivateUserReturnsNotFoundForUnknownUser(): void
     {
         $adminData = $this->createTestAdmin($this->baseUrl);
 
         $response = $this->makeRequest(
-            'DELETE',
-            "{$this->baseUrl}/admin/users/999999",
+            'POST',
+            "{$this->baseUrl}/admin/users/999999/deactivate",
             null,
             ["Authorization: Bearer {$adminData['token']}"]
         );

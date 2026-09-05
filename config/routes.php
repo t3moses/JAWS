@@ -296,12 +296,12 @@ return [
         'auth' => true,
     ],
 
-    // Delete User (and linked crew/boat profile)
+    // Deactivate User (withdraw linked crew from future events, mark inactive)
     [
-        'method' => 'DELETE',
-        'path' => '/api/admin/users/{userId}',
+        'method' => 'POST',
+        'path' => '/api/admin/users/{userId}/deactivate',
         'controller' => AdminController::class,
-        'action' => 'deleteUser',
+        'action' => 'deactivateUser',
         'auth' => true,
     ],
 

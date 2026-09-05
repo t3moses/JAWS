@@ -102,7 +102,7 @@ function renderPage() {
         renderWhitelist(crew);
     }
 
-    renderDangerZone(user);
+    renderAccountDeactivation(user);
 }
 
 // ==================== User Info ====================
@@ -412,43 +412,43 @@ async function handleWhitelistRemove(boatKey) {
     }
 }
 
-// ==================== Danger Zone ====================
+// ==================== Account Deactivation ====================
 
-function renderDangerZone(user) {
-    const section = document.getElementById('section-danger-zone');
-    const btn = document.getElementById('delete-user-btn');
+function renderAccountDeactivation(user) {
+    const section = document.getElementById('section-account-deactivation');
+    const btn = document.getElementById('deactivate-user-btn');
 
     // Disable if targeting self
     if (user.id === currentUser.id) {
         btn.disabled = true;
-        btn.title = 'You cannot delete your own account';
+        btn.title = 'You cannot deactivate your own account';
     } else {
-        btn.addEventListener('click', () => handleDeleteUser(user));
+        btn.addEventListener('click', () => handleDeactivateUser(user));
     }
 
     section.style.display = '';
 }
 
-async function handleDeleteUser(user) {
+async function handleDeactivateUser(user) {
     const confirmed = confirm(
-        `Permanently delete the account for ${user.email}? This will remove their crew or boat profile and all related history. This cannot be undone.`
+        `Deactivate the account for ${user.email}? They will be removed from all future events and will not be able to reregister. The account keeps existing, so the email address stays claimed.`
     );
     if (!confirmed) {
         return;
     }
 
-    const btn = document.getElementById('delete-user-btn');
+    const btn = document.getElementById('deactivate-user-btn');
     btn.disabled = true;
 
     try {
-        await adminService.deleteUser(targetUserId);
-        showToast('User account deleted.', 'success');
+        await adminService.deactivateUser(targetUserId);
+        showToast('User account deactivated.', 'success');
         setTimeout(() => {
             window.location.href = 'admin-users.html';
         }, 1200);
     } catch (error) {
-        console.error('Failed to delete user:', error);
-        showToast(error.message || 'Failed to delete user', 'error');
+        console.error('Failed to deactivate user:', error);
+        showToast(error.message || 'Failed to deactivate user', 'error');
         btn.disabled = false;
     }
 }

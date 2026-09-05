@@ -168,21 +168,23 @@ export async function getUserDetail(userId) {
 }
 
 /**
- * Permanently delete a user account and its linked crew or boat profile
+ * Deactivate a user's linked crew account: withdraw them from future events,
+ * mark the crew inactive, and set commitment_rank to 0. The account itself is
+ * kept (the email address stays claimed).
  * @param {number} userId - Target user ID
- * @returns {Promise<Object>} { deleted: true, user_id: number }
+ * @returns {Promise<Object>} { deactivated: true, user_id: number, crew_key: string, withdrawn_from_future_events: boolean }
  */
-export async function deleteUser(userId) {
+export async function deactivateUser(userId) {
     try {
-        const response = await apiService.deleteRequest(API_CONFIG.ENDPOINTS.ADMIN_USER_DETAIL, { userId });
+        const response = await apiService.post(API_CONFIG.ENDPOINTS.ADMIN_USER_DEACTIVATE, {}, { userId });
 
         if (!response.success) {
-            throw new Error(response.message || 'Failed to delete user');
+            throw new Error(response.message || 'Failed to deactivate user');
         }
 
         return response.data;
     } catch (error) {
-        console.error('AdminService: Failed to delete user:', error);
+        console.error('AdminService: Failed to deactivate user:', error);
         throw error;
     }
 }

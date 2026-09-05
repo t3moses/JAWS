@@ -398,12 +398,11 @@ $container->set(\App\Application\UseCase\Admin\GetUserDetailUseCase::class, func
     );
 });
 
-$container->set(\App\Application\UseCase\Admin\DeleteUserUseCase::class, function ($c) {
-    return new \App\Application\UseCase\Admin\DeleteUserUseCase(
+$container->set(\App\Application\UseCase\Admin\DeactivateUserUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\DeactivateUserUseCase(
         $c->get(UserRepositoryInterface::class),
         $c->get(CrewRepositoryInterface::class),
-        $c->get(BoatRepositoryInterface::class),
-        $c->get(PasswordResetTokenRepositoryInterface::class),
+        $c->get(EventRepositoryInterface::class),
         $c->get(TransactionServiceInterface::class),
         $c->get(LoggerInterface::class)
     );
@@ -654,7 +653,7 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Crew\RecordNoShowUseCase::class),
-        $c->get(\App\Application\UseCase\Admin\DeleteUserUseCase::class)
+        $c->get(\App\Application\UseCase\Admin\DeactivateUserUseCase::class)
     );
 });
 

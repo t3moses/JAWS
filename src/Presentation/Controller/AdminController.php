@@ -17,7 +17,7 @@ use App\Application\UseCase\Admin\GetCrewBoatHistoryUseCase;
 use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
-use App\Application\UseCase\Admin\DeleteUserUseCase;
+use App\Application\UseCase\Admin\DeactivateUserUseCase;
 use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
@@ -52,7 +52,7 @@ class AdminController
         private AddToCrewWhitelistUseCase $addToCrewWhitelistUseCase,
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
         private RecordNoShowUseCase $recordNoShowUseCase,
-        private DeleteUserUseCase $deleteUserUseCase,
+        private DeactivateUserUseCase $deactivateUserUseCase,
     ) {
     }
 
@@ -323,14 +323,17 @@ class AdminController
     }
 
     /**
-     * DELETE /api/admin/users/{userId}
+     * POST /api/admin/users/{userId}/deactivate
      *
-     * Permanently deletes a user account and its linked crew or boat profile.
+     * Deactivates the user's linked crew account: withdraws the crew from every
+     * future event, sets crews.active to false, and sets commitment_rank to 0.
+     * The user row and all other tables are left untouched, so the account keeps
+     * existing and its email address stays claimed.
      *
      * @param array $params Route parameters (userId)
      * @param array $auth   Authentication context
      */
-    public function deleteUser(array $params, array $auth): JsonResponse
+    public function deactivateUser(array $params, array $auth): JsonResponse
     {
         if (!$this->isAdmin($auth)) {
             return JsonResponse::error('Admin privileges required', 403);
@@ -340,9 +343,9 @@ class AdminController
             $targetUserId = (int)$params['userId'];
             $requestingUserId = (int)$auth['user_id'];
 
-            $this->deleteUserUseCase->execute($targetUserId, $requestingUserId);
+            $result = $this->deactivateUserUseCase->execute($targetUserId, $requestingUserId);
 
-            return JsonResponse::success(['deleted' => true, 'user_id' => $targetUserId]);
+            return JsonResponse::success($result);
         } catch (ValidationException $e) {
             return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
         } catch (\RuntimeException $e) {
