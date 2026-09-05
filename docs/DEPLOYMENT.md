@@ -817,6 +817,21 @@ tail -50 /opt/bitnami/jaws/logs/cron.log
 grep "Done\." /opt/bitnami/jaws/logs/cron.log
 ```
 
+### Log Write Diagnostic
+
+`bin/log-write-test.php` is a manual ops tool — **not** scheduled by default. It writes one entry through the app's `LoggerInterface` (the same Monolog handler `notify.php`'s use cases log through) and emails the admin notification address with the result. Use it to confirm `logs/app-*.log` is writable without waiting for a real event's notification window to exercise it — e.g. after touching `logs/` permissions, or across a midnight file-rotation boundary.
+
+```bash
+php bin/log-write-test.php
+```
+
+To run it hourly for a day while validating a permissions fix, add it to crontab and comment it back out (don't delete the file — leave it available for the next time this needs checking):
+
+```bash
+0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/log-write-test.php >> /opt/bitnami/jaws/logs/cron.log 2>&1
+# 0 * * * * /usr/bin/php /opt/bitnami/jaws/bin/log-write-test.php >> /opt/bitnami/jaws/logs/cron.log 2>&1
+```
+
 **Sample log output:**
 
 ```
