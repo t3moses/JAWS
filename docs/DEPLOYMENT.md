@@ -716,8 +716,14 @@ Idempotency is enforced via the `cron_notifications` database table (UNIQUE cons
 ```bash
 mkdir -p /opt/bitnami/jaws/logs
 sudo chown bitnami:daemon /opt/bitnami/jaws/logs
-sudo chmod 775 /opt/bitnami/jaws/logs
+sudo chmod 2775 /opt/bitnami/jaws/logs
+sudo setfacl -m g:daemon:rw /opt/bitnami/jaws/logs
+sudo setfacl -d -m g:daemon:rw /opt/bitnami/jaws/logs
 ```
+
+`logs/app-*.log` is written by both Apache (`daemon`) and cron (`bitnami`) as different users who only share the `daemon` group, and Monolog's `RotatingFileHandler` creates a brand-new file each day — whichever process gets there first sets that day's owner/mode. `chmod 2775` (the leading `2` is the setgid bit) forces every new file created in this directory to inherit the `daemon` group regardless of creator; the `setfacl -d` default ACL then guarantees that group gets write access on each new file too, not just read. Without both, whichever process didn't create today's file can read it but not append — this caused a production incident on 2026-09-04 where `notify.php`'s cron jobs sent a partial batch of emails, then crashed trying to log the send and never recorded `cron_notifications`, so they silently retried (and would have kept re-sending) on every subsequent hourly tick within the window. See `bin/log-write-test.php` below for a way to verify this holds across the next day's rotation.
+
+`getfacl /opt/bitnami/jaws/logs` should then show `flags: -s-` (setgid on) and a `default:group:daemon:rw-` entry.
 
 #### 2. Set Script Executable (optional)
 
