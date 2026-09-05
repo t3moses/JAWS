@@ -714,6 +714,7 @@ Idempotency is enforced via the `cron_notifications` database table (UNIQUE cons
 #### 1. Create Logs Directory
 
 ```bash
+sudo usermod -aG daemon bitnami
 mkdir -p /opt/bitnami/jaws/logs
 sudo chown bitnami:daemon /opt/bitnami/jaws/logs
 sudo chmod 2775 /opt/bitnami/jaws/logs
@@ -721,7 +722,9 @@ sudo setfacl -m g:daemon:rw /opt/bitnami/jaws/logs
 sudo setfacl -d -m g:daemon:rw /opt/bitnami/jaws/logs
 ```
 
-`logs/app-*.log` is written by both Apache (`daemon`) and cron (`bitnami`) as different users who only share the `daemon` group, and Monolog's `RotatingFileHandler` creates a brand-new file each day — whichever process gets there first sets that day's owner/mode. `chmod 2775` (the leading `2` is the setgid bit) forces every new file created in this directory to inherit the `daemon` group regardless of creator; the `setfacl -d` default ACL then guarantees that group gets write access on each new file too, not just read. Without both, whichever process didn't create today's file can read it but not append — this caused a production incident on 2026-09-04 where `notify.php`'s cron jobs sent a partial batch of emails, then crashed trying to log the send and never recorded `cron_notifications`, so they silently retried (and would have kept re-sending) on every subsequent hourly tick within the window. See `bin/log-write-test.php` below for a way to verify this holds across the next day's rotation.
+`logs/app-*.log` is written by both Apache (`daemon`) and cron (`bitnami`) as different users, and Monolog's `RotatingFileHandler` creates a brand-new file each day — whichever process gets there first sets that day's owner/mode. `chmod 2775` (the leading `2` is the setgid bit) forces every new file created in this directory to inherit the `daemon` group regardless of creator; the `setfacl -d` default ACL then guarantees that group gets write access on each new file too, not just read. **None of that helps unless `bitnami` is actually a member of the `daemon` group** — by default it isn't (`id bitnami` typically shows `bitnami, adm, dialout, cdrom, floppy, sudo, audio, dip, www-data, video, plugdev, bitnami-admins`, no `daemon`), so group-based permission checks silently fall through to `other` (read-only) for cron whenever Apache created the file first. `usermod -aG daemon bitnami` fixes that; verify with `id bitnami` afterward. Cron picks up new group membership at each job's spawn time with no restart needed — an already-open SSH session won't, so re-login before testing manually.
+
+Without all three pieces, whichever process didn't create today's file can read it but not append — this caused a production incident on 2026-09-04 where `notify.php`'s cron jobs sent a partial batch of emails, then crashed trying to log the send and never recorded `cron_notifications`, so they silently retried (and would have kept re-sending) on every subsequent hourly tick within the window. See `bin/log-write-test.php` below for a way to verify this holds across the next day's rotation.
 
 `getfacl /opt/bitnami/jaws/logs` should then show `flags: -s-` (setgid on) and a `default:group:daemon:rw-` entry.
 
