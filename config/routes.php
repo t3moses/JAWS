@@ -305,6 +305,15 @@ return [
         'auth' => true,
     ],
 
+    // Notify User (admin-composed email to a single user)
+    [
+        'method' => 'POST',
+        'path' => '/api/admin/users/{userId}/notify',
+        'controller' => AdminController::class,
+        'action' => 'notifyUser',
+        'auth' => true,
+    ],
+
     // Get All Crews (for partner picker)
     [
         'method' => 'GET',

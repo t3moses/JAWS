@@ -422,4 +422,91 @@ class AdminApiTest extends TestCase
 
         $this->cleanupTestUser($adminData['userId']);
     }
+
+    // =======================
+    // POST /api/admin/users/{userId}/notify
+    // =======================
+
+    public function testNotifyUserRequiresAuthentication(): void
+    {
+        $response = $this->makeRequest('POST', "{$this->baseUrl}/admin/users/999999/notify", [
+            'subject' => 'NSC Social Day Cruising',
+            'message' => 'Hello',
+        ]);
+
+        $this->assertEquals(401, $response['status']);
+    }
+
+    public function testNotifyUserRequiresAdminPrivileges(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+        $crewData  = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'POST',
+            "{$this->baseUrl}/admin/users/{$adminData['userId']}/notify",
+            ['subject' => 'NSC Social Day Cruising', 'message' => 'Hello'],
+            ["Authorization: Bearer {$crewData['token']}"]
+        );
+
+        $this->assertEquals(403, $response['status']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($crewData['userId']);
+    }
+
+    public function testNotifyUserValidatesRequiredFields(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+        $crewData  = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'POST',
+            "{$this->baseUrl}/admin/users/{$crewData['userId']}/notify",
+            ['subject' => 'NSC Social Day Cruising', 'message' => '   '],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(400, $response['status']);
+        $this->assertFalse($response['body']['success']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($crewData['userId']);
+    }
+
+    public function testNotifyUserReturnsNotFoundForUnknownUser(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'POST',
+            "{$this->baseUrl}/admin/users/999999/notify",
+            ['subject' => 'NSC Social Day Cruising', 'message' => 'Hello'],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(404, $response['status']);
+
+        $this->cleanupTestUser($adminData['userId']);
+    }
+
+    public function testNotifyUserAcceptsAValidRequest(): void
+    {
+        $adminData = $this->createTestAdmin($this->baseUrl);
+        $crewData  = $this->createTestCrew($this->baseUrl);
+
+        $response = $this->makeRequest(
+            'POST',
+            "{$this->baseUrl}/admin/users/{$crewData['userId']}/notify",
+            ['subject' => 'NSC Social Day Cruising', 'message' => 'Please note the schedule change.'],
+            ["Authorization: Bearer {$adminData['token']}"]
+        );
+
+        $this->assertEquals(200, $response['status']);
+        $this->assertTrue($response['body']['success']);
+        $this->assertArrayHasKey('emails_sent', $response['body']['data']);
+
+        $this->cleanupTestUser($adminData['userId']);
+        $this->cleanupTestUser($crewData['userId']);
+    }
 }

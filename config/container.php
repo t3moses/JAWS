@@ -408,6 +408,14 @@ $container->set(\App\Application\UseCase\Admin\DeactivateUserUseCase::class, fun
     );
 });
 
+$container->set(\App\Application\UseCase\Admin\NotifyUserUseCase::class, function ($c) {
+    return new \App\Application\UseCase\Admin\NotifyUserUseCase(
+        $c->get(UserRepositoryInterface::class),
+        $c->get(EmailServiceInterface::class),
+        $c->get(LoggerInterface::class)
+    );
+});
+
 $container->set(\App\Application\UseCase\Admin\GetAllCrewsUseCase::class, function ($c) {
     return new \App\Application\UseCase\Admin\GetAllCrewsUseCase(
         $c->get(CrewRepositoryInterface::class)
@@ -653,7 +661,8 @@ $container->set(\App\Presentation\Controller\AdminController::class, function ($
         $c->get(\App\Application\UseCase\Admin\AddToCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase::class),
         $c->get(\App\Application\UseCase\Crew\RecordNoShowUseCase::class),
-        $c->get(\App\Application\UseCase\Admin\DeactivateUserUseCase::class)
+        $c->get(\App\Application\UseCase\Admin\DeactivateUserUseCase::class),
+        $c->get(\App\Application\UseCase\Admin\NotifyUserUseCase::class)
     );
 });
 

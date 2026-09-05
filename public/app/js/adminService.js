@@ -190,6 +190,31 @@ export async function deactivateUser(userId) {
 }
 
 /**
+ * Send an admin-composed notification email to a single user.
+ * @param {number} userId - Target user ID
+ * @param {{subject: string, message: string}} options
+ * @returns {Promise<{emails_sent: number, message: string}>}
+ */
+export async function notifyUser(userId, { subject, message }) {
+    try {
+        const response = await apiService.post(
+            API_CONFIG.ENDPOINTS.ADMIN_USER_NOTIFY,
+            { subject, message },
+            { userId }
+        );
+
+        if (!response.success) {
+            throw new Error(response.message || 'Failed to send notification');
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('AdminService: Failed to notify user:', error);
+        throw error;
+    }
+}
+
+/**
  * Get all crew members (for partner picker)
  * @returns {Promise<Object[]>} Array of crew summaries
  */

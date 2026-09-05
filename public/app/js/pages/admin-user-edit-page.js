@@ -102,6 +102,7 @@ function renderPage() {
         renderWhitelist(crew);
     }
 
+    renderNotifyUser(user);
     renderAccountDeactivation(user);
 }
 
@@ -409,6 +410,47 @@ async function handleWhitelistRemove(boatKey) {
     } catch (error) {
         console.error('Failed to remove from whitelist:', error);
         showToast(error.message || 'Failed to remove boat from whitelist', 'error');
+    }
+}
+
+// ==================== Notify User ====================
+
+function renderNotifyUser(user) {
+    const section = document.getElementById('section-notify-user');
+    document.getElementById('notify-to').value = user.email;
+    document.getElementById('notify-subject').value = 'NSC Social Day Cruising';
+    document.getElementById('notify-message').value = '';
+
+    document.getElementById('notify-send-btn').addEventListener('click', () => handleNotifyUser(user));
+
+    section.style.display = '';
+}
+
+async function handleNotifyUser(user) {
+    const subject = document.getElementById('notify-subject').value.trim();
+    const message = document.getElementById('notify-message').value.trim();
+
+    if (!subject) {
+        showToast('Subject is required.', 'error');
+        return;
+    }
+    if (!message) {
+        showToast('Message is required.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('notify-send-btn');
+    btn.disabled = true;
+
+    try {
+        await adminService.notifyUser(targetUserId, { subject, message });
+        document.getElementById('notify-message').value = '';
+        showToast(`Notification sent to ${user.email}.`, 'success');
+    } catch (error) {
+        console.error('Failed to notify user:', error);
+        showToast(error.message || 'Failed to send notification', 'error');
+    } finally {
+        btn.disabled = false;
     }
 }
 

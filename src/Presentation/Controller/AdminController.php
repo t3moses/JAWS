@@ -18,6 +18,7 @@ use App\Application\UseCase\Admin\UpdateCrewProfileUseCase;
 use App\Application\UseCase\Admin\AddToCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\RemoveFromCrewWhitelistUseCase;
 use App\Application\UseCase\Admin\DeactivateUserUseCase;
+use App\Application\UseCase\Admin\NotifyUserUseCase;
 use App\Application\UseCase\Crew\RecordNoShowUseCase;
 use App\Application\UseCase\Season\UpdateConfigUseCase;
 use App\Application\UseCase\Season\ProcessSeasonUpdateUseCase;
@@ -53,6 +54,7 @@ class AdminController
         private RemoveFromCrewWhitelistUseCase $removeFromCrewWhitelistUseCase,
         private RecordNoShowUseCase $recordNoShowUseCase,
         private DeactivateUserUseCase $deactivateUserUseCase,
+        private NotifyUserUseCase $notifyUserUseCase,
     ) {
     }
 
@@ -344,6 +346,38 @@ class AdminController
             $requestingUserId = (int)$auth['user_id'];
 
             $result = $this->deactivateUserUseCase->execute($targetUserId, $requestingUserId);
+
+            return JsonResponse::success($result);
+        } catch (ValidationException $e) {
+            return JsonResponse::error($e->getMessage(), 400, $e->getErrors());
+        } catch (\RuntimeException $e) {
+            return JsonResponse::notFound($e->getMessage());
+        } catch (\Exception $e) {
+            return JsonResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /api/admin/users/{userId}/notify
+     *
+     * Sends an admin-composed message to the user's account email address.
+     *
+     * @param array $params Route parameters (userId)
+     * @param array $body   Request body (subject, message)
+     * @param array $auth   Authentication context
+     */
+    public function notifyUser(array $params, array $body, array $auth): JsonResponse
+    {
+        if (!$this->isAdmin($auth)) {
+            return JsonResponse::error('Admin privileges required', 403);
+        }
+
+        try {
+            $targetUserId = (int)$params['userId'];
+            $subject      = (string)($body['subject'] ?? '');
+            $message      = (string)($body['message'] ?? '');
+
+            $result = $this->notifyUserUseCase->execute($targetUserId, $subject, $message);
 
             return JsonResponse::success($result);
         } catch (ValidationException $e) {
