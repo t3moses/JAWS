@@ -645,6 +645,7 @@ ROW;
             </div>
 
             <p>We look forward to seeing you at {$friendlyTime}.</p>
+            <p>You can help us to improve the experience for both owners and crew by flagging no-shows.  This helps us ensure that places are taken by people who actually want to practice and improve their sailing skills, become or remain crewing members and possibly even become boat owners themselves.  After the event, sign-in to your account, scroll down to the My Boat Assignments section, find the event, select the crew who was missing and click the no-show button.  Your fellow owners and committed crews will thank you.</p>
 
             <div class="footer">
                 <p>This is an automated notification from the Social Day Cruising sailing management system.</p>
